@@ -1,0 +1,42 @@
+{
+  "name": "@nobogey/mobile",
+  "version": "0.1.0",
+  "private": true,
+  "main": "expo-router/entry",
+  "scripts": {
+    "dev": "expo start",
+    "start": "expo start",
+    "android": "expo run:android",
+    "ios": "expo run:ios",
+    "web": "expo start --web",
+    "build": "expo export --platform web",
+    "lint": "eslint .",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run --passWithNoTests",
+    "clean": "rm -rf .expo web-build dist coverage"
+  },
+  "dependencies": {
+    "@expo/vector-icons": "latest",
+    "@nobogey/contracts": "workspace:*",
+    "@nobogey/ui": "workspace:*",
+    "@nobogey/utils": "workspace:*",
+    "expo": "latest",
+    "expo-constants": "latest",
+    "expo-dev-client": "~57.0.5",
+    "expo-linking": "latest",
+    "expo-router": "latest",
+    "expo-splash-screen": "latest",
+    "expo-status-bar": "latest",
+    "react": "latest",
+    "react-dom": "latest",
+    "react-native": "latest",
+    "react-native-safe-area-context": "latest",
+    "react-native-screens": "latest",
+    "react-native-web": "~0.21.0"
+  },
+  "devDependencies": {
+    "@nobogey/config": "workspace:*",
+    "@types/react": "latest",
+    "@types/react-dom": "latest"
+  }
+}

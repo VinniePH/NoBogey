@@ -1,0 +1,39 @@
+{
+  "expo": {
+    "name": "NoBogey",
+    "slug": "nobogey-mobile",
+    "scheme": "nobogey",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "backgroundColor": "#1F7A4D",
+      "resizeMode": "contain"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#1F7A4D"
+      },
+      "package": "com.anonymous.nobogeymobile"
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "static"
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#1F7A4D"
+        }
+      ]
+    ]
+  }
+}

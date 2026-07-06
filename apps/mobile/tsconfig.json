@@ -1,0 +1,16 @@
+{
+  "extends": "@nobogey/config/typescript/base",
+  "compilerOptions": {
+    "allowJs": true,
+    "customConditions": [
+      "react-native"
+    ],
+    "noEmit": true
+  },
+  "include": [
+    "app/**/*.ts",
+    "app/**/*.tsx",
+    "src/**/*.ts",
+    "src/**/*.tsx"
+  ]
+}
