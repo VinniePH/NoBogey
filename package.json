@@ -14,6 +14,7 @@
   },
   "devDependencies": {
     "@eslint/js": "latest",
+    "babel-preset-expo": "latest",
     "eslint": "latest",
     "eslint-plugin-react-hooks": "latest",
     "turbo": "latest",
