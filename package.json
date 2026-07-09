@@ -20,5 +20,8 @@
     "typescript": "latest",
     "typescript-eslint": "latest",
     "vitest": "latest"
+  },
+  "dependencies": {
+    "pnpm": "^11.10.0"
   }
 }

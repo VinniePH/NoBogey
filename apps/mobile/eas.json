@@ -1,0 +1,23 @@
+{
+  "cli": {
+    "version": ">= 20.5.1"
+  },
+  "build": {
+    "preview": {
+      "corepack": true,
+      "node": "22.22.2",
+      "pnpm": "11.10.0",
+      "distribution": "internal",
+      "android": {
+        "image": "latest",
+        "buildType": "apk",
+        "gradleCommand": ":app:assembleRelease"
+      }
+    },
+    "production": {
+      "corepack": true,
+      "node": "22.22.2",
+      "pnpm": "11.10.0"
+    }
+  }
+}

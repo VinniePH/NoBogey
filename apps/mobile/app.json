@@ -6,10 +6,6 @@
     "version": "0.1.0",
     "orientation": "portrait",
     "userInterfaceStyle": "light",
-    "splash": {
-      "backgroundColor": "#1F7A4D",
-      "resizeMode": "contain"
-    },
     "assetBundlePatterns": [
       "**/*"
     ],
@@ -34,6 +30,12 @@
           "backgroundColor": "#1F7A4D"
         }
       ]
-    ]
+    ],
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "7d77afdf-0d3a-4284-b41a-77d41d969a8d"
+      }
+    }
   }
 }
