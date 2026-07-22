@@ -18,7 +18,7 @@
     "eslint": "latest",
     "eslint-plugin-react-hooks": "latest",
     "turbo": "latest",
-    "typescript": "latest",
+    "typescript": "6.0.3",
     "typescript-eslint": "latest",
     "vitest": "latest"
   },

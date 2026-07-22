@@ -2,6 +2,8 @@
 
 This guide is the operational setup runbook for the NoBogey framework. Use it when setting up the repo from a fresh clone, starting the mobile or admin app, running verification checks, or preparing an Expo/EAS build.
 
+For Codex integrations with Figma, Expo MCP, local Expo tooling, and optional Mobbin research, see [Codex Design And Expo Tools](./codex-design-and-expo-tools.md).
+
 ## 1. What This Framework Contains
 
 NoBogey is a mobile-first TypeScript monorepo for an on-demand golf caddie booking product.
@@ -305,4 +307,3 @@ Use this checklist for a fresh machine:
 [ ] Install EAS CLI only if cloud builds are needed
 [ ] Read docs/api/backend-boundary.md before adding backend assumptions
 ```
-

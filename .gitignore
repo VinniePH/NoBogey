@@ -1,16 +1,55 @@
+# OS and editor files
 .DS_Store
+Thumbs.db
 .idea/
+.vscode/
+*.swp
+*.swo
+
+# Local developer tooling
+.agents/
+.codex/
 .superpowers/
 .worktrees/
+
+# Dependencies and package-manager caches
 .pnpm-store/
 node_modules/
 .turbo/
+
+# Build and test output
 dist/
 build/
 coverage/
-.expo/
-.expo-shared/
 web-build/
-*.log
 *.tsbuildinfo
 
+# Expo local state
+.expo/
+.expo-shared/
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Local environment files (commit a redacted .env.example when needed)
+.env
+.env.*
+!.env.example
+!.env.*.example
+
+# Signing keys and certificates
+*.jks
+*.keystore
+*.pem
+*.key
+*.p8
+*.mobileprovision
+
+# Mobile build artifacts
+*.apk
+*.aab
+*.ipa

@@ -1,7 +1,8 @@
 import type { PropsWithChildren, ReactNode } from "react";
-import { ScrollView, StyleSheet, Text, View } from "react-native";
+import { ScrollView, StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { colors, spacing, typography } from "@nobogey/ui";
+import { AppText } from "./primitives";
+import { colors, fonts, spacing, typography } from "@nobogey/ui";
 
 interface ScreenProps extends PropsWithChildren {
   title: string;
@@ -15,9 +16,9 @@ export function Screen({ action, children, subtitle, title }: ScreenProps) {
       <ScrollView contentContainerStyle={styles.content}>
         <View style={styles.header}>
           <View style={styles.titleGroup}>
-            <Text style={styles.eyebrow}>NoBogey</Text>
-            <Text style={styles.title}>{title}</Text>
-            {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
+            <AppText selectable={false} style={styles.eyebrow}>NoBogey</AppText>
+            <AppText selectable={false} style={styles.title}>{title}</AppText>
+            {subtitle ? <AppText style={styles.subtitle}>{subtitle}</AppText> : null}
           </View>
           {action}
         </View>
@@ -36,6 +37,7 @@ const styles = StyleSheet.create({
   eyebrow: {
     color: colors.fairway,
     fontSize: typography.small,
+    fontFamily: fonts.sans,
     fontWeight: "700",
     textTransform: "uppercase"
   },
@@ -52,11 +54,13 @@ const styles = StyleSheet.create({
   subtitle: {
     color: colors.muted,
     fontSize: typography.body,
+    fontFamily: fonts.sans,
     lineHeight: 23
   },
   title: {
     color: colors.ink,
     fontSize: typography.heading,
+    fontFamily: fonts.sans,
     fontWeight: "800",
     lineHeight: 34
   },

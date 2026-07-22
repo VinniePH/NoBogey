@@ -40,6 +40,7 @@
     "@nobogey/config": "workspace:*",
     "@types/react": "latest",
     "@types/react-dom": "latest",
-    "babel-preset-expo": "latest"
+    "babel-preset-expo": "latest",
+    "expo-mcp": "~0.2.4"
   }
 }

@@ -1,110 +1,39 @@
-import { router } from "expo-router";
-import { Pressable, StyleSheet, Text, View } from "react-native";
-import { colors, radius, spacing, typography } from "@nobogey/ui";
-import { formatMoney } from "@nobogey/utils";
+import { router, useLocalSearchParams } from "expo-router";
+import { useEffect, useMemo, useState } from "react";
+import { ScrollView, StyleSheet, Text, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { spacing, typography } from "@nobogey/ui";
 import { caddies, courses } from "../../data/mock";
-import { Screen } from "../../ui/Screen";
+import { BookingStepper } from "../../ui/booking-design";
+import { CaddieCard } from "../booking/components/MarketplaceCards";
+import { CaddieDetailSheet } from "./components/CaddieDetailSheet";
 
 export function CaddieListingScreen() {
-  return (
-    <Screen
-      title="Match with a trusted loop."
-      subtitle="Profiles show verification, rates, strengths, and course familiarity before a booking is requested."
-    >
-      {caddies.map((caddie) => {
-        const course = courses.find((item) => item.id === caddie.homeCourseId);
-        return (
-          <Pressable
-            key={caddie.id}
-            style={styles.card}
-            onPress={() =>
-              router.push({ pathname: "/caddies/[id]", params: { id: caddie.id } })
-            }
-          >
-            <View style={styles.topRow}>
-              <View style={styles.avatar}>
-                <Text style={styles.avatarText}>{caddie.displayName.slice(0, 1)}</Text>
-              </View>
-              <View style={styles.nameGroup}>
-                <Text style={styles.name}>{caddie.displayName}</Text>
-                <Text style={styles.course}>{course?.name}</Text>
-              </View>
-              <Text style={styles.rate}>{formatMoney(caddie.rate.amountInCentavos)}</Text>
-            </View>
-            <Text style={styles.bio}>{caddie.bio}</Text>
-            <View style={styles.metaRow}>
-              <Text style={styles.meta}>{caddie.ratingAverage.toFixed(1)} stars</Text>
-              <Text style={styles.meta}>{caddie.completedRounds} rounds</Text>
-              <Text style={styles.meta}>{caddie.yearsExperience} yrs</Text>
-            </View>
-          </Pressable>
-        );
-      })}
-    </Screen>
-  );
+  const { caddieId, courseId, date } = useLocalSearchParams<{ caddieId?: string; courseId?: string; date?: string }>();
+  const [selectedId, setSelectedId] = useState<string | undefined>(caddieId);
+  const availableCaddies = useMemo(() => caddies.filter((caddie) => !courseId || caddie.homeCourseId === courseId), [courseId]);
+
+  useEffect(() => {
+    setSelectedId(availableCaddies.some((caddie) => caddie.id === caddieId) ? caddieId : undefined);
+  }, [availableCaddies, caddieId]);
+
+  return <SafeAreaView edges={["top", "bottom"]} style={styles.safeArea}>
+    <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+      <BookingStepper step={2} />
+      <View style={styles.heading}><Text accessibilityRole="header" style={styles.title}>Pick your caddie.</Text><Text style={styles.subtitle}>Choose one available at your selected course.</Text></View>
+      {availableCaddies.length ? <View style={styles.grid}>{availableCaddies.map((caddie) => <CaddieCard caddie={caddie} key={caddie.id} onPress={() => setSelectedId(caddie.id)} />)}</View> : <View style={styles.empty}><Text style={styles.emptyTitle}>No caddies available</Text><Text style={styles.subtitle}>Try another course or date to see available caddies.</Text></View>}
+    </ScrollView>
+    <CaddieDetailSheet caddie={caddies.find((caddie) => caddie.id === selectedId) ?? null} course={courses.find((course) => course.id === courseId)} onBook={(time) => router.push({ pathname: "/booking", params: { caddieId: selectedId, courseId, date, time } })} onClose={() => setSelectedId(undefined)} visible={Boolean(selectedId)} />
+  </SafeAreaView>;
 }
 
 const styles = StyleSheet.create({
-  avatar: {
-    alignItems: "center",
-    backgroundColor: colors.fairway,
-    borderRadius: 22,
-    height: 44,
-    justifyContent: "center",
-    width: 44
-  },
-  avatarText: {
-    color: colors.surface,
-    fontSize: typography.title,
-    fontWeight: "800"
-  },
-  bio: {
-    color: colors.muted,
-    fontSize: typography.body,
-    lineHeight: 23
-  },
-  card: {
-    backgroundColor: colors.surface,
-    borderRadius: radius.md,
-    gap: spacing.md,
-    padding: spacing.lg
-  },
-  course: {
-    color: colors.muted,
-    fontSize: typography.small
-  },
-  meta: {
-    backgroundColor: colors.canvas,
-    borderRadius: radius.sm,
-    color: colors.ink,
-    fontSize: typography.small,
-    fontWeight: "700",
-    overflow: "hidden",
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.xs
-  },
-  metaRow: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: spacing.sm
-  },
-  name: {
-    color: colors.ink,
-    fontSize: typography.title,
-    fontWeight: "800"
-  },
-  nameGroup: {
-    flex: 1,
-    gap: spacing.xs
-  },
-  rate: {
-    color: colors.fairway,
-    fontSize: typography.small,
-    fontWeight: "800"
-  },
-  topRow: {
-    alignItems: "center",
-    flexDirection: "row",
-    gap: spacing.md
-  }
+  content: { gap: spacing.xl, paddingBottom: spacing.xl },
+  empty: { gap: spacing.sm, paddingHorizontal: spacing.xl },
+  emptyTitle: { color: "#17201B", fontSize: typography.title, fontWeight: "800" },
+  grid: { alignItems: "center", gap: spacing.lg, paddingHorizontal: spacing.lg },
+  heading: { gap: spacing.sm, paddingHorizontal: spacing.xl },
+  safeArea: { backgroundColor: "#FAF9F6", flex: 1 },
+  subtitle: { color: "#6E6D67", fontSize: typography.body, lineHeight: 23 },
+  title: { color: "#000000", fontSize: 36, fontWeight: "800", letterSpacing: -1, lineHeight: 42 }
 });

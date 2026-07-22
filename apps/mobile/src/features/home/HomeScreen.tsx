@@ -1,271 +1,45 @@
 import { router } from "expo-router";
-import { useMemo, useState } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
-import type { UserRole } from "@nobogey/contracts";
-import { colors, radius, spacing, typography } from "@nobogey/ui";
-import { formatMoney, formatTeeTime } from "@nobogey/utils";
-import {
-  availabilitySlots,
-  bookings,
-  caddies,
-  courses,
-  golfer
-} from "../../data/mock";
-import { Screen } from "../../ui/Screen";
+import { Ionicons } from "@expo/vector-icons";
+import { useState } from "react";
+import { Image, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { colors, spacing, typography } from "@nobogey/ui";
+import { caddies, courses } from "../../data/mock";
+import { CaddieCard, CourseCard } from "../booking/components/MarketplaceCards";
+import { CaddieDetailSheet } from "../caddies/components/CaddieDetailSheet";
+import TagaytayHighlandsHero from "../../../assets/images/tagaytay-highlands-hero.jpg";
+
+const dateLabel = "Saturday, July 7, 2026";
 
 export function HomeScreen() {
-  const [role, setRole] = useState<UserRole>("golfer");
-  const preferredCaddies = useMemo(
-    () => caddies.filter((caddie) => golfer.preferredCaddieIds.includes(caddie.id)),
-    []
-  );
-  const nextBooking = bookings[0];
-  const nextCaddie = caddies.find((caddie) => caddie.id === nextBooking?.caddieId);
+  const [selectedCaddieId, setSelectedCaddieId] = useState<string>();
+  const selectedCaddie = caddies.find((caddie) => caddie.id === selectedCaddieId) ?? null;
 
-  return (
-    <Screen
-      title="Book the right caddie before you arrive."
-      subtitle="Browse trusted loops, check availability, and hold a tee-time ready caddie from your phone."
-      action={
-        <View style={styles.roleSwitch}>
-          {(["golfer", "caddie"] as const).map((nextRole) => (
-            <Pressable
-              key={nextRole}
-              accessibilityRole="button"
-              onPress={() => setRole(nextRole)}
-              style={[
-                styles.roleButton,
-                role === nextRole ? styles.roleButtonActive : null
-              ]}
-            >
-              <Text
-                style={[
-                  styles.roleText,
-                  role === nextRole ? styles.roleTextActive : null
-                ]}
-              >
-                {nextRole}
-              </Text>
-            </Pressable>
-          ))}
-        </View>
-      }
-    >
-      <View style={styles.heroCard}>
-        <Text style={styles.kicker}>Next round</Text>
-        <Text style={styles.heroTitle}>
-          {nextCaddie?.displayName ?? "Select a caddie"} at{" "}
-          {courses.find((course) => course.id === nextBooking?.courseId)?.name}
-        </Text>
-        <Text style={styles.heroMeta}>
-          {nextBooking ? formatTeeTime(nextBooking.teeTime) : "Choose a tee time"} -{" "}
-          {nextBooking ? formatMoney(nextBooking.quotedRate.amountInCentavos) : "No quote"}
-        </Text>
-        <Pressable style={styles.primaryButton} onPress={() => router.push("/booking")}>
-          <Text style={styles.primaryButtonText}>Review booking</Text>
-        </Pressable>
-      </View>
-
-      <View style={styles.quickGrid}>
-        <QuickAction label="Find course" onPress={() => router.push("/courses")} />
-        <QuickAction label="Browse caddies" onPress={() => router.push("/caddies")} />
-        <QuickAction label="Golfer profile" onPress={() => router.push("/profile")} />
-        <QuickAction
-          label="Caddie dashboard"
-          onPress={() => router.push("/caddie-dashboard")}
-        />
-      </View>
-
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Preferred caddies</Text>
-        {preferredCaddies.map((caddie) => (
-          <Pressable
-            key={caddie.id}
-            style={styles.listCard}
-            onPress={() =>
-              router.push({ pathname: "/caddies/[id]", params: { id: caddie.id } })
-            }
-          >
-            <View style={styles.avatar}>
-              <Text style={styles.avatarText}>{caddie.displayName.slice(0, 1)}</Text>
-            </View>
-            <View style={styles.listBody}>
-              <Text style={styles.listTitle}>{caddie.displayName}</Text>
-              <Text style={styles.listMeta}>
-                {caddie.ratingAverage.toFixed(1)} rating -{" "}
-                {formatMoney(caddie.rate.amountInCentavos)}
-              </Text>
-            </View>
-            <Text style={styles.chevron}>›</Text>
-          </Pressable>
-        ))}
-      </View>
-
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Open slots</Text>
-        {availabilitySlots
-          .filter((slot) => slot.status === "open")
-          .map((slot) => {
-            const caddie = caddies.find((item) => item.id === slot.caddieId);
-            return (
-              <View key={slot.id} style={styles.slotCard}>
-                <Text style={styles.slotTime}>{formatTeeTime(slot.startsAt)}</Text>
-                <Text style={styles.slotName}>{caddie?.displayName}</Text>
-              </View>
-            );
-          })}
-      </View>
-    </Screen>
-  );
+  return <SafeAreaView edges={["top", "bottom"]} style={styles.safeArea}><ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+    <View style={styles.hero}><Image accessibilityLabel="Tagaytay Highlands golf course" resizeMode="cover" source={TagaytayHighlandsHero} style={styles.heroImage} /><View style={styles.heroOverlay} /><View style={styles.heroCopy}>
+      <View style={styles.brandRow}><Text accessibilityRole="header" style={styles.wordmark}>NoBogey</Text></View>
+      <Text accessibilityRole="header" style={styles.headline}>The perfect walk,{"\n"}arranged <Text style={styles.headlineAccent}>on-demand.</Text></Text><Text style={styles.heroDescription}>Professional caddies for every skill level. Book your preferred bagman at any course in the metro, instantly.</Text>
+    </View></View>
+    <View style={styles.searchCard}><SearchDetail label="Location" value="Manila Golf and Country Club Inc" /><View style={styles.divider} /><SearchDetail label="Date" value={dateLabel} /><Pressable accessibilityLabel="Search available caddies" accessibilityRole="button" onPress={() => router.push({ pathname: "/courses", params: { date: "2026-07-07" } })} style={styles.searchButton}><Text style={styles.searchButtonText}>Search Fleet</Text></Pressable></View>
+    <HomeSection actionLabel="See All" onAction={() => router.push("/courses")} title="Courses"><ScrollView horizontal contentContainerStyle={styles.horizontalList} showsHorizontalScrollIndicator={false}>{courses.map((course) => <CourseCard compact course={course} key={course.id} onPress={() => router.push({ pathname: "/courses/[id]", params: { id: course.id } })} />)}</ScrollView></HomeSection>
+    <HomeSection actionLabel="See All" onAction={() => router.push("/caddies")} title="Caddies"><ScrollView horizontal contentContainerStyle={styles.horizontalList} showsHorizontalScrollIndicator={false}>{caddies.map((caddie) => <CaddieCard caddie={caddie} compact key={caddie.id} onPress={() => setSelectedCaddieId(caddie.id)} />)}</ScrollView></HomeSection>
+  </ScrollView><BottomNavigation /><CaddieDetailSheet caddie={selectedCaddie} course={courses.find((course) => course.id === selectedCaddie?.homeCourseId)} onBook={(time) => router.push({ pathname: "/booking", params: { caddieId: selectedCaddie?.id, courseId: selectedCaddie?.homeCourseId, date: "2026-07-07", time } })} onClose={() => setSelectedCaddieId(undefined)} visible={Boolean(selectedCaddie)} /></SafeAreaView>;
 }
 
-function QuickAction({ label, onPress }: { label: string; onPress: () => void }) {
-  return (
-    <Pressable accessibilityRole="button" onPress={onPress} style={styles.quickAction}>
-      <Text style={styles.quickActionText}>{label}</Text>
-    </Pressable>
-  );
-}
+function SearchDetail({ label, value }: { label: string; value: string }) { return <View style={styles.searchDetail}><Text style={styles.fieldLabel}>{label}</Text><Text selectable style={styles.fieldValue}>{value}</Text></View>; }
+function HomeSection({ actionLabel, children, onAction, title }: { actionLabel: string; children: React.ReactNode; onAction: () => void; title: string }) { return <View style={styles.section}><View style={styles.sectionHeader}><Text accessibilityRole="header" style={styles.sectionTitle}>{title}</Text><Pressable accessibilityLabel={`${actionLabel} ${title.toLowerCase()}`} accessibilityRole="button" hitSlop={8} onPress={onAction} style={styles.seeAllButton}><Text style={styles.seeAll}>{actionLabel}</Text></Pressable></View>{children}</View>; }
+function BottomNavigation() { return <View accessibilityRole="tablist" style={styles.bottomNavigation}>
+  <NavTab active icon="home" label="Home" onPress={() => undefined} />
+  <NavTab icon="calendar" label="Bookings" onPress={() => router.push("/booking")} />
+  <Pressable accessibilityLabel="Start a booking" accessibilityRole="button" onPress={() => router.push("/courses")} style={styles.primaryNavAction}><GolfBallIcon /></Pressable>
+  <NavTab icon="people" label="Caddies" onPress={() => router.push("/caddies")} />
+  <NavTab icon="person-circle-outline" label="Profile" onPress={() => router.push("/profile")} />
+</View>; }
+
+function NavTab({ active = false, icon, label, onPress }: { active?: boolean; icon: keyof typeof Ionicons.glyphMap; label: string; onPress: () => void }) { return <Pressable accessibilityLabel={label} accessibilityRole="tab" accessibilityState={{ selected: active }} onPress={onPress} style={styles.navItem}><View style={[styles.navIcon, active && styles.navIconActive]}><Ionicons color={active ? "#17432E" : "#64645E"} name={icon} size={22} /></View><Text style={[styles.navLabel, active && styles.navLabelActive]}>{label}</Text></Pressable>; }
+
+function GolfBallIcon() { return <View style={styles.golfBall}><View style={[styles.golfDot, styles.golfDotOne]} /><View style={[styles.golfDot, styles.golfDotTwo]} /><View style={[styles.golfDot, styles.golfDotThree]} /><View style={[styles.golfDot, styles.golfDotFour]} /><View style={[styles.golfDot, styles.golfDotFive]} /></View>; }
 
 const styles = StyleSheet.create({
-  avatar: {
-    alignItems: "center",
-    backgroundColor: colors.sky,
-    borderRadius: 20,
-    height: 40,
-    justifyContent: "center",
-    width: 40
-  },
-  avatarText: {
-    color: colors.fairwayDark,
-    fontSize: typography.body,
-    fontWeight: "800"
-  },
-  chevron: {
-    color: colors.muted,
-    fontSize: 28
-  },
-  heroCard: {
-    backgroundColor: colors.fairway,
-    borderRadius: radius.md,
-    gap: spacing.md,
-    padding: spacing.lg
-  },
-  heroMeta: {
-    color: colors.sky,
-    fontSize: typography.body
-  },
-  heroTitle: {
-    color: colors.surface,
-    fontSize: 24,
-    fontWeight: "800",
-    lineHeight: 30
-  },
-  kicker: {
-    color: colors.sand,
-    fontSize: typography.small,
-    fontWeight: "800",
-    textTransform: "uppercase"
-  },
-  listBody: {
-    flex: 1,
-    gap: spacing.xs
-  },
-  listCard: {
-    alignItems: "center",
-    backgroundColor: colors.surface,
-    borderRadius: radius.md,
-    flexDirection: "row",
-    gap: spacing.md,
-    padding: spacing.md
-  },
-  listMeta: {
-    color: colors.muted,
-    fontSize: typography.small
-  },
-  listTitle: {
-    color: colors.ink,
-    fontSize: typography.body,
-    fontWeight: "700"
-  },
-  primaryButton: {
-    alignItems: "center",
-    alignSelf: "flex-start",
-    backgroundColor: colors.surface,
-    borderRadius: radius.sm,
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.md
-  },
-  primaryButtonText: {
-    color: colors.fairwayDark,
-    fontSize: typography.body,
-    fontWeight: "800"
-  },
-  quickAction: {
-    backgroundColor: colors.surface,
-    borderColor: colors.line,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    minHeight: 58,
-    justifyContent: "center",
-    padding: spacing.md
-  },
-  quickActionText: {
-    color: colors.ink,
-    fontSize: typography.body,
-    fontWeight: "700"
-  },
-  quickGrid: {
-    gap: spacing.md
-  },
-  roleButton: {
-    borderRadius: radius.sm,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm
-  },
-  roleButtonActive: {
-    backgroundColor: colors.ink
-  },
-  roleSwitch: {
-    backgroundColor: colors.surface,
-    borderColor: colors.line,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    flexDirection: "row",
-    padding: spacing.xs
-  },
-  roleText: {
-    color: colors.muted,
-    fontSize: typography.small,
-    fontWeight: "800",
-    textTransform: "capitalize"
-  },
-  roleTextActive: {
-    color: colors.surface
-  },
-  section: {
-    gap: spacing.sm
-  },
-  sectionTitle: {
-    color: colors.ink,
-    fontSize: typography.title,
-    fontWeight: "800"
-  },
-  slotCard: {
-    backgroundColor: colors.surface,
-    borderLeftColor: colors.flag,
-    borderLeftWidth: 4,
-    borderRadius: radius.md,
-    gap: spacing.xs,
-    padding: spacing.md
-  },
-  slotName: {
-    color: colors.muted,
-    fontSize: typography.body
-  },
-  slotTime: {
-    color: colors.ink,
-    fontSize: typography.body,
-    fontWeight: "800"
-  }
+  bottomNavigation: { alignItems: "center", backgroundColor: "#FFFEFB", borderTopColor: "#D8D7D0", borderTopWidth: StyleSheet.hairlineWidth, bottom: 0, flexDirection: "row", justifyContent: "space-around", left: 0, minHeight: 72, paddingHorizontal: spacing.sm, paddingTop: spacing.xs, position: "absolute", right: 0 }, brandRow: { alignItems: "center", flexDirection: "row", justifyContent: "center" }, content: { gap: 44, paddingBottom: 124 }, divider: { backgroundColor: "#AAA9A1", height: StyleSheet.hairlineWidth }, fieldLabel: { color: "#687B70", fontSize: typography.small, fontWeight: "800", textTransform: "uppercase" }, fieldValue: { color: "#686760", fontSize: 22, lineHeight: 29 }, golfBall: { alignItems: "center", borderColor: "#D9B957", borderRadius: 16, borderWidth: 2, height: 32, justifyContent: "center", width: 32 }, golfDot: { backgroundColor: "#D9B957", borderRadius: 2, height: 4, position: "absolute", width: 4 }, golfDotFive: { bottom: 7, left: 13 }, golfDotFour: { bottom: 10, right: 6 }, golfDotOne: { left: 7, top: 8 }, golfDotThree: { right: 7, top: 8 }, golfDotTwo: { left: 14, top: 5 }, headline: { color: "#050705", fontSize: 33, fontWeight: "900", letterSpacing: -0.8, lineHeight: 39 }, headlineAccent: { color: "#397250" }, hero: { backgroundColor: "#EFF4ED", height: 370, overflow: "hidden" }, heroCopy: { gap: 15, paddingHorizontal: 34, paddingTop: 48 }, heroDescription: { color: "#5C5E57", fontSize: 16, lineHeight: 20, maxWidth: 610 }, heroImage: { height: "100%", position: "absolute", width: "100%" }, heroOverlay: { backgroundColor: "rgba(250, 250, 247, 0.72)", bottom: 0, left: 0, position: "absolute", right: 0, top: 0 }, horizontalList: { gap: spacing.lg, paddingHorizontal: spacing.xl }, navIcon: { alignItems: "center", borderRadius: 18, height: 36, justifyContent: "center", width: 36 }, navIconActive: { backgroundColor: "#E6E8E5" }, navItem: { alignItems: "center", flex: 1, gap: 1, justifyContent: "center", minHeight: 58 }, navLabel: { color: "#64645E", fontSize: 11, fontWeight: "500" }, navLabelActive: { color: "#17432E", fontWeight: "700" }, primaryNavAction: { alignItems: "center", backgroundColor: "#FFFEFB", borderColor: "#17432E", borderRadius: 34, borderWidth: 3, height: 68, justifyContent: "center", marginTop: -30, width: 68 }, safeArea: { backgroundColor: "#FAF9F6", flex: 1 }, searchButton: { alignItems: "center", backgroundColor: "#22633E", borderRadius: 12, justifyContent: "center", minHeight: 48 }, searchButtonText: { color: colors.surface, fontSize: 18, fontWeight: "600" }, searchCard: { backgroundColor: colors.surface, borderColor: "#E1E0DA", borderCurve: "continuous", borderRadius: 20, borderWidth: StyleSheet.hairlineWidth, boxShadow: "0 5px 7px rgba(23, 32, 27, 0.20)", gap: 16, marginHorizontal: 30, marginTop: -76, padding: 22 }, searchDetail: { gap: spacing.sm }, section: { gap: spacing.lg }, sectionHeader: { alignItems: "center", flexDirection: "row", justifyContent: "space-between", paddingHorizontal: spacing.xl }, sectionTitle: { color: "#050705", fontSize: 38, fontWeight: "900", letterSpacing: -0.8 }, seeAll: { color: "#17432E", fontSize: typography.title, fontWeight: "800" }, seeAllButton: { justifyContent: "center", minHeight: 44 }, wordmark: { color: "#22633E", fontSize: 42, fontStyle: "italic", fontWeight: "900", letterSpacing: -1.6 }
 });

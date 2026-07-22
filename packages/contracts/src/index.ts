@@ -22,10 +22,14 @@ export interface Caddie {
   id: string;
   role: "caddie";
   displayName: string;
+  /** A remote profile image. Consumers must provide an initials fallback. */
+  avatarUrl?: string;
   homeCourseId: string;
   bio: string;
   specialties: string[];
   languages: string[];
+  /** Course-specific skills a golfer can use to decide on a caddie. */
+  courseKnowledge: string[];
   yearsExperience: number;
   ratingAverage: number;
   reviewCount: number;
@@ -41,9 +45,15 @@ export interface GolfCourse {
   city: string;
   province: string;
   holes: 9 | 18 | 27 | 36;
+  /** Course scorecard par for the standard 18-hole layout. */
+  par: number;
+  /** Total length of the standard layout, in yards. */
+  yardage: number;
   distanceKm: number;
   caddieCount: number;
   amenities: string[];
+  /** Wide course photography used in marketplace cards and course profiles. */
+  imageUrl?: string;
 }
 
 export type AvailabilityStatus = "open" | "held" | "booked" | "blocked";

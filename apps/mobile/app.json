@@ -9,11 +9,13 @@
     "assetBundlePatterns": [
       "**/*"
     ],
+    "icon": "../../assets/logo/NoBogey-Logo.png",
     "ios": {
       "supportsTablet": true
     },
     "android": {
       "adaptiveIcon": {
+        "foregroundImage": "../../assets/logo/NoBogey-Logo.png",
         "backgroundColor": "#1F7A4D"
       },
       "package": "com.anonymous.nobogeymobile"

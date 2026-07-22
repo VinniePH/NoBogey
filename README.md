@@ -21,6 +21,8 @@ pnpm install
 pnpm dev:mobile
 ```
 
+For the full framework setup runbook, see `docs/setup/README.md`.
+
 Useful checks:
 
 ```bash

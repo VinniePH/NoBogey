@@ -1,141 +1,27 @@
-import { StyleSheet, Text, View } from "react-native";
+import { router, useLocalSearchParams } from "expo-router";
+import { ScrollView, StyleSheet, Text, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { colors, radius, spacing, typography } from "@nobogey/ui";
-import { formatMoney, formatTeeTime, isBookingTerminal } from "@nobogey/utils";
-import { bookings, caddies, courses, paymentIntents } from "../../data/mock";
-import { Screen } from "../../ui/Screen";
+import { caddies, courses } from "../../data/mock";
+import { BookingStepper, PrimaryButton, StickyActionBar } from "../../ui/booking-design";
 
 export function BookingPlaceholderScreen() {
-  const booking = bookings[0];
-  if (!booking) {
-    return (
-      <Screen
-        title="No booking selected"
-        subtitle="Once a golfer holds a caddie, the booking request summary will appear here."
-      >
-        <View style={styles.card}>
-          <Text style={styles.label}>Empty state</Text>
-          <Text style={styles.value}>No active request</Text>
-          <Text style={styles.detail}>
-            Backend persistence is out of scope for this foundation phase.
-          </Text>
-        </View>
-      </Screen>
-    );
-  }
-
-  const caddie = caddies.find((item) => item.id === booking.caddieId);
-  const course = courses.find((item) => item.id === booking.courseId);
-  const payment = paymentIntents.find((item) => item.bookingId === booking.id);
-
-  return (
-    <Screen
-      title="Booking request"
-      subtitle="This placeholder names the states the future backend must enforce before payment and confirmation."
-    >
-      <View style={styles.card}>
-        <Text style={styles.label}>Requested caddie</Text>
-        <Text style={styles.value}>{caddie?.displayName}</Text>
-        <Text style={styles.detail}>{course?.name}</Text>
-      </View>
-
-      <View style={styles.card}>
-        <Text style={styles.label}>Tee time</Text>
-        <Text style={styles.value}>{formatTeeTime(booking.teeTime)}</Text>
-        <Text style={styles.detail}>{booking.notes}</Text>
-      </View>
-
-      <View style={styles.statusGrid}>
-        <StatusTile label="Booking" value={booking.status} />
-        <StatusTile
-          label="Payment"
-          value={payment?.status ?? "not_required"}
-          accent={colors.flag}
-        />
-        <StatusTile
-          label="Terminal"
-          value={isBookingTerminal(booking.status) ? "yes" : "no"}
-        />
-      </View>
-
-      <View style={styles.paymentCard}>
-        <Text style={styles.label}>Future GCash handoff</Text>
-        <Text style={styles.value}>
-          {payment ? formatMoney(payment.amount.amountInCentavos) : "No payment"}
-        </Text>
-        <Text style={styles.detail}>
-          Backend will own payment intent creation, status callbacks, and abandoned
-          payment recovery.
-        </Text>
-      </View>
-    </Screen>
-  );
+  const { caddieId, courseId, time } = useLocalSearchParams<{ caddieId?: string; courseId?: string; time?: string }>();
+  const caddie = caddies.find((item) => item.id === caddieId) ?? caddies[0]!;
+  const course = courses.find((item) => item.id === courseId) ?? courses.find((item) => item.id === caddie.homeCourseId) ?? courses[0]!;
+  return <SafeAreaView edges={["top", "bottom"]} style={styles.safeArea}><ScrollView contentContainerStyle={styles.content}><BookingStepper step={3}/><View style={styles.heading}><Text accessibilityRole="header" style={styles.title}>Review your booking.</Text><Text style={styles.subtitle}>Everything looks right? Confirm your caddie request below.</Text></View><View style={styles.card}><Row label="COURSE" value={course.name}/><Row label="CADDIE" value={caddie.displayName}/><Row label="TEE TIME" value={time ?? "Choose a time"}/><Row label="RATE" value="₱1,500"/><View style={styles.rule}/><Text style={styles.note}>Payment is collected after the course accepts the caddie request.</Text></View></ScrollView><StickyActionBar><PrimaryButton label="Confirm Booking" onPress={() => router.replace({ pathname: "/confirmation", params: { caddieId: caddie.id, courseId: course.id, time } })}/></StickyActionBar></SafeAreaView>;
 }
-
-function StatusTile({
-  accent = colors.fairway,
-  label,
-  value
-}: {
-  accent?: string;
-  label: string;
-  value: string;
-}) {
-  return (
-    <View style={[styles.statusTile, { borderTopColor: accent }]}>
-      <Text style={styles.statusLabel}>{label}</Text>
-      <Text style={styles.statusValue}>{value}</Text>
-    </View>
-  );
-}
-
+function Row({ label, value }: { label: string; value: string }) { return <View style={styles.row}><Text style={styles.label}>{label}</Text><Text style={styles.value}>{value}</Text></View>; }
 const styles = StyleSheet.create({
-  card: {
-    backgroundColor: colors.surface,
-    borderRadius: radius.md,
-    gap: spacing.xs,
-    padding: spacing.lg
-  },
-  detail: {
-    color: colors.muted,
-    fontSize: typography.body,
-    lineHeight: 23
-  },
-  label: {
-    color: colors.fairway,
-    fontSize: typography.small,
-    fontWeight: "800",
-    textTransform: "uppercase"
-  },
-  paymentCard: {
-    backgroundColor: colors.sky,
-    borderRadius: radius.md,
-    gap: spacing.xs,
-    padding: spacing.lg
-  },
-  statusGrid: {
-    gap: spacing.md
-  },
-  statusLabel: {
-    color: colors.muted,
-    fontSize: typography.small,
-    fontWeight: "700"
-  },
-  statusTile: {
-    backgroundColor: colors.surface,
-    borderRadius: radius.md,
-    borderTopWidth: 4,
-    gap: spacing.xs,
-    padding: spacing.md
-  },
-  statusValue: {
-    color: colors.ink,
-    fontSize: typography.title,
-    fontWeight: "800",
-    textTransform: "capitalize"
-  },
-  value: {
-    color: colors.ink,
-    fontSize: typography.title,
-    fontWeight: "800"
-  }
+  card: { backgroundColor: colors.surface, borderColor: "#999890", borderRadius: radius.md, borderWidth: 1, gap: spacing.lg, marginHorizontal: spacing.xl, padding: spacing.xl },
+  content: { gap: spacing.xl, paddingBottom: spacing.xl },
+  heading: { gap: spacing.sm, paddingHorizontal: spacing.xl },
+  label: { color: "#66786D", fontSize: typography.small, fontWeight: "800", letterSpacing: 1 },
+  note: { color: "#6E6D67", fontSize: typography.small, lineHeight: 19 },
+  row: { gap: spacing.xs },
+  rule: { backgroundColor: "#B9B8B1", height: 1 },
+  safeArea: { backgroundColor: "#FAF9F6", flex: 1 },
+  subtitle: { color: "#6E6D67", fontSize: typography.body, lineHeight: 23 },
+  title: { color: "#000000", fontSize: 36, fontWeight: "800", letterSpacing: -1, lineHeight: 42 },
+  value: { color: "#18382A", fontSize: typography.title, fontWeight: "800" }
 });
