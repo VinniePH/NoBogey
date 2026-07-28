@@ -5,7 +5,8 @@ import type {
   GolfCourse,
   Golfer,
   PaymentIntent,
-  Review
+  Review,
+  TeeTimeSlot
 } from "@nobogey/contracts";
 
 export const courses: GolfCourse[] = [
@@ -154,6 +155,20 @@ export const availabilitySlots: AvailabilitySlot[] = [
   }
 ];
 
+/**
+ * Temporary club tee-sheet response. Replace this fixture through the gateway
+ * in `features/booking/clubTeeSheet.ts` when a club integration is available.
+ */
+export const teeTimeSlots: TeeTimeSlot[] = [
+  { id: "tee-ayala-2026-07-25-0630", courseId: "course-ayala", startsAt: "2026-07-25T06:30:00+08:00", remainingPlayerCapacity: 4, remainingCaddieCapacity: 2, status: "open", sourceUpdatedAt: "2026-07-24T09:00:00+08:00" },
+  { id: "tee-ayala-2026-07-25-0710", courseId: "course-ayala", startsAt: "2026-07-25T07:10:00+08:00", remainingPlayerCapacity: 4, remainingCaddieCapacity: 2, status: "open", sourceUpdatedAt: "2026-07-24T09:00:00+08:00" },
+  { id: "tee-ayala-2026-07-25-0750", courseId: "course-ayala", startsAt: "2026-07-25T07:50:00+08:00", remainingPlayerCapacity: 2, remainingCaddieCapacity: 1, status: "held", sourceUpdatedAt: "2026-07-24T09:00:00+08:00" },
+  { id: "tee-ayala-2026-07-25-0830", courseId: "course-ayala", startsAt: "2026-07-25T08:30:00+08:00", remainingPlayerCapacity: 0, remainingCaddieCapacity: 0, status: "full", sourceUpdatedAt: "2026-07-24T09:00:00+08:00" },
+  { id: "tee-ayala-2026-07-26-0640", courseId: "course-ayala", startsAt: "2026-07-26T06:40:00+08:00", remainingPlayerCapacity: 4, remainingCaddieCapacity: 2, status: "open", sourceUpdatedAt: "2026-07-24T09:00:00+08:00" },
+  { id: "tee-villamor-2026-07-25-0700", courseId: "course-villamor", startsAt: "2026-07-25T07:00:00+08:00", remainingPlayerCapacity: 4, remainingCaddieCapacity: 2, status: "open", sourceUpdatedAt: "2026-07-24T09:00:00+08:00" },
+  { id: "tee-southwoods-2026-07-25-0730", courseId: "course-southwoods", startsAt: "2026-07-25T07:30:00+08:00", remainingPlayerCapacity: 4, remainingCaddieCapacity: 2, status: "open", sourceUpdatedAt: "2026-07-24T09:00:00+08:00" }
+];
+
 export const bookings: Booking[] = [
   {
     id: "booking-1024",
@@ -166,6 +181,8 @@ export const bookings: Booking[] = [
     partySize: 2,
     notes: "Walking round, prefers help around greens.",
     quotedRate: { amountInCentavos: 240000, currency: "PHP" }
+    , preferredCaddieId: "caddie-rafa"
+    , caddieAssignmentStatus: "preferred_requested"
   }
 ];
 

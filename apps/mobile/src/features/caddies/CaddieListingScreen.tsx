@@ -9,7 +9,7 @@ import { CaddieCard } from "../booking/components/MarketplaceCards";
 import { CaddieDetailSheet } from "./components/CaddieDetailSheet";
 
 export function CaddieListingScreen() {
-  const { caddieId, courseId, date } = useLocalSearchParams<{ caddieId?: string; courseId?: string; date?: string }>();
+  const { caddieId, courseId, date, teeTimeId, time } = useLocalSearchParams<{ caddieId?: string; courseId?: string; date?: string; teeTimeId?: string; time?: string }>();
   const [selectedId, setSelectedId] = useState<string | undefined>(caddieId);
   const availableCaddies = useMemo(() => caddies.filter((caddie) => !courseId || caddie.homeCourseId === courseId), [courseId]);
 
@@ -19,11 +19,11 @@ export function CaddieListingScreen() {
 
   return <SafeAreaView edges={["top", "bottom"]} style={styles.safeArea}>
     <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-      <BookingStepper step={2} />
-      <View style={styles.heading}><Text accessibilityRole="header" style={styles.title}>Pick your caddie.</Text><Text style={styles.subtitle}>Choose one available at your selected course.</Text></View>
+      <BookingStepper step={3} />
+      <View style={styles.heading}><Text accessibilityRole="header" style={styles.title}>Request a caddie.</Text><Text style={styles.subtitle}>Choose a preferred caddie for your selected tee time. The course confirms the final assignment.</Text></View>
       {availableCaddies.length ? <View style={styles.grid}>{availableCaddies.map((caddie) => <CaddieCard caddie={caddie} key={caddie.id} onPress={() => setSelectedId(caddie.id)} />)}</View> : <View style={styles.empty}><Text style={styles.emptyTitle}>No caddies available</Text><Text style={styles.subtitle}>Try another course or date to see available caddies.</Text></View>}
     </ScrollView>
-    <CaddieDetailSheet caddie={caddies.find((caddie) => caddie.id === selectedId) ?? null} course={courses.find((course) => course.id === courseId)} onBook={(time) => router.push({ pathname: "/booking", params: { caddieId: selectedId, courseId, date, time } })} onClose={() => setSelectedId(undefined)} visible={Boolean(selectedId)} />
+    <CaddieDetailSheet caddie={caddies.find((caddie) => caddie.id === selectedId) ?? null} course={courses.find((course) => course.id === courseId)} onBook={() => router.push({ pathname: "/booking", params: { caddieId: selectedId, courseId, date, teeTimeId, time } })} onClose={() => setSelectedId(undefined)} visible={Boolean(selectedId)} />
   </SafeAreaView>;
 }
 

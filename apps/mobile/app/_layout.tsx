@@ -38,8 +38,11 @@ export default function RootLayout() {
         }}
       >
         <Stack.Screen name="index" options={{ headerShown: false }} />
+        <Stack.Screen name="auth" options={{ headerShown: false }} />
+        <Stack.Screen name="home" options={{ headerShown: false }} />
         <Stack.Screen name="courses" options={{ title: "Choose a course" }} />
         <Stack.Screen name="courses/[id]" options={{ title: "Course profile" }} />
+        <Stack.Screen name="tee-times" options={{ title: "Choose a tee time" }} />
         <Stack.Screen name="caddies" options={{ title: "Available caddies" }} />
         <Stack.Screen
           name="caddies/[id]"
@@ -47,6 +50,9 @@ export default function RootLayout() {
         />
         <Stack.Screen name="booking" options={{ title: "Booking" }} />
         <Stack.Screen name="confirmation" options={{ headerShown: false }} />
+        <Stack.Screen name="bookings" options={{ title: "My bookings" }} />
+        <Stack.Screen name="booking-details" options={{ title: "Booking details" }} />
+        <Stack.Screen name="rate-caddie" options={{ title: "Rate your caddie" }} />
         <Stack.Screen name="profile" options={{ title: "My Profile", headerRight: () => <Pressable accessibilityLabel="Open settings" accessibilityRole="button" hitSlop={8} onPress={() => router.push("/settings")} style={{ alignItems: "center", justifyContent: "center", minHeight: 44, minWidth: 44 }}><Text style={{ color: colors.fairwayDark, fontSize: 22 }}>⚙</Text></Pressable> }} />
         <Stack.Screen name="settings" options={{ headerShown: false }} />
         <Stack.Screen

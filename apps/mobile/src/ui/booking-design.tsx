@@ -13,19 +13,21 @@ export function ImagePlaceholder({ label, style }: { label: string; style?: obje
   );
 }
 
-export function BookingStepper({ step }: { step: 1 | 2 | 3 }) {
+export function BookingStepper({ step }: { step: 1 | 2 | 3 | 4 }) {
   return (
-    <View accessibilityLabel={`Booking step ${step} of 3`} style={styles.stepper}>
+    <View accessibilityLabel={`Booking step ${step} of 4`} style={styles.stepper}>
       <StepCircle number={1} active />
       <View style={[styles.stepLine, step >= 2 && styles.stepLineActive]} />
       <StepCircle number={2} active={step >= 2} />
       <View style={[styles.stepLine, step >= 3 && styles.stepLineActive]} />
       <StepCircle number={3} active={step >= 3} />
+      <View style={[styles.stepLine, step >= 4 && styles.stepLineActive]} />
+      <StepCircle number={4} active={step >= 4} />
     </View>
   );
 }
 
-function StepCircle({ active, number }: { active: boolean; number: 1 | 2 | 3 }) {
+function StepCircle({ active, number }: { active: boolean; number: 1 | 2 | 3 | 4 }) {
   return <View style={[styles.stepCircle, active ? styles.stepCircleActive : styles.stepCircleInactive]}><AppText selectable={false} style={styles.stepText}>{number}</AppText></View>;
 }
 
