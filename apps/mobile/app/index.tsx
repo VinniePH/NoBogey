@@ -1,3 +1,3 @@
-import { HomeScreen } from "../src/features/home/HomeScreen";
+import { SplashScreen } from "../src/features/account/EntryScreens";
 
-export default HomeScreen;
+export default SplashScreen;

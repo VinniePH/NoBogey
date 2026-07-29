@@ -1,3 +1,3 @@
-import { BookingPlaceholderScreen } from "../src/features/booking/BookingPlaceholderScreen";
+import { BookingSummaryScreen } from "../src/features/booking/BookingSummaryScreen";
 
-export default BookingPlaceholderScreen;
+export default BookingSummaryScreen;

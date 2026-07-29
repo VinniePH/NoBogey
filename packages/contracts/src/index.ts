@@ -67,6 +67,25 @@ export interface AvailabilitySlot {
   status: AvailabilityStatus;
 }
 
+/** A tee-sheet slot supplied by a club's booking system. */
+export interface TeeTimeSlot {
+  id: string;
+  courseId: string;
+  startsAt: string;
+  /** Number of golfers that can be placed on this tee time. */
+  remainingPlayerCapacity: number;
+  /** Caddie teams still available for this tee time. */
+  remainingCaddieCapacity: number;
+  status: "open" | "held" | "full" | "closed";
+  sourceUpdatedAt: string;
+}
+
+export type CaddieAssignmentStatus =
+  | "preferred_requested"
+  | "preferred_assigned"
+  | "replacement_assigned"
+  | "no_caddie_available";
+
 export type BookingStatus =
   | "draft"
   | "requested"
@@ -88,6 +107,10 @@ export interface Booking {
   partySize: number;
   notes: string;
   quotedRate: MoneyAmount;
+  /** A golfer can request a person, while the club owns final assignment. */
+  preferredCaddieId?: string;
+  assignedCaddieId?: string;
+  caddieAssignmentStatus?: CaddieAssignmentStatus;
 }
 
 export interface Review {
