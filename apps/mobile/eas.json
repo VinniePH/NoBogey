@@ -6,7 +6,6 @@
     "preview": {
       "corepack": true,
       "node": "22.22.2",
-      "pnpm": "11.17.0",
       "distribution": "internal",
       "android": {
         "image": "latest",
@@ -16,8 +15,7 @@
     },
     "production": {
       "corepack": true,
-      "node": "22.22.2",
-      "pnpm": "11.17.0"
+      "node": "22.22.2"
     }
   }
 }
