@@ -5,16 +5,17 @@ import { colors, radius, spacing, typography } from "@nobogey/ui";
 import { caddies, courses } from "../../data/mock";
 import { ImagePlaceholder, PrimaryButton, ScreenSection } from "../../ui/booking-design";
 import { CaddieCard } from "../booking/components/MarketplaceCards";
+import { ResponsiveContent } from "../../ui/ResponsiveContent";
 
 export function CourseProfileScreen() {
   const { id } = useLocalSearchParams<{ id?: string }>();
   const course = courses.find((item) => item.id === id) ?? courses[0]!;
   const available = caddies.filter((item) => item.homeCourseId === course.id);
-  return <SafeAreaView edges={["top", "bottom"]} style={styles.safeArea}><ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+  return <SafeAreaView edges={["top", "bottom"]} style={styles.safeArea}><ScrollView contentContainerStyle={styles.content} contentInsetAdjustmentBehavior="automatic" showsVerticalScrollIndicator={false}><ResponsiveContent style={styles.frame}>
     <View><ImagePlaceholder label="Course hero placeholder" style={styles.heroImage} /><View style={styles.introCard}><Text style={styles.kicker}>{course.city}, {course.province}</Text><Text accessibilityRole="header" style={styles.title}>{course.name}</Text><Text style={styles.description}>The most prestigious golf club in the Philippines.</Text><View style={styles.rule}/><View style={styles.stats}><Stat label="PAR" value="71"/><Stat label="YARDS" value="6,850"/><Stat label="DESIGNER" value="Robert Trent Jones Jr."/><Stat label="AVAILABLE" value={`${course.caddieCount} caddies`}/></View></View></View>
     <ScreenSection title="Available caddies" action={<Pressable accessibilityLabel="See all available caddies" accessibilityRole="button" hitSlop={8} onPress={() => router.push({ pathname: "/caddies", params: { courseId: course.id } })} style={styles.seeAllButton}><Text style={styles.seeAll}>See All</Text></Pressable>}><ScrollView horizontal contentContainerStyle={styles.horizontalList} showsHorizontalScrollIndicator={false}>{available.map((caddie) => <CaddieCard caddie={caddie} key={caddie.id} onPress={() => router.push({ pathname: "/caddies/[id]", params: { id: caddie.id, courseId: course.id } })} />)}</ScrollView></ScreenSection>
     <View style={styles.locationCard}><View style={styles.mapPlaceholder}/><View style={styles.locationCopy}><Text style={styles.kicker}>LOCATION</Text><Text style={styles.locationName}>{course.name}</Text><Text style={styles.address}>⌾ {course.city}, {course.province}</Text><PrimaryButton label="Get Directions" /></View></View>
-  </ScrollView></SafeAreaView>;
+  </ResponsiveContent></ScrollView></SafeAreaView>;
 }
 
 function Stat({ label, value }: { label: string; value: string }) { return <View style={styles.stat}><Text style={styles.kicker}>{label}</Text><Text style={styles.statValue}>{value}</Text></View>; }
@@ -22,6 +23,7 @@ function Stat({ label, value }: { label: string; value: string }) { return <View
 const styles = StyleSheet.create({
   address: { color: "#718075", fontSize: typography.body },
   content: { gap: 44, paddingBottom: 48 },
+  frame: { gap: 44 },
   description: { color: "#6B6A65", fontSize: 24, lineHeight: 30 },
   heroImage: { height: 365, width: "100%" },
   horizontalList: { gap: spacing.lg, paddingHorizontal: spacing.xl },

@@ -1,7 +1,9 @@
-import { ScrollView, StyleSheet, Text, View } from "react-native";
+import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { router } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { colors, spacing } from "@nobogey/ui";
 import { caddies, courses, golfer } from "../../data/mock";
+import { ResponsiveContent } from "../../ui/ResponsiveContent";
 
 const roundHistory = [
   { caddie: "Elena S.", date: "May 15, 2026", score: 82 },
@@ -16,7 +18,7 @@ export function GolferProfileScreen() {
   const initials = golfer.displayName.split(" ").map((name) => name[0]).join("").slice(0, 2).toUpperCase();
 
   return <SafeAreaView edges={["bottom"]} style={styles.safeArea}>
-    <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+    <ScrollView contentContainerStyle={styles.content} contentInsetAdjustmentBehavior="automatic" showsVerticalScrollIndicator={false}><ResponsiveContent style={styles.frame}>
       <View style={styles.profileCard}>
         <View accessibilityLabel={`${golfer.displayName} initials avatar`} accessibilityRole="image" style={styles.avatar}><Text style={styles.avatarText}>{initials}</Text></View>
         <View style={styles.profileCopy}>
@@ -25,6 +27,11 @@ export function GolferProfileScreen() {
           <Text style={styles.profileMeta}>Handicap Mid ({golfer.handicap ?? "—"}) · Home: {homeCourse?.name ?? "Not set"}</Text>
           <Text style={styles.profileBio}>Weekend golfer chasing a single-digit handicap. Loves early tee times and a good green read.</Text>
         </View>
+      </View>
+      <View style={styles.switchCard}>
+        <Text style={styles.switchTitle}>Account role</Text>
+        <Text style={styles.profileMeta}>Your golfer role stays selected on this phone. Add a caddie identity only if you also caddie.</Text>
+        <Pressable accessibilityLabel="Become a caddie" accessibilityRole="button" onPress={() => router.push({ pathname: "/auth", params: { mode: "register", role: "caddie" } })} style={styles.switchButton}><Text style={styles.switchText}>Become a caddie</Text></Pressable>
       </View>
 
       <View style={styles.statRow}>
@@ -43,7 +50,7 @@ export function GolferProfileScreen() {
           {roundHistory.map((round, index) => <RoundRow key={`${round.date}-${round.score}`} isLast={index === roundHistory.length - 1} courseName={homeCourse?.name ?? "Home course"} {...round} />)}
         </View>
       </View>
-    </ScrollView>
+    </ResponsiveContent></ScrollView>
   </SafeAreaView>;
 }
 
@@ -59,6 +66,7 @@ const styles = StyleSheet.create({
   avatar: { alignItems: "center", backgroundColor: "#113827", borderCurve: "continuous", borderRadius: 17, height: 74, justifyContent: "center", width: 74 },
   avatarText: { color: colors.surface, fontSize: 28, fontWeight: "800" },
   content: { gap: 26, padding: 18, paddingBottom: 32 },
+  frame: { gap: 26 },
   eyebrow: { color: "#60736A", fontSize: 10, fontWeight: "800", letterSpacing: 0.15 },
   favoriteCard: { backgroundColor: colors.surface, borderColor: "#A9AAA2", borderCurve: "continuous", borderRadius: 16, borderWidth: StyleSheet.hairlineWidth, gap: 3, paddingHorizontal: 16, paddingVertical: 17 },
   favoriteName: { color: "#123427", fontSize: 17, fontWeight: "800" },
@@ -80,5 +88,9 @@ const styles = StyleSheet.create({
   scoreValue: { color: "#123427", fontFamily: "JetBrainsMono", fontSize: 20, fontWeight: "800" },
   statCard: { backgroundColor: colors.surface, borderColor: "#A9AAA2", borderCurve: "continuous", borderRadius: 16, borderWidth: StyleSheet.hairlineWidth, flex: 1, gap: 3, minHeight: 70, paddingHorizontal: 16, paddingVertical: 14 },
   statRow: { flexDirection: "row", gap: 11 },
-  statValue: { color: "#123427", fontFamily: "JetBrainsMono", fontSize: 17, fontWeight: "800" }
+  statValue: { color: "#123427", fontFamily: "JetBrainsMono", fontSize: 17, fontWeight: "800" },
+  switchButton: { alignItems: "center", backgroundColor: colors.primary, borderRadius: 10, justifyContent: "center", minHeight: 44, paddingHorizontal: 14 },
+  switchCard: { backgroundColor: colors.surface, borderColor: "#A9AAA2", borderCurve: "continuous", borderRadius: 16, borderWidth: StyleSheet.hairlineWidth, gap: 8, padding: 16 },
+  switchText: { color: colors.surface, fontSize: 14, fontWeight: "800" },
+  switchTitle: { color: "#123427", fontSize: 16, fontWeight: "800" }
 });

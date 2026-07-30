@@ -3,6 +3,7 @@ import { ScrollView, StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { AppText } from "./primitives";
 import { colors, fonts, spacing, typography } from "@nobogey/ui";
+import { ResponsiveContent } from "./ResponsiveContent";
 
 interface ScreenProps extends PropsWithChildren {
   title: string;
@@ -14,6 +15,7 @@ export function Screen({ action, children, subtitle, title }: ScreenProps) {
   return (
     <SafeAreaView style={styles.safeArea} edges={["bottom"]}>
       <ScrollView contentContainerStyle={styles.content}>
+        <ResponsiveContent style={styles.frame}>
         <View style={styles.header}>
           <View style={styles.titleGroup}>
             <AppText selectable={false} style={styles.eyebrow}>NoBogey</AppText>
@@ -23,6 +25,7 @@ export function Screen({ action, children, subtitle, title }: ScreenProps) {
           {action}
         </View>
         {children}
+        </ResponsiveContent>
       </ScrollView>
     </SafeAreaView>
   );
@@ -40,6 +43,9 @@ const styles = StyleSheet.create({
     fontFamily: fonts.sans,
     fontWeight: "700",
     textTransform: "uppercase"
+  },
+  frame: {
+    gap: spacing.lg
   },
   header: {
     alignItems: "flex-start",

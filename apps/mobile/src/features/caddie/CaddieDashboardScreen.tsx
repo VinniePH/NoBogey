@@ -1,121 +1,34 @@
-import { StyleSheet, Text, View } from "react-native";
+import { router } from "expo-router";
+import { useState } from "react";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 import { colors, radius, spacing, typography } from "@nobogey/ui";
-import { formatMoney, formatTeeTime } from "@nobogey/utils";
-import { availabilitySlots, bookings, caddies } from "../../data/mock";
+import { availabilitySlots, bookings, caddies, courses } from "../../data/mock";
 import { Screen } from "../../ui/Screen";
+import { Button } from "../../ui/primitives";
+import { useAppSession } from "../session/AppSession";
+
+type OfferState = "pending" | "accepted" | "declined" | "expired";
 
 export function CaddieDashboardScreen() {
-  const caddie = caddies[0];
-  if (!caddie) {
-    return (
-      <Screen
-        title="Caddie dashboard"
-        subtitle="Caddie metrics will appear here after profiles are loaded."
-      >
-        <View style={styles.row}>
-          <Text style={styles.rowTitle}>No caddie profile</Text>
-          <Text style={styles.rowMeta}>Mock data is empty</Text>
-        </View>
-      </Screen>
-    );
-  }
-
+  const { caddieVerification } = useAppSession();
+  const [offerState, setOfferState] = useState<OfferState>("pending");
+  const caddie = caddies[0]!;
+  const course = courses.find((item) => item.id === caddie.homeCourseId)!;
   const slots = availabilitySlots.filter((slot) => slot.caddieId === caddie.id);
   const roster = bookings.filter((booking) => booking.caddieId === caddie.id);
-  const projectedEarnings = roster.reduce(
-    (total, booking) => total + booking.quotedRate.amountInCentavos,
-    0
-  );
+  const pending = caddieVerification !== "verified";
 
-  return (
-    <Screen
-      title="Caddie dashboard"
-      subtitle="Availability, roster, earnings, feedback, and portfolio are represented as placeholders for the future caddie role."
-    >
-      <View style={styles.summary}>
-        <Metric label="Open slots" value={String(slots.length)} />
-        <Metric label="Roster" value={String(roster.length)} />
-        <Metric label="Earnings" value={formatMoney(projectedEarnings)} />
-      </View>
-
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Availability</Text>
-        {slots.map((slot) => (
-          <View key={slot.id} style={styles.row}>
-            <Text style={styles.rowTitle}>{formatTeeTime(slot.startsAt)}</Text>
-            <Text style={styles.rowMeta}>{slot.status}</Text>
-          </View>
-        ))}
-      </View>
-
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Portfolio prompts</Text>
-        {caddie.portfolioHighlights.map((highlight) => (
-          <View key={highlight} style={styles.row}>
-            <Text style={styles.rowTitle}>{highlight}</Text>
-            <Text style={styles.rowMeta}>Visible after verification workflow</Text>
-          </View>
-        ))}
-      </View>
-    </Screen>
-  );
+  return <Screen title="Caddie dashboard" subtitle={pending ? "Your account is pending Manila Golf and Country Club’s confirmation. You cannot receive player offers yet." : "Manage incoming player offers and your personal schedule."} action={<Pressable accessibilityLabel="Open caddie profile" accessibilityRole="button" onPress={() => router.push("/profile")}><Text style={styles.profileLink}>Caddie Profile</Text></Pressable>}>
+    {pending ? <View style={styles.pending}><Text style={styles.pendingTitle}>Verification pending</Text><Text style={styles.pendingText}>The club will either verify your registry details or ask you to correct and resubmit them. There is no automatic approval.</Text></View> : <OfferCard state={offerState} onAccept={() => setOfferState("accepted")} onDecline={() => setOfferState("declined")} />}
+    <View style={styles.section}><Text style={styles.sectionTitle}>Upcoming bookings</Text>{roster.map((booking) => <View key={booking.id} style={styles.row}><Text style={styles.rowTitle}>{course.name}</Text><Text style={styles.rowMeta}>{booking.teeTime} · {booking.status}</Text></View>)}</View>
+    <View style={styles.section}><Text style={styles.sectionTitle}>Past bookings</Text><View style={styles.row}><Text style={styles.rowTitle}>No completed bookings yet</Text><Text style={styles.rowMeta}>Your completed rounds will appear here.</Text></View></View>
+    <View style={styles.section}><Text style={styles.sectionTitle}>Availability</Text>{slots.map((slot) => <View key={slot.id} style={styles.row}><Text style={styles.rowTitle}>{slot.startsAt}</Text><Text style={styles.rowMeta}>{slot.status}</Text></View>)}<Button accessibilityLabel="Edit availability" onPress={() => router.push("/profile")}>Edit availability</Button></View>
+  </Screen>;
 }
 
-function Metric({ label, value }: { label: string; value: string }) {
-  return (
-    <View style={styles.metric}>
-      <Text style={styles.metricValue}>{value}</Text>
-      <Text style={styles.metricLabel}>{label}</Text>
-    </View>
-  );
+function OfferCard({ onAccept, onDecline, state }: { onAccept: () => void; onDecline: () => void; state: OfferState }) {
+  const label = state === "pending" ? "1h 43m remaining" : state === "accepted" ? "Accepted" : state === "declined" ? "Declined" : "Expired / auto-declined";
+  return <View style={styles.offer}><Text style={styles.sectionTitle}>Player offers</Text><Text style={styles.rowTitle}>Mia Santos · Manila Golf and Country Club</Text><Text style={styles.rowMeta}>Tee time: Saturday, 7:10 AM</Text><Text style={[styles.countdown, state !== "pending" && styles.resolved]}>{label}</Text>{state === "pending" ? <View style={styles.offerActions}><Button accessibilityLabel="Accept player offer" onPress={onAccept}>Accept</Button><Button accessibilityLabel="Decline player offer" onPress={onDecline} variant="secondary">Decline</Button></View> : null}</View>;
 }
 
-const styles = StyleSheet.create({
-  metric: {
-    backgroundColor: colors.surface,
-    borderRadius: radius.md,
-    flex: 1,
-    gap: spacing.xs,
-    minWidth: 96,
-    padding: spacing.md
-  },
-  metricLabel: {
-    color: colors.muted,
-    fontSize: typography.small,
-    fontWeight: "700"
-  },
-  metricValue: {
-    color: colors.fairway,
-    fontSize: typography.title,
-    fontWeight: "900"
-  },
-  row: {
-    backgroundColor: colors.surface,
-    borderRadius: radius.md,
-    gap: spacing.xs,
-    padding: spacing.md
-  },
-  rowMeta: {
-    color: colors.muted,
-    fontSize: typography.small,
-    textTransform: "capitalize"
-  },
-  rowTitle: {
-    color: colors.ink,
-    fontSize: typography.body,
-    fontWeight: "800"
-  },
-  section: {
-    gap: spacing.sm
-  },
-  sectionTitle: {
-    color: colors.ink,
-    fontSize: typography.title,
-    fontWeight: "800"
-  },
-  summary: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: spacing.md
-  }
-});
+const styles = StyleSheet.create({ countdown: { color: "#8A531D", fontSize: typography.small, fontWeight: "800" }, offer: { backgroundColor: "#FFF7E0", borderColor: colors.warning, borderRadius: radius.lg, borderWidth: 1, gap: spacing.sm, padding: spacing.lg }, offerActions: { flexDirection: "row", gap: spacing.sm }, pending: { backgroundColor: "#E7EEE9", borderColor: colors.primary, borderRadius: radius.lg, borderWidth: 1, gap: spacing.sm, padding: spacing.lg }, pendingText: { color: colors.textMuted, fontSize: typography.small, lineHeight: 19 }, pendingTitle: { color: colors.fairwayDark, fontSize: typography.title, fontWeight: "800" }, profileLink: { color: colors.primary, fontSize: typography.small, fontWeight: "800" }, resolved: { color: colors.textMuted }, row: { backgroundColor: colors.surface, borderRadius: radius.md, gap: spacing.xs, padding: spacing.md }, rowMeta: { color: colors.textMuted, fontSize: typography.small, textTransform: "capitalize" }, rowTitle: { color: colors.text, fontSize: typography.body, fontWeight: "800" }, section: { gap: spacing.sm }, sectionTitle: { color: colors.text, fontSize: typography.title, fontWeight: "800" } });
