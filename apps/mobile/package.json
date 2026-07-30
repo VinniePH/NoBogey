@@ -1,0 +1,47 @@
+{
+  "name": "@nobogey/mobile",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "pnpm@11.17.0+sha512.cca3cea332ad254bb84145f966d19f4879615210346fc92c79a047f23a0d7b3cca3c3792f0076ba1f1831d277efbcf0a9119b31a9a60eca7fb3d6231f331ef72",
+  "main": "expo-router/entry",
+  "scripts": {
+    "dev": "expo start",
+    "start": "expo start",
+    "android": "expo run:android",
+    "ios": "expo run:ios",
+    "web": "expo start --web",
+    "build": "expo export --platform web",
+    "lint": "eslint .",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run --passWithNoTests",
+    "clean": "rm -rf .expo web-build dist coverage"
+  },
+  "dependencies": {
+    "@expo/vector-icons": "latest",
+    "@nobogey/contracts": "workspace:*",
+    "@nobogey/ui": "workspace:*",
+    "@nobogey/utils": "workspace:*",
+    "@react-native-async-storage/async-storage": "^3.1.1",
+    "expo": "latest",
+    "expo-constants": "latest",
+    "expo-dev-client": "~57.0.5",
+    "expo-font": "latest",
+    "expo-linking": "latest",
+    "expo-router": "latest",
+    "expo-splash-screen": "latest",
+    "expo-status-bar": "latest",
+    "react": "19.2.3",
+    "react-dom": "19.2.3",
+    "react-native": "latest",
+    "react-native-safe-area-context": "~5.7.0",
+    "react-native-screens": "latest",
+    "react-native-web": "~0.21.0"
+  },
+  "devDependencies": {
+    "@nobogey/config": "workspace:*",
+    "@types/react": "latest",
+    "@types/react-dom": "latest",
+    "babel-preset-expo": "latest",
+    "expo-mcp": "~0.2.4"
+  }
+}

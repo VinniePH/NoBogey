@@ -1,0 +1,11 @@
+{
+  "extends": "@nobogey/config/typescript/base",
+  "compilerOptions": {
+    "composite": true,
+    "declaration": true,
+    "declarationMap": true,
+    "noEmit": true,
+    "rootDir": "src"
+  },
+  "include": ["src"]
+}
