@@ -4,21 +4,22 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { radius, spacing, typography } from "@nobogey/ui";
 import { caddies, courses } from "../../data/mock";
 import { ImagePlaceholder, PrimaryButton, StickyActionBar } from "../../ui/booking-design";
+import { ResponsiveContent } from "../../ui/ResponsiveContent";
 
 export function CaddieProfileScreen() {
-  const { id, courseId } = useLocalSearchParams<{ id?: string; courseId?: string }>();
-  const caddie = caddies.find((item) => item.id === id) ?? caddies[0]!;
+  const { caddieId, courseId } = useLocalSearchParams<{ caddieId?: string; courseId?: string }>();
+  const caddie = caddies.find((item) => item.id === caddieId) ?? caddies[0]!;
   const course = courses.find((item) => item.id === (courseId ?? caddie.homeCourseId));
   return <SafeAreaView edges={["top", "bottom"]} style={styles.safeArea}>
-    <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+    <ScrollView contentContainerStyle={styles.content} contentInsetAdjustmentBehavior="automatic" showsVerticalScrollIndicator={false}><ResponsiveContent>
       <View style={styles.pageBody}>
         <ImagePlaceholder label="Caddie profile placeholder" style={styles.photo} />
         <Text style={styles.classLabel}>A - CLASS</Text><Text accessibilityRole="header" selectable style={styles.name}>{caddie.displayName}</Text><Text selectable style={styles.meta}>{caddie.yearsExperience} Years Pro · {caddie.languages.join(", ")}</Text>
         <View style={styles.statGrid}><Stat label="RATING" value={caddie.ratingAverage.toFixed(1)} /><Stat label="ROUNDS" value={String(caddie.completedRounds)} /><Stat label="RATE" value="₱1,500" /><Stat label="HANDICAP" value="Low (0-9)" /></View>
       </View>
       <View style={styles.about}><Section title="ABOUT"><Text selectable style={styles.aboutText}>{caddie.bio}</Text><Text selectable style={styles.homeCourse}>Home Course: <Text style={styles.homeCourseValue}>{course?.name}</Text></Text></Section><Section title="CREDENTIALS"><Text selectable style={styles.listItem}>• PGA Caddie Certified{"\n"}• First Aid / CPR{"\n"}• Rules of Golf Level 2</Text></Section><Section title="SPECIALTIES"><View style={styles.tags}>{caddie.specialties.map((item) => <Text key={item} style={styles.tag}>{item}</Text>)}</View></Section><Section title="PREFERRED-CADDIE REQUEST"><Text selectable style={styles.scheduleNote}>Choose a tee time from the club’s live tee sheet. This caddie is requested first; the course assigns the next qualified caddie if their prior round is still in progress.</Text></Section></View>
-    </ScrollView>
-    <StickyActionBar><View style={styles.actions}><Pressable accessibilityLabel="Close caddie profile" accessibilityRole="button" onPress={() => router.back()} style={styles.close}><Text style={styles.closeText}>Close</Text></Pressable><View style={styles.book}><PrimaryButton label="Choose tee time" onPress={() => router.push({ pathname: "/tee-times", params: { caddieId: caddie.id, courseId } })} /></View></View></StickyActionBar>
+    </ResponsiveContent></ScrollView>
+    <StickyActionBar><View style={styles.actions}><Pressable accessibilityLabel="Close caddie profile" accessibilityRole="button" onPress={() => router.back()} style={styles.close}><Text style={styles.closeText}>Close</Text></Pressable><View style={styles.book}><PrimaryButton label="Choose tee time" onPress={() => router.push({ pathname: "/golfer/bookings/new/tee-times", params: { caddieId: caddie.id, courseId } })} /></View></View></StickyActionBar>
   </SafeAreaView>;
 }
 

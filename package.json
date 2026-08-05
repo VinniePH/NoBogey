@@ -14,6 +14,7 @@
     "db:test-connection": "node --env-file=.env apps/mobile/scripts/db/test-supabase-connection.mjs"
   },
   "devDependencies": {
+    "@babel/traverse": "7.29.7",
     "@eslint/js": "latest",
     "babel-preset-expo": "latest",
     "eslint": "latest",

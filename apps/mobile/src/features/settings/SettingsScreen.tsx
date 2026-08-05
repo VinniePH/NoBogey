@@ -3,6 +3,7 @@ import { router } from "expo-router";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { colors } from "@nobogey/ui";
+import { ResponsiveContent } from "../../ui/ResponsiveContent";
 
 type SettingsItem = {
   detail: string;
@@ -13,7 +14,7 @@ type SettingsItem = {
 
 const sections: SettingsItem[][] = [
   [
-    { icon: "account-circle-outline", label: "Account Information", detail: "Raf Vincent · rafvincent@gmail.com", onPress: () => router.push("/profile") },
+    { icon: "account-circle-outline", label: "Account Information", detail: "Raf Vincent · rafvincent@gmail.com", onPress: () => router.push("/golfer/profile") },
     { icon: "calendar-check-outline", label: "Booking Preferences", detail: "Preferred courses, language, group size" }
   ],
   [{ icon: "credit-card-outline", label: "Payment Methods", detail: "GCash · Manage payment details" }],
@@ -29,7 +30,7 @@ const sections: SettingsItem[][] = [
 
 export function SettingsScreen() {
   return <SafeAreaView edges={["top", "bottom"]} style={styles.safeArea}>
-    <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+    <ScrollView contentContainerStyle={styles.content} contentInsetAdjustmentBehavior="automatic" showsVerticalScrollIndicator={false}><ResponsiveContent style={styles.frame}>
       <View style={styles.header}>
         <Pressable accessibilityLabel="Go back" accessibilityRole="button" hitSlop={10} onPress={() => router.back()} style={styles.backButton}><MaterialCommunityIcons color="#123F2B" name="arrow-left" size={25} /></Pressable>
         <View style={styles.headerCopy}><Text accessibilityRole="header" style={styles.title}>Settings</Text><Text style={styles.subtitle}>Manage your NoBogey account and preferences.</Text></View>
@@ -39,7 +40,7 @@ export function SettingsScreen() {
       {sections.map((items, index) => <SettingsSection items={items} key={index} />)}
 
       <View style={styles.logoutCard}><MaterialCommunityIcons color="#FF2028" name="logout-variant" size={25} /><Text style={styles.logoutText}>Log out</Text><MaterialCommunityIcons color="#FF2028" name="chevron-right" size={24} /></View>
-    </ScrollView>
+    </ResponsiveContent></ScrollView>
   </SafeAreaView>;
 }
 
@@ -58,6 +59,7 @@ function SettingsRow({ isLast, item }: { isLast: boolean; item: SettingsItem }) 
 const styles = StyleSheet.create({
   backButton: { alignItems: "center", justifyContent: "center", minHeight: 44, minWidth: 44 },
   content: { gap: 19, padding: 19, paddingBottom: 29 },
+  frame: { gap: 19 },
   header: { alignItems: "center", flexDirection: "row", minHeight: 44 },
   headerCopy: { alignItems: "center", flex: 1, gap: 1 },
   headerSpacer: { minWidth: 44 },

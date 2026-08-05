@@ -1,12 +1,12 @@
 import { useEffect } from "react";
 import { useFonts } from "expo-font";
-import { router, Stack, SplashScreen } from "expo-router";
-import { Pressable, Text } from "react-native";
+import { Stack, SplashScreen } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { colors } from "@nobogey/ui";
 import InterFont from "../assets/fonts/Inter-Variable.ttf";
 import JetBrainsMonoFont from "../assets/fonts/JetBrainsMono-Regular.ttf";
+import { AppSessionProvider } from "../src/features/session/AppSession";
 
 void SplashScreen.preventAutoHideAsync();
 
@@ -28,38 +28,20 @@ export default function RootLayout() {
 
   return (
     <SafeAreaProvider>
-      <StatusBar style="dark" />
-      <Stack
-        screenOptions={{
-          contentStyle: { backgroundColor: colors.canvas },
-          headerShadowVisible: false,
-          headerStyle: { backgroundColor: colors.canvas },
-          headerTintColor: colors.ink
-        }}
-      >
+      <AppSessionProvider>
+        <StatusBar style="dark" />
+        <Stack
+          screenOptions={{
+            contentStyle: { backgroundColor: colors.canvas },
+            headerShown: false
+          }}
+        >
         <Stack.Screen name="index" options={{ headerShown: false }} />
-        <Stack.Screen name="auth" options={{ headerShown: false }} />
-        <Stack.Screen name="home" options={{ headerShown: false }} />
-        <Stack.Screen name="courses" options={{ title: "Choose a course" }} />
-        <Stack.Screen name="courses/[id]" options={{ title: "Course profile" }} />
-        <Stack.Screen name="tee-times" options={{ title: "Choose a tee time" }} />
-        <Stack.Screen name="caddies" options={{ title: "Available caddies" }} />
-        <Stack.Screen
-          name="caddies/[id]"
-          options={{ title: "Caddie profile" }}
-        />
-        <Stack.Screen name="booking" options={{ title: "Booking" }} />
-        <Stack.Screen name="confirmation" options={{ headerShown: false }} />
-        <Stack.Screen name="bookings" options={{ title: "My bookings" }} />
-        <Stack.Screen name="booking-details" options={{ title: "Booking details" }} />
-        <Stack.Screen name="rate-caddie" options={{ title: "Rate your caddie" }} />
-        <Stack.Screen name="profile" options={{ title: "My Profile", headerRight: () => <Pressable accessibilityLabel="Open settings" accessibilityRole="button" hitSlop={8} onPress={() => router.push("/settings")} style={{ alignItems: "center", justifyContent: "center", minHeight: 44, minWidth: 44 }}><Text style={{ color: colors.fairwayDark, fontSize: 22 }}>⚙</Text></Pressable> }} />
-        <Stack.Screen name="settings" options={{ headerShown: false }} />
-        <Stack.Screen
-          name="caddie-dashboard"
-          options={{ title: "Caddie dashboard" }}
-        />
-      </Stack>
+          <Stack.Screen name="(public)" />
+          <Stack.Screen name="(auth)" />
+          <Stack.Screen name="(app)" />
+        </Stack>
+      </AppSessionProvider>
     </SafeAreaProvider>
   );
 }
