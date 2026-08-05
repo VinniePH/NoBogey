@@ -22,7 +22,7 @@ export function CourseSelectionScreen() {
       <View style={styles.heading}><Text accessibilityRole="header" style={styles.title}>Pick your course.</Text><Text style={styles.subtitle}>{date ? `Courses staffed by NoBogey on ${date}.` : "Browse courses currently staffed by NoBogey."}</Text></View>
       <View accessibilityRole="radiogroup" style={styles.list}>{courses.map((course) => <CourseCard course={course} key={course.id} onPress={() => setSelectedId(course.id)} selected={selectedId === course.id} />)}</View>
     </ResponsiveContent></ScrollView>
-    <StickyActionBar><PrimaryButton disabled={!selectedId} label="Choose tee time" onPress={() => router.push({ pathname: "/tee-times", params: { caddieId, courseId: selectedId, date } })} /></StickyActionBar>
+    <StickyActionBar><PrimaryButton disabled={!selectedId} label="Choose tee time" onPress={() => router.push({ pathname: "/golfer/bookings/new/tee-times", params: { caddieId, courseId: selectedId, date } })} /></StickyActionBar>
   </SafeAreaView>;
 }
 

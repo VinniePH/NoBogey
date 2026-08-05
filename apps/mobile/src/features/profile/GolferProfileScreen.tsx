@@ -31,7 +31,7 @@ export function GolferProfileScreen() {
       <View style={styles.switchCard}>
         <Text style={styles.switchTitle}>Account role</Text>
         <Text style={styles.profileMeta}>Your golfer role stays selected on this phone. Add a caddie identity only if you also caddie.</Text>
-        <Pressable accessibilityLabel="Become a caddie" accessibilityRole="button" onPress={() => router.push({ pathname: "/auth", params: { mode: "register", role: "caddie" } })} style={styles.switchButton}><Text style={styles.switchText}>Become a caddie</Text></Pressable>
+        <Pressable accessibilityLabel="Become a caddie" accessibilityRole="button" onPress={() => router.push({ pathname: "/sign-in", params: { mode: "register", role: "caddie" } })} style={styles.switchButton}><Text style={styles.switchText}>Become a caddie</Text></Pressable>
       </View>
 
       <View style={styles.statRow}>

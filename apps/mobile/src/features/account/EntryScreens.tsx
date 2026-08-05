@@ -19,11 +19,11 @@ export function SplashScreen() {
   const start = () => {
     if (!isHydrated) return;
     if (initialRole === "golfer") {
-      router.replace("/home");
+      router.replace("/golfer/home");
       return;
     }
     if (initialRole === "caddie") {
-      router.replace({ pathname: "/auth", params: { mode: "login", role: "caddie" } });
+      router.replace("/caddie/dashboard");
       return;
     }
     router.replace("/onboarding");
@@ -36,28 +36,28 @@ export function OnboardingScreen() {
   const { selectInitialRole } = useAppSession();
   const choose = (role: AppRole) => {
     selectInitialRole(role);
-    if (role === "golfer") router.replace("/home");
-    else router.replace({ pathname: "/auth", params: { role: "caddie", mode: "register" } });
+    if (role === "golfer") router.replace("/golfer/home");
+    else router.replace("/caddie/dashboard");
   };
-  return <SafeAreaView edges={["top", "bottom"]} style={styles.authSafe}><ScrollView contentContainerStyle={styles.authContent}><Image accessibilityLabel="NoBogey logo" resizeMode="contain" source={NoBogeyLogo} style={styles.authLogo} /><View style={styles.authHeader}><Text accessibilityRole="header" style={styles.authTitle}>How do you play?</Text><Text style={styles.authSubtitle}>Choose the role you use most. It stays selected on this phone.</Text></View><RoleChoice description="Browse tee times and caddies before creating an account." icon="⛳" label="I’m a golfer" onPress={() => choose("golfer")} /><RoleChoice description="Create an account to receive player offers and manage availability." icon="🏌️" label="I’m a caddie" onPress={() => choose("caddie")} /><Text style={styles.placeholderNote}>Golfers can add a caddie identity later from Profile.</Text></ScrollView></SafeAreaView>;
+  return <SafeAreaView edges={["top", "bottom"]} style={styles.authSafe}><ScrollView contentContainerStyle={styles.authContent}><Image accessibilityLabel="NoBogey logo" resizeMode="contain" source={NoBogeyLogo} style={styles.authLogo} /><View style={styles.authHeader}><Text accessibilityRole="header" style={styles.authTitle}>How do you play?</Text><Text style={styles.authSubtitle}>Choose the role you use most. It stays selected on this phone.</Text></View><RoleChoice description="Browse tee times and caddies before creating an account." icon="⛳" label="I’m a golfer" onPress={() => choose("golfer")} /><RoleChoice description="Preview the caddie roster and portfolio without logging in." icon="🏌️" label="I’m a caddie" onPress={() => choose("caddie")} /><Text style={styles.placeholderNote}>Golfers can add a caddie identity later from Profile.</Text></ScrollView></SafeAreaView>;
 }
 
 export function AuthScreen() {
   const params = useLocalSearchParams<{ mode?: Mode; role?: AppRole; returnTo?: string; caddieId?: string; courseId?: string; teeTimeId?: string; time?: string }>();
   const [mode, setMode] = useState<Mode>(params.mode === "register" ? "register" : "login");
-  const [role, setRole] = useState<AppRole>(params.role === "caddie" ? "caddie" : "golfer");
+  const [role] = useState<AppRole>(params.role === "caddie" ? "caddie" : "golfer");
   const { caddieVerification, signInAs } = useAppSession();
   const submit = () => {
     signInAs(role);
     if (role === "caddie") {
-      router.replace(caddieVerification === "verified" ? "/caddie-dashboard" : "/caddie-dashboard?verification=pending");
+      router.replace(caddieVerification === "verified" ? "/caddie/dashboard" : "/caddie/dashboard?verification=pending");
       return;
     }
-    if (params.returnTo === "/caddies") {
-      router.replace({ pathname: "/caddies", params: { caddieId: params.caddieId, courseId: params.courseId, teeTimeId: params.teeTimeId, time: params.time } });
+    if (params.returnTo === "/golfer/caddies") {
+      router.replace({ pathname: "/golfer/caddies", params: { caddieId: params.caddieId, courseId: params.courseId, teeTimeId: params.teeTimeId, time: params.time } });
       return;
     }
-    router.replace("/home");
+    router.replace("/golfer/home");
   };
   const submitLabel = mode === "login" ? "Log in" : `Create ${role} account`;
   return <SafeAreaView edges={["top", "bottom"]} style={styles.authSafe}><ScrollView contentContainerStyle={styles.authContent} keyboardShouldPersistTaps="handled"><View style={styles.authHeader}><Image accessibilityLabel="NoBogey logo" resizeMode="contain" source={NoBogeyLogo} style={styles.authLogo} /><Text accessibilityRole="header" style={styles.authTitle}>{mode === "login" ? "Welcome back." : "Join the fairway."}</Text><Text style={styles.authSubtitle}>{role === "caddie" ? "Caddie accounts are reviewed by their home club before offers can arrive." : "Create an account only when you’re ready to pay."}</Text></View><View style={styles.modeTabs}><Tab active={mode === "login"} label="Log in" onPress={() => setMode("login")} /><Tab active={mode === "register"} label="Create account" onPress={() => setMode("register")} /></View>{role === "caddie" && <View style={styles.roleGroup}><Text style={styles.fieldLabel}>Creating a caddie account</Text><Text style={styles.placeholderNote}>Your partially completed signup will resume on this device. // TODO(spec): set the signup-draft expiry TTL with product.</Text></View>}<View style={styles.form}>{mode === "register" && <Field label="Full name" placeholder="e.g. Mia Santos" />}{role === "caddie" && <Field label="Home course" placeholder="Manila Golf and Country Club" />}{mode === "register" && role === "caddie" && <Field label="Caddie registry number" placeholder="Provided by your club" />}<Field keyboardType="email-address" label="Email address" placeholder="you@example.com" /><Field label="Password" placeholder="••••••••" secureTextEntry /><Button accessibilityLabel={submitLabel} onPress={submit}>{submitLabel}</Button></View><Pressable accessibilityLabel="Return to role selection" accessibilityRole="button" onPress={() => router.replace("/onboarding")}><Text style={styles.secondaryLink}>Back to role selection</Text></Pressable></ScrollView></SafeAreaView>;

@@ -14,7 +14,7 @@ type SettingsItem = {
 
 const sections: SettingsItem[][] = [
   [
-    { icon: "account-circle-outline", label: "Account Information", detail: "Raf Vincent · rafvincent@gmail.com", onPress: () => router.push("/profile") },
+    { icon: "account-circle-outline", label: "Account Information", detail: "Raf Vincent · rafvincent@gmail.com", onPress: () => router.push("/golfer/profile") },
     { icon: "calendar-check-outline", label: "Booking Preferences", detail: "Preferred courses, language, group size" }
   ],
   [{ icon: "credit-card-outline", label: "Payment Methods", detail: "GCash · Manage payment details" }],

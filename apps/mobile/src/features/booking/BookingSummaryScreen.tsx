@@ -14,10 +14,10 @@ export function BookingSummaryScreen() {
   const { golferSignedIn } = useAppSession();
   const continueToPayment = () => {
     if (!golferSignedIn) {
-      router.push({ pathname: "/auth", params: { role: "golfer", returnTo: "/caddies", caddieId: caddie.id, courseId: course.id, teeTimeId, time } });
+      router.push({ pathname: "/sign-in", params: { role: "golfer", returnTo: "/golfer/caddies", caddieId: caddie.id, courseId: course.id, teeTimeId, time } });
       return;
     }
-    router.push({ pathname: "/payment", params: { caddieId: caddie.id, courseId: course.id, teeTimeId, time } });
+    router.push({ pathname: "/golfer/bookings/new/payment", params: { caddieId: caddie.id, courseId: course.id, teeTimeId, time } });
   };
   return <SafeAreaView edges={["top", "bottom"]} style={styles.safeArea}><ScrollView contentContainerStyle={styles.content} contentInsetAdjustmentBehavior="automatic"><ResponsiveContent style={{ gap: spacing.xl }}><BookingStepper step={4}/><View style={styles.heading}><Text accessibilityRole="header" style={styles.title}>Review your request.</Text><Text style={styles.subtitle}>Your tee time is reserved for a foursome. Your named caddie is a preferred request.</Text></View><View style={styles.card}><Row label="COURSE" value={course.name}/><Row label="TEE TIME" value={time ?? "Selected tee time"}/><Row label="GROUP" value="4 golfers"/><Row label="PREFERRED CADDIE" value={caddie.displayName}/><View style={styles.rule}/><Text style={styles.notice}>If {caddie.displayName.split(" ")[0]} is still on a prior round, the course will assign the next available qualified caddie.</Text></View></ResponsiveContent></ScrollView><StickyActionBar><PrimaryButton label={golferSignedIn ? "Continue to payment" : "Log in to continue"} onPress={continueToPayment}/></StickyActionBar></SafeAreaView>;
 }
