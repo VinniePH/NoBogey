@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { spacing, typography } from "@nobogey/ui";
-import { caddies, courses } from "../../data/mock";
+import { caddies, courses } from "../../data/catalog";
 import { BookingStepper } from "../../ui/booking-design";
 import { CaddieCard } from "../booking/components/MarketplaceCards";
 import { CaddieDetailSheet } from "./components/CaddieDetailSheet";

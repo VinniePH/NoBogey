@@ -1,26 +1,15 @@
-import { useState } from "react";
-import { Image, StyleSheet, Text, View } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
 import { colors, typography } from "@nobogey/ui";
 
 interface CaddieAvatarProps {
   name: string;
-  source?: string | undefined;
   size?: "small" | "large";
 }
 
-export function CaddieAvatar({ name, size = "small", source }: CaddieAvatarProps) {
+export function CaddieAvatar({ name, size = "small" }: CaddieAvatarProps) {
   const dimension = size === "large" ? 88 : 44;
   const initial = name.trim().slice(0, 1).toUpperCase();
-  const [imageFailed, setImageFailed] = useState(false);
-
-  return source && !imageFailed ? (
-    <Image
-      accessibilityLabel={`${name} profile photo`}
-      onError={() => setImageFailed(true)}
-      source={{ uri: source }}
-      style={[styles.image, { height: dimension, width: dimension }]}
-    />
-  ) : (
+  return (
     <View
       accessibilityLabel={`${name} profile avatar`}
       accessibilityRole="image"
@@ -37,10 +26,6 @@ const styles = StyleSheet.create({
     backgroundColor: colors.fairway,
     borderRadius: 999,
     justifyContent: "center"
-  },
-  image: {
-    backgroundColor: colors.line,
-    borderRadius: 999
   },
   initial: {
     color: colors.surface,

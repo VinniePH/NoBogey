@@ -1,9 +1,11 @@
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { router } from "expo-router";
+import { useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { colors } from "@nobogey/ui";
 import { ResponsiveContent } from "../../ui/ResponsiveContent";
+import { useAppSession } from "../session/AppSession";
 
 type SettingsItem = {
   detail: string;
@@ -12,23 +14,21 @@ type SettingsItem = {
   onPress?: () => void;
 };
 
-const sections: SettingsItem[][] = [
-  [
-    { icon: "account-circle-outline", label: "Account Information", detail: "Raf Vincent · rafvincent@gmail.com", onPress: () => router.push("/golfer/profile") },
-    { icon: "calendar-check-outline", label: "Booking Preferences", detail: "Preferred courses, language, group size" }
-  ],
-  [{ icon: "credit-card-outline", label: "Payment Methods", detail: "GCash · Manage payment details" }],
-  [
-    { icon: "bell-outline", label: "Notifications", detail: "Booking updates, reminders, promotions" },
-    { icon: "lock-outline", label: "Privacy & Security", detail: "Change password · Delete account" }
-  ],
-  [
-    { icon: "help-circle-outline", label: "Help & Support", detail: "FAQs, contact support, report an issue" },
-    { icon: "file-document-outline", label: "Terms & Conditions", detail: "Terms of Service · Privacy Policy" }
-  ]
-];
+type SettingsRole = "golfer" | "caddie";
 
-export function SettingsScreen() {
+export function SettingsScreen({ role = "golfer" }: { role?: SettingsRole }) {
+  const sections = getSections(role);
+  const { signOut } = useAppSession();
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const logOut = async () => {
+    setIsLoggingOut(true);
+    try {
+      await signOut();
+      router.replace("/sign-in");
+    } finally {
+      setIsLoggingOut(false);
+    }
+  };
   return <SafeAreaView edges={["top", "bottom"]} style={styles.safeArea}>
     <ScrollView contentContainerStyle={styles.content} contentInsetAdjustmentBehavior="automatic" showsVerticalScrollIndicator={false}><ResponsiveContent style={styles.frame}>
       <View style={styles.header}>
@@ -37,15 +37,25 @@ export function SettingsScreen() {
         <View style={styles.headerSpacer} />
       </View>
 
-      {sections.map((items, index) => <SettingsSection items={items} key={index} />)}
+      {sections.map((section) => <SettingsSection items={section.items} key={section.title} title={section.title} />)}
 
-      <View style={styles.logoutCard}><MaterialCommunityIcons color="#FF2028" name="logout-variant" size={25} /><Text style={styles.logoutText}>Log out</Text><MaterialCommunityIcons color="#FF2028" name="chevron-right" size={24} /></View>
+      <Pressable accessibilityLabel="Log out" accessibilityRole="button" accessibilityState={{ busy: isLoggingOut, disabled: isLoggingOut }} disabled={isLoggingOut} onPress={() => void logOut()} style={({ pressed }) => [styles.logoutCard, pressed && styles.logoutPressed, isLoggingOut && styles.logoutDisabled]}><MaterialCommunityIcons color="#FF2028" name="logout-variant" size={25} /><Text style={styles.logoutText}>{isLoggingOut ? "Logging out…" : "Log out"}</Text><MaterialCommunityIcons color="#FF2028" name="chevron-right" size={24} /></Pressable>
     </ResponsiveContent></ScrollView>
   </SafeAreaView>;
 }
 
-function SettingsSection({ items }: { items: SettingsItem[] }) {
-  return <View style={styles.section}><Text style={styles.sectionTitle}>ACCOUNT</Text><View style={styles.sectionCard}>{items.map((item, index) => <SettingsRow isLast={index === items.length - 1} item={item} key={item.label} />)}</View></View>;
+function getSections(role: SettingsRole): { items: SettingsItem[]; title: string }[] {
+  const profilePath = role === "golfer" ? "/golfer/profile" : "/caddie/profile";
+  return [
+    { title: "ACCOUNT", items: [{ icon: "account-circle-outline", label: "Account Information", detail: "Manage your account details", onPress: () => router.push(profilePath) }, { icon: "calendar-check-outline", label: role === "golfer" ? "Booking Preferences" : "Caddie Preferences", detail: role === "golfer" ? "Preferred courses, language, group size" : "Home course, languages, availability" }] },
+    { title: "PAYMENT", items: [role === "golfer" ? { icon: "credit-card-outline", label: "Payment Methods", detail: "Manage payment details" } : { icon: "bank-outline", label: "Payout Method", detail: "Manage how you receive earnings" }] },
+    { title: "PREFERENCES", items: [{ icon: "bell-outline", label: "Notifications", detail: role === "golfer" ? "Tee-time alerts, messages, promotions" : "Match alerts, messages, promotions" }, { icon: "lock-outline", label: "Privacy & Security", detail: "Change password · Delete account" }] },
+    { title: "SUPPORT", items: [{ icon: "help-circle-outline", label: "Help & Support", detail: "FAQs, contact support, report an issue" }, { icon: "file-document-outline", label: "Terms & Conditions", detail: "Terms of Service · Privacy Policy" }] }
+  ];
+}
+
+function SettingsSection({ items, title }: { items: SettingsItem[]; title: string }) {
+  return <View style={styles.section}><Text style={styles.sectionTitle}>{title}</Text><View style={styles.sectionCard}>{items.map((item, index) => <SettingsRow isLast={index === items.length - 1} item={item} key={item.label} />)}</View></View>;
 }
 
 function SettingsRow({ isLast, item }: { isLast: boolean; item: SettingsItem }) {
@@ -64,6 +74,8 @@ const styles = StyleSheet.create({
   headerCopy: { alignItems: "center", flex: 1, gap: 1 },
   headerSpacer: { minWidth: 44 },
   logoutCard: { alignItems: "center", backgroundColor: colors.surface, borderColor: "#D9D9D4", borderCurve: "continuous", borderRadius: 16, borderWidth: StyleSheet.hairlineWidth, flexDirection: "row", gap: 13, marginTop: 10, minHeight: 67, paddingHorizontal: 14 },
+  logoutDisabled: { opacity: 0.65 },
+  logoutPressed: { backgroundColor: "#FFF2F2" },
   logoutText: { color: "#FF2028", flex: 1, fontSize: 15, fontWeight: "700" },
   row: { alignItems: "center", flexDirection: "row", gap: 13, minHeight: 70, paddingHorizontal: 13, paddingVertical: 12 },
   rowCopy: { flex: 1, gap: 5 },

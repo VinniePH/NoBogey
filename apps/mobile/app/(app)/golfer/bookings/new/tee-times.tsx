@@ -1,3 +1,3 @@
-import { TeeTimeSelectionScreen } from "../../../../../src/features/booking/BookingPlaceholderScreen";
+import { TeeTimeSelectionScreen } from "../../../../../src/features/booking/TeeTimeSelectionScreen";
 
 export default TeeTimeSelectionScreen;
