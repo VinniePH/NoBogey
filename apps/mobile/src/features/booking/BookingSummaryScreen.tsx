@@ -2,16 +2,18 @@ import { router, useLocalSearchParams } from "expo-router";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { colors, radius, spacing, typography } from "@nobogey/ui";
-import { caddies, courses } from "../../data/mock";
+import { caddies, courses } from "../../data/catalog";
+import { EmptyState } from "../../ui/EmptyState";
 import { BookingStepper, PrimaryButton, StickyActionBar } from "../../ui/booking-design";
 import { useAppSession } from "../session/AppSession";
 import { ResponsiveContent } from "../../ui/ResponsiveContent";
 
 export function BookingSummaryScreen() {
   const { caddieId, courseId, teeTimeId, time } = useLocalSearchParams<{ caddieId?: string; courseId?: string; teeTimeId?: string; time?: string }>();
-  const caddie = caddies.find((item) => item.id === caddieId) ?? caddies[0]!;
-  const course = courses.find((item) => item.id === courseId) ?? courses[0]!;
+  const caddie = caddies.find((item) => item.id === caddieId);
+  const course = courses.find((item) => item.id === courseId);
   const { golferSignedIn } = useAppSession();
+  if (!caddie || !course) return <SafeAreaView edges={["top", "bottom"]} style={styles.safeArea}><View style={{ padding: spacing.xl }}><EmptyState description="Booking details will appear after the course and caddie services are connected." icon="calendar-remove-outline" title="Booking request unavailable" /></View></SafeAreaView>;
   const continueToPayment = () => {
     if (!golferSignedIn) {
       router.push({ pathname: "/sign-in", params: { role: "golfer", returnTo: "/golfer/caddies", caddieId: caddie.id, courseId: course.id, teeTimeId, time } });

@@ -1,21 +1,123 @@
+import type { Booking } from "@nobogey/contracts";
 import { router, useLocalSearchParams } from "expo-router";
-import { useState } from "react";
-import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { formatMoney, formatTeeTime } from "@nobogey/utils";
-import { bookings, caddies, courses } from "../../data/mock";
+import { colors, radius, spacing, typography } from "@nobogey/ui";
+import { bookings, caddies, courses } from "../../data/catalog";
+import { EmptyState } from "../../ui/EmptyState";
 import { Button } from "../../ui/primitives";
 
-export function MyBookingsScreen() { const upcomingBookings = bookings.filter((booking) => booking.status === "requested" || booking.status === "confirmed"); return <SafeAreaView edges={["bottom"]} style={styles.safe}><ScrollView contentContainerStyle={styles.page}><View style={styles.intro}><Text accessibilityRole="header" style={styles.title}>My bookings</Text><Text style={styles.subtitle}>Your upcoming bookings are listed here.</Text></View><Text style={styles.sectionLabel}>UPCOMING</Text>{upcomingBookings.length ? upcomingBookings.map((booking) => <BookingCard booking={booking} key={booking.id} />) : <View style={styles.empty}><Text style={styles.emptyTitle}>No upcoming bookings</Text><Text style={styles.emptyText}>Your next confirmed or requested round will appear here.</Text></View>}</ScrollView></SafeAreaView>; }
+export function MyBookingsScreen() {
+  const upcomingBookings = bookings.filter((booking) => booking.status === "requested" || booking.status === "confirmed");
+  return (
+    <SafeAreaView edges={["bottom"]} style={styles.safeArea}>
+      <ScrollView contentContainerStyle={styles.page}>
+        <View style={styles.intro}>
+          <Text accessibilityRole="header" style={styles.title}>My bookings</Text>
+          <Text style={styles.subtitle}>Your upcoming bookings are listed here.</Text>
+        </View>
+        {upcomingBookings.length
+          ? upcomingBookings.map((booking) => <BookingCard booking={booking} key={booking.id} />)
+          : <EmptyState description="Confirmed and requested rounds will appear after the booking service is connected." icon="calendar-blank-outline" title="No upcoming bookings" />}
+      </ScrollView>
+    </SafeAreaView>
+  );
+}
+export function BookingDetailsScreen() {
+  const { bookingId } = useLocalSearchParams<{ bookingId?: string }>();
+  const booking = bookings.find((item) => item.id === bookingId);
+  const caddie = caddies.find((item) => item.id === booking?.caddieId);
+  const course = courses.find((item) => item.id === booking?.courseId);
 
-export function BookingDetailsScreen() { const { bookingId } = useLocalSearchParams<{ bookingId?: string }>(); const booking = bookings.find((item) => item.id === bookingId) ?? bookings[0]!; const caddie = caddies.find((item) => item.id === booking.caddieId) ?? caddies[0]!; const course = courses.find((item) => item.id === booking.courseId) ?? courses[0]!; return <SafeAreaView edges={["bottom"]} style={styles.safe}><ScrollView contentContainerStyle={styles.page}><StatusPill label={booking.status === "confirmed" ? "Booking confirmed" : "Request pending"} completed={false} /><View style={styles.intro}><Text accessibilityRole="header" style={styles.title}>{course.name}</Text><Text style={styles.subtitle}>{formatTeeTime(booking.teeTime)}</Text></View><View style={styles.detailCard}><Detail label="Booking reference" value={`#${booking.id.replace("booking-", "NB-")}`} /><Detail label="Caddie" value={caddie.displayName} /><Detail label="Group size" value={`${booking.partySize} golfers`} /><Detail label="Caddie rate" value={formatMoney(booking.quotedRate.amountInCentavos)} /><Detail label="Assignment" value="Preferred caddie request — club to confirm" /></View><View style={styles.notice}><Text style={styles.noticeTitle}>What happens next</Text><Text style={styles.noticeText}>The club will confirm your tee time and final caddie assignment. Notifications are a placeholder in this prototype.</Text></View></ScrollView></SafeAreaView>; }
+  if (!booking || !caddie || !course) {
+    return <UnavailableBooking title="Booking unavailable" />;
+  }
 
-export function RateCaddieScreen() { const { caddieId } = useLocalSearchParams<{ caddieId?: string }>(); const caddie = caddies.find((item) => item.id === caddieId) ?? caddies[1] ?? caddies[0]!; const [rating, setRating] = useState(0); const [submitted, setSubmitted] = useState(false); if (submitted) return <SafeAreaView edges={["bottom"]} style={styles.safe}><View style={styles.success}><Text style={styles.successIcon}>✓</Text><Text accessibilityRole="header" style={styles.title}>Thanks for the feedback.</Text><Text style={styles.subtitle}>Your placeholder review for {caddie.displayName} has been saved locally.</Text><Button onPress={() => router.replace("/golfer/bookings")}>Back to my bookings</Button></View></SafeAreaView>; return <SafeAreaView edges={["bottom"]} style={styles.safe}><ScrollView contentContainerStyle={styles.page}><View style={styles.intro}><Text style={styles.sectionLabel}>RATE YOUR ROUND</Text><Text accessibilityRole="header" style={styles.title}>How was {caddie.displayName}?</Text><Text style={styles.subtitle}>Your feedback helps golfers choose with confidence.</Text></View><View style={styles.ratingCard}><Text style={styles.ratingNumber}>{rating || "—"}</Text><View accessibilityLabel={`${rating || 0} out of 5 stars`} accessibilityRole="adjustable" style={styles.stars}>{[1, 2, 3, 4, 5].map((star) => <Pressable accessibilityLabel={`Give ${star} stars`} accessibilityRole="button" key={star} onPress={() => setRating(star)}><Text style={[styles.star, star <= rating && styles.starActive]}>★</Text></Pressable>)}</View><Text style={styles.ratingHint}>{rating ? `${rating} out of 5` : "Tap a star to rate"}</Text></View><View style={styles.field}><Text style={styles.fieldLabel}>Tell us about your round</Text><TextInput accessibilityLabel="Review comment" multiline placeholder="Green reads, pace, course knowledge…" placeholderTextColor="#7B857E" style={styles.comment} textAlignVertical="top" /></View><Button disabled={!rating} onPress={() => setSubmitted(true)}>Submit placeholder review</Button><Text style={styles.placeholderNote}>Ratings are not published or sent to a caddie yet.</Text></ScrollView></SafeAreaView>; }
+  return (
+    <SafeAreaView edges={["bottom"]} style={styles.safeArea}>
+      <ScrollView contentContainerStyle={styles.page}>
+        <View style={styles.intro}>
+          <Text accessibilityRole="header" style={styles.title}>{course.name}</Text>
+          <Text style={styles.subtitle}>{formatTeeTime(booking.teeTime)}</Text>
+        </View>
+        <View style={styles.detailCard}>
+          <Detail label="Booking reference" value={booking.id} />
+          <Detail label="Caddie" value={caddie.displayName} />
+          <Detail label="Group size" value={`${booking.partySize} golfers`} />
+          <Detail label="Caddie rate" value={formatMoney(booking.quotedRate.amountInCentavos)} />
+          <Detail label="Status" value={booking.status} />
+        </View>
+      </ScrollView>
+    </SafeAreaView>
+  );
+}
 
-function BookingCard({ booking }: { booking: typeof bookings[number] }) { const caddie = caddies.find((item) => item.id === booking.caddieId) ?? caddies[0]!; const course = courses.find((item) => item.id === booking.courseId) ?? courses[0]!; return <Pressable accessibilityLabel={`View booking at ${course.name}`} accessibilityRole="button" onPress={() => router.push({ pathname: "/golfer/bookings/[bookingId]", params: { bookingId: booking.id } })} style={styles.bookingCard}><View style={styles.cardTop}><StatusPill label={booking.status === "confirmed" ? "Confirmed" : "Pending"} completed={false} /><Text style={styles.chevron}>›</Text></View><Text style={styles.cardTitle}>{course.name}</Text><Text style={styles.cardMeta}>{formatTeeTime(booking.teeTime)}</Text><View style={styles.cardFooter}><Text style={styles.caddieName}>{caddie.displayName}</Text><Text style={styles.rate}>{formatMoney(booking.quotedRate.amountInCentavos)}</Text></View></Pressable>; }
-function StatusPill({ completed, label }: { completed: boolean; label: string }) { return <View style={[styles.statusPill, completed && styles.statusCompleted]}><Text style={[styles.statusText, completed && styles.statusTextCompleted]}>{label}</Text></View>; }
-function Detail({ label, value }: { label: string; value: string }) { return <View style={styles.detail}><Text style={styles.fieldLabel}>{label}</Text><Text selectable style={styles.detailValue}>{value}</Text></View>; }
+export function RateCaddieScreen() {
+  // TODO: load the completed booking and submit feedback through the real review service.
+  return <UnavailableBooking title="Caddie rating unavailable" />;
+}
+
+function UnavailableBooking({ title }: { title: string }) {
+  return (
+    <SafeAreaView edges={["bottom"]} style={styles.safeArea}>
+      <View style={styles.unavailable}>
+        <EmptyState description="Booking details will appear after the booking service is connected." icon="calendar-remove-outline" title={title} />
+        <Button onPress={() => router.replace("/golfer/bookings")}>Back to bookings</Button>
+      </View>
+    </SafeAreaView>
+  );
+}
+
+function BookingCard({ booking }: { booking: Booking }) {
+  const caddie = caddies.find((item) => item.id === booking.caddieId);
+  const course = courses.find((item) => item.id === booking.courseId);
+  if (!caddie || !course) return null;
+
+  return (
+    <Pressable
+      accessibilityLabel={`View booking at ${course.name}`}
+      accessibilityRole="button"
+      onPress={() => router.push({ pathname: "/golfer/bookings/[bookingId]", params: { bookingId: booking.id } })}
+      style={styles.bookingCard}
+    >
+      <Text style={styles.cardTitle}>{course.name}</Text>
+      <Text style={styles.cardMeta}>{formatTeeTime(booking.teeTime)}</Text>
+      <Text style={styles.cardMeta}>{caddie.displayName}</Text>
+    </Pressable>
+  );
+}
+
+function Detail({ label, value }: { label: string; value: string }) {
+  return <View style={styles.detail}><Text style={styles.label}>{label}</Text><Text selectable style={styles.value}>{value}</Text></View>;
+}
 
 const styles = StyleSheet.create({
-  bookingCard: { backgroundColor: "#FFFFFF", borderColor: "#D4DDD5", borderCurve: "continuous", borderRadius: 16, borderWidth: 1, gap: 7, padding: 17 }, cardFooter: { alignItems: "center", borderTopColor: "#E2E8E3", borderTopWidth: 1, flexDirection: "row", justifyContent: "space-between", marginTop: 6, paddingTop: 12 }, cardMeta: { color: "#5C6C62", fontSize: 14 }, cardTitle: { color: "#163C2A", fontSize: 19, fontWeight: "900" }, cardTop: { alignItems: "center", flexDirection: "row", justifyContent: "space-between" }, caddieName: { color: "#385A49", fontSize: 14, fontWeight: "700" }, chevron: { color: "#1C5D3D", fontSize: 27, lineHeight: 27 }, comment: { backgroundColor: "#FFFFFF", borderColor: "#CBD8CF", borderCurve: "continuous", borderRadius: 12, borderWidth: 1, color: "#15271D", fontSize: 16, minHeight: 130, padding: 14 }, detail: { gap: 4 }, detailCard: { backgroundColor: "#FFFFFF", borderColor: "#D4DDD5", borderCurve: "continuous", borderRadius: 16, borderWidth: 1, gap: 19, padding: 18 }, detailValue: { color: "#1B3D2B", fontSize: 16, fontWeight: "700", lineHeight: 22 }, empty: { alignItems: "center", backgroundColor: "#E8EEE8", borderRadius: 16, gap: 5, padding: 22 }, emptyText: { color: "#617067", fontSize: 13, lineHeight: 18, textAlign: "center" }, emptyTitle: { color: "#31533F", fontSize: 15, fontWeight: "800" }, field: { gap: 7 }, fieldLabel: { color: "#557061", fontSize: 12, fontWeight: "800", textTransform: "uppercase" }, intro: { gap: 6 }, notice: { backgroundColor: "#F1E8CD", borderRadius: 14, gap: 5, padding: 17 }, noticeText: { color: "#655D48", fontSize: 14, lineHeight: 20 }, noticeTitle: { color: "#564A2A", fontSize: 15, fontWeight: "900" }, page: { gap: 18, padding: 20, paddingTop: 28 }, placeholderNote: { color: "#6D776F", fontSize: 12, textAlign: "center" }, rate: { color: "#1B5D3D", fontSize: 14, fontWeight: "900" }, ratingCard: { alignItems: "center", backgroundColor: "#FFFFFF", borderColor: "#D4DDD5", borderCurve: "continuous", borderRadius: 18, borderWidth: 1, gap: 8, padding: 24 }, ratingHint: { color: "#6E786F", fontSize: 13 }, ratingNumber: { color: "#174B32", fontSize: 38, fontWeight: "900" }, safe: { backgroundColor: "#FAF9F6", flex: 1 }, sectionLabel: { color: "#557061", fontSize: 12, fontWeight: "900", letterSpacing: 1 }, star: { color: "#CDD3CD", fontSize: 39, paddingHorizontal: 1 }, starActive: { color: "#D4A72C" }, stars: { flexDirection: "row" }, statusCompleted: { backgroundColor: "#E0EEE2" }, statusPill: { alignSelf: "flex-start", backgroundColor: "#F4E8C5", borderRadius: 999, paddingHorizontal: 10, paddingVertical: 5 }, statusText: { color: "#866223", fontSize: 11, fontWeight: "900", textTransform: "uppercase" }, statusTextCompleted: { color: "#256342" }, subtitle: { color: "#617067", fontSize: 16, lineHeight: 23 }, success: { flex: 1, gap: 18, justifyContent: "center", padding: 28 }, successIcon: { alignSelf: "center", backgroundColor: "#1B6A43", borderRadius: 40, color: "#FFFFFF", fontSize: 35, fontWeight: "900", height: 80, lineHeight: 80, overflow: "hidden", textAlign: "center", width: 80 }, title: { color: "#153D2B", fontSize: 31, fontWeight: "900", letterSpacing: -0.8, lineHeight: 36 }
+  bookingCard: {
+    backgroundColor: colors.surface,
+    borderColor: colors.border,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    gap: spacing.xs,
+    padding: spacing.lg
+  },
+  cardMeta: { color: colors.textMuted, fontSize: typography.small },
+  cardTitle: { color: colors.fairwayDark, fontSize: typography.title, fontWeight: "800" },
+  detail: { gap: spacing.xs },
+  detailCard: {
+    backgroundColor: colors.surface,
+    borderColor: colors.border,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    gap: spacing.lg,
+    padding: spacing.lg
+  },
+  intro: { gap: spacing.sm },
+  label: { color: colors.textMuted, fontSize: typography.small, fontWeight: "800", textTransform: "uppercase" },
+  page: { gap: spacing.lg, padding: spacing.xl },
+  safeArea: { backgroundColor: colors.canvas, flex: 1 },
+  subtitle: { color: colors.textMuted, fontSize: typography.body },
+  title: { color: colors.text, fontSize: typography.heading, fontWeight: "900" },
+  unavailable: { flex: 1, gap: spacing.lg, justifyContent: "center", padding: spacing.xl },
+  value: { color: colors.fairwayDark, fontSize: typography.body, fontWeight: "700" }
 });

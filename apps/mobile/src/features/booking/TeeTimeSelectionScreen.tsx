@@ -5,18 +5,22 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { colors, radius, spacing, typography } from "@nobogey/ui";
 import { formatTeeTime } from "@nobogey/utils";
-import { caddies, courses } from "../../data/mock";
+import { courses } from "../../data/catalog";
+import { EmptyState } from "../../ui/EmptyState";
 import { BookingStepper, PrimaryButton, StickyActionBar } from "../../ui/booking-design";
 import { canSelectTeeTime, clubTeeSheet } from "./clubTeeSheet";
 import { ResponsiveContent } from "../../ui/ResponsiveContent";
 
 const partySize = 4;
-const dates = ["2026-07-25", "2026-07-26"];
+const dates = [0, 1].map((offset) => {
+  const date = new Date();
+  date.setDate(date.getDate() + offset);
+  return date.toISOString().slice(0, 10);
+});
 
 export function TeeTimeSelectionScreen() {
-  const { caddieId, courseId } = useLocalSearchParams<{ caddieId?: string; courseId?: string }>();
-  const caddie = caddies.find((item) => item.id === caddieId) ?? caddies[0]!;
-  const course = courses.find((item) => item.id === courseId) ?? courses.find((item) => item.id === caddie.homeCourseId) ?? courses[0]!;
+  const { courseId } = useLocalSearchParams<{ courseId?: string }>();
+  const course = courses.find((item) => item.id === courseId);
   const [date, setDate] = useState(dates[0]!);
   const [slots, setSlots] = useState<TeeTimeSlot[]>([]);
   const [selectedSlotId, setSelectedSlotId] = useState<string>();
@@ -24,12 +28,16 @@ export function TeeTimeSelectionScreen() {
   useEffect(() => {
     let active = true;
     setSelectedSlotId(undefined);
-    void clubTeeSheet.getTeeTimes(course.id, date).then((result) => { if (active) setSlots(result); });
+    if (course) void clubTeeSheet.getTeeTimes(course.id, date).then((result) => { if (active) setSlots(result); });
     return () => { active = false; };
-  }, [course.id, date]);
+  }, [course, date]);
 
   const selectedSlot = useMemo(() => slots.find((slot) => slot.id === selectedSlotId), [selectedSlotId, slots]);
   const friday = new Date(`${date}T12:00:00+08:00`).getDay() === 5;
+
+  if (!course) {
+    return <SafeAreaView edges={["top", "bottom"]} style={styles.safeArea}><View style={styles.emptyPage}><EmptyState description="Choose a course after the catalog service is connected." icon="golf" title="Course unavailable" /></View></SafeAreaView>;
+  }
 
   return <SafeAreaView edges={["top", "bottom"]} style={styles.safeArea}>
     <ScrollView contentContainerStyle={styles.content} contentInsetAdjustmentBehavior="automatic" showsVerticalScrollIndicator={false}><ResponsiveContent style={styles.frame}>
@@ -75,6 +83,7 @@ function Row({ label, value }: { label: string; value: string }) { return <View 
 
 const styles = StyleSheet.create({
   frame: { gap: spacing.xl },
+  emptyPage: { flex: 1, justifyContent: "center", padding: spacing.xl },
   card: { backgroundColor: colors.surface, borderColor: "#999890", borderRadius: radius.md, borderWidth: 1, gap: spacing.md, marginHorizontal: spacing.xl, padding: spacing.xl },
   content: { gap: spacing.xl, paddingBottom: spacing.xl }, dateButton: { alignItems: "center", borderColor: "#B9B8B1", borderRadius: radius.md, borderWidth: 1, gap: 2, minWidth: 82, padding: spacing.md }, dateButtonSelected: { backgroundColor: "#B3C1AA", borderColor: colors.fairwayDark }, dateDay: { color: "#66786D", fontSize: 11, fontWeight: "800", textTransform: "uppercase" }, dateMonth: { color: "#66786D", fontSize: 12 }, dateNumber: { color: colors.ink, fontSize: 24, fontWeight: "800" }, dateRow: { flexDirection: "row", gap: spacing.md }, dateTextSelected: { color: colors.fairwayDark }, empty: { color: "#6E6D67", fontSize: typography.body }, heading: { gap: spacing.sm, paddingHorizontal: spacing.xl }, label: { color: "#66786D", fontSize: typography.small, fontWeight: "800", letterSpacing: 1 }, note: { color: "#6E6D67", fontSize: typography.small, lineHeight: 19 }, policyTitle: { color: colors.fairwayDark, fontSize: typography.small, fontWeight: "800" }, row: { gap: spacing.xs }, rule: { backgroundColor: "#B9B8B1", height: 1 }, safeArea: { backgroundColor: "#FAF9F6", flex: 1 }, section: { gap: spacing.sm, paddingHorizontal: spacing.xl }, sectionNote: { color: "#6E6D67", fontSize: typography.small, lineHeight: 19 }, sectionTitle: { color: colors.fairwayDark, fontSize: typography.body, fontWeight: "800" }, selectedSummary: { backgroundColor: "#E7EEE9", borderRadius: radius.md, gap: spacing.xs, marginHorizontal: spacing.xl, padding: spacing.lg }, selectedSummaryText: { color: "#24543D", fontSize: typography.body }, selectedSummaryTitle: { color: colors.fairwayDark, fontSize: typography.small, fontWeight: "800", letterSpacing: 1, textTransform: "uppercase" }, slot: { alignItems: "center", backgroundColor: colors.surface, borderColor: "#B9B8B1", borderRadius: radius.md, borderWidth: 1, flexDirection: "row", justifyContent: "space-between", padding: spacing.lg }, slotDetail: { color: "#66786D", fontSize: typography.small, marginTop: 3 }, slotList: { gap: spacing.sm }, slotSelected: { backgroundColor: "#E7EEE9", borderColor: colors.fairwayDark, borderWidth: 2 }, slotStatus: { color: colors.fairway, fontSize: typography.small, fontWeight: "800" }, slotStatusUnavailable: { color: "#6E6D67" }, slotTextUnavailable: { color: "#6E6D67" }, slotTime: { color: colors.ink, fontSize: typography.body, fontWeight: "800" }, slotUnavailable: { backgroundColor: "#EFEEE9" }, subtitle: { color: "#6E6D67", fontSize: typography.body, lineHeight: 23 }, title: { color: "#000000", fontSize: 36, fontWeight: "800", letterSpacing: -1, lineHeight: 42 }, value: { color: "#18382A", fontSize: typography.body, fontWeight: "800" }
 });

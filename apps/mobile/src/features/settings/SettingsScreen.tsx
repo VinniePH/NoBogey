@@ -37,7 +37,7 @@ export function SettingsScreen({ role = "golfer" }: { role?: SettingsRole }) {
         <View style={styles.headerSpacer} />
       </View>
 
-      {sections.map((section, index) => <SettingsSection items={section.items} key={section.title} title={section.title} />)}
+      {sections.map((section) => <SettingsSection items={section.items} key={section.title} title={section.title} />)}
 
       <Pressable accessibilityLabel="Log out" accessibilityRole="button" accessibilityState={{ busy: isLoggingOut, disabled: isLoggingOut }} disabled={isLoggingOut} onPress={() => void logOut()} style={({ pressed }) => [styles.logoutCard, pressed && styles.logoutPressed, isLoggingOut && styles.logoutDisabled]}><MaterialCommunityIcons color="#FF2028" name="logout-variant" size={25} /><Text style={styles.logoutText}>{isLoggingOut ? "Logging out…" : "Log out"}</Text><MaterialCommunityIcons color="#FF2028" name="chevron-right" size={24} /></Pressable>
     </ResponsiveContent></ScrollView>
@@ -47,8 +47,8 @@ export function SettingsScreen({ role = "golfer" }: { role?: SettingsRole }) {
 function getSections(role: SettingsRole): { items: SettingsItem[]; title: string }[] {
   const profilePath = role === "golfer" ? "/golfer/profile" : "/caddie/profile";
   return [
-    { title: "ACCOUNT", items: [{ icon: "account-circle-outline", label: "Account Information", detail: "Raf Vincent · rafvincent@gmail.com", onPress: () => router.push(profilePath) }, { icon: "calendar-check-outline", label: role === "golfer" ? "Booking Preferences" : "Caddie Preferences", detail: role === "golfer" ? "Preferred courses, language, group size" : "Home course, languages, availability" }] },
-    { title: "PAYMENT", items: [role === "golfer" ? { icon: "credit-card-outline", label: "Payment Methods", detail: "GCash · Manage payment details" } : { icon: "bank-outline", label: "Payout Method", detail: "GCash · Manage how you receive earnings" }] },
+    { title: "ACCOUNT", items: [{ icon: "account-circle-outline", label: "Account Information", detail: "Manage your account details", onPress: () => router.push(profilePath) }, { icon: "calendar-check-outline", label: role === "golfer" ? "Booking Preferences" : "Caddie Preferences", detail: role === "golfer" ? "Preferred courses, language, group size" : "Home course, languages, availability" }] },
+    { title: "PAYMENT", items: [role === "golfer" ? { icon: "credit-card-outline", label: "Payment Methods", detail: "Manage payment details" } : { icon: "bank-outline", label: "Payout Method", detail: "Manage how you receive earnings" }] },
     { title: "PREFERENCES", items: [{ icon: "bell-outline", label: "Notifications", detail: role === "golfer" ? "Tee-time alerts, messages, promotions" : "Match alerts, messages, promotions" }, { icon: "lock-outline", label: "Privacy & Security", detail: "Change password · Delete account" }] },
     { title: "SUPPORT", items: [{ icon: "help-circle-outline", label: "Help & Support", detail: "FAQs, contact support, report an issue" }, { icon: "file-document-outline", label: "Terms & Conditions", detail: "Terms of Service · Privacy Policy" }] }
   ];
