@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { Image, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { router } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { colors, fonts, radius, spacing, typography } from "@nobogey/ui";
 import { ResponsiveContent } from "../../ui/ResponsiveContent";
@@ -32,9 +33,9 @@ export function CaddieDashboardScreen() {
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         <ResponsiveContent style={styles.content}>
           <View style={styles.header}>
-            <Text accessibilityLabel="Back" style={styles.back}>‹</Text>
-            <Text accessibilityRole="header" style={styles.title}>My Profile</Text>
-            <Text accessibilityLabel="Settings" style={styles.settings}>⚙</Text>
+            <Pressable accessibilityLabel="Open caddie profile" accessibilityRole="button" onPress={() => router.push("/caddie/profile")}><Text style={styles.back}>‹</Text></Pressable>
+            <Pressable accessibilityRole="button" onPress={() => router.push("/caddie/profile")}><Text accessibilityRole="header" style={styles.title}>My Profile</Text></Pressable>
+            <Pressable accessibilityLabel="Open settings" accessibilityRole="button" onPress={() => router.push("/caddie/settings")}><Text style={styles.settings}>⚙</Text></Pressable>
           </View>
 
           <NextClientCard clientNotified={clientNotified} onEditAvailability={() => setAvailabilityEditorVisible(true)} onNotify={() => setClientNotified(true)} />

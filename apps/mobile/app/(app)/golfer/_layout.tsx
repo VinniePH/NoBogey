@@ -1,5 +1,4 @@
-import { router, Stack } from "expo-router";
-import { Pressable, Text } from "react-native";
+import { Stack } from "expo-router";
 import { colors } from "@nobogey/ui";
 
 export default function GolferLayout() {
@@ -29,23 +28,7 @@ export default function GolferLayout() {
       <Stack.Screen name="bookings/new/payment" options={{ title: "Payment" }} />
       <Stack.Screen name="bookings/receipt" options={{ headerShown: false }} />
       <Stack.Screen name="bookings/confirmation" options={{ headerShown: false }} />
-      <Stack.Screen
-        name="profile"
-        options={{
-          title: "My Profile",
-          headerRight: () => (
-            <Pressable
-              accessibilityLabel="Open settings"
-              accessibilityRole="button"
-              hitSlop={8}
-              onPress={() => router.push("/golfer/settings")}
-              style={{ alignItems: "center", justifyContent: "center", minHeight: 44, minWidth: 44 }}
-            >
-              <Text style={{ color: colors.fairwayDark, fontSize: 22 }}>⚙</Text>
-            </Pressable>
-          )
-        }}
-      />
+      <Stack.Screen name="profile" options={{ headerShown: false }} />
       <Stack.Screen name="settings" options={{ headerShown: false }} />
     </Stack>
   );

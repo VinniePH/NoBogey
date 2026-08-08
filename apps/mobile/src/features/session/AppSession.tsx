@@ -13,6 +13,7 @@ type Session = {
   golferSignedIn: boolean;
   selectInitialRole: (role: AppRole) => void;
   signInAs: (role: AppRole) => void;
+  signOut: () => Promise<void>;
   switchRole: (role: AppRole) => void;
 };
 
@@ -51,6 +52,12 @@ export function AppSessionProvider({ children }: PropsWithChildren) {
     signInAs: (role) => {
       setActiveRole(role);
       if (role === "golfer") setGolferSignedIn(true);
+    },
+    signOut: async () => {
+      await AsyncStorage.removeItem(roleStorageKey);
+      setActiveRole(null);
+      setInitialRole(null);
+      setGolferSignedIn(false);
     },
     switchRole: setActiveRole
   }), [activeRole, caddieVerification, golferSignedIn, initialRole, isHydrated]);
