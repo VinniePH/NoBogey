@@ -56,7 +56,7 @@ export function TeeTimeSelectionScreen() {
       </View>
       {selectedSlot ? <View style={styles.selectedSummary}><Text style={styles.selectedSummaryTitle}>Tee time selected</Text><Text style={styles.selectedSummaryText}>{formatTeeTime(selectedSlot.startsAt)} · Next, choose a preferred caddie</Text></View> : null}
     </ResponsiveContent></ScrollView>
-    <StickyActionBar><PrimaryButton disabled={!selectedSlot} label={selectedSlot ? "Confirm tee time" : "Choose a tee time for 4 golfers"} onPress={() => selectedSlot && router.push({ pathname: "/tee-time-confirmation", params: { courseId: course.id, date, teeTimeId: selectedSlot.id } })} /></StickyActionBar>
+    <StickyActionBar><PrimaryButton disabled={!selectedSlot} label={selectedSlot ? "Confirm tee time" : "Choose a tee time for 4 golfers"} onPress={() => selectedSlot && router.push({ pathname: "/golfer/bookings/new/tee-time-confirmation", params: { courseId: course.id, date, teeTimeId: selectedSlot.id } })} /></StickyActionBar>
   </SafeAreaView>;
 }
 
