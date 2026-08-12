@@ -5,6 +5,8 @@ export default function CaddieLayout() {
   return (
     <Stack screenOptions={{ contentStyle: { backgroundColor: colors.canvas }, headerShown: false }}>
       <Stack.Screen name="dashboard" />
+      <Stack.Screen name="onboarding" />
+      <Stack.Screen name="verification" />
       <Stack.Screen name="profile" />
       <Stack.Screen name="settings" />
       <Stack.Screen name="matches/[bookingId]" options={{ headerShown: true, title: "Match details" }} />

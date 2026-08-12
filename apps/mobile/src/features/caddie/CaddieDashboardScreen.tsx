@@ -7,13 +7,18 @@ import { colors, radius, spacing } from "@nobogey/ui";
 import { EmptyState } from "../../ui/EmptyState";
 import { ResponsiveContent } from "../../ui/ResponsiveContent";
 import { CaddieAvailabilityEditor, CaddieSchedulePanel, initialAvailabilitySlots } from "./CaddieScheduleScreen";
+import { VerificationStatusScreen } from "../caddie-onboarding/VerificationStatusScreen";
+import { useAppSession } from "../session/AppSession";
 
 type DashboardTab = "schedule" | "roster" | "portfolio";
 
 export function CaddieDashboardScreen() {
+  const { caddieVerification } = useAppSession();
   const [tab, setTab] = useState<DashboardTab>("roster");
   const [availabilityEditorVisible, setAvailabilityEditorVisible] = useState(false);
   const [availabilitySlots, setAvailabilitySlots] = useState(initialAvailabilitySlots);
+
+  if (caddieVerification !== "verified") return <VerificationStatusScreen />;
 
   return (
     <SafeAreaView edges={["top", "bottom"]} style={styles.safeArea}>
