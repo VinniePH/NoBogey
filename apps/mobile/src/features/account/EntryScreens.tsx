@@ -23,7 +23,7 @@ export function SplashScreen() {
       return;
     }
     if (initialRole === "caddie") {
-      router.replace("/caddie/dashboard");
+      router.replace("/caddie/onboarding");
       return;
     }
     router.replace("/onboarding");
@@ -37,9 +37,9 @@ export function OnboardingScreen() {
   const choose = (role: AppRole) => {
     selectInitialRole(role);
     if (role === "golfer") router.replace("/golfer/home");
-    else router.replace("/caddie/dashboard");
+    else router.replace("/caddie/onboarding");
   };
-  return <SafeAreaView edges={["top", "bottom"]} style={styles.authSafe}><ScrollView contentContainerStyle={styles.authContent}><Image accessibilityLabel="NoBogey logo" resizeMode="contain" source={NoBogeyLogo} style={styles.authLogo} /><View style={styles.authHeader}><Text accessibilityRole="header" style={styles.authTitle}>How do you play?</Text><Text style={styles.authSubtitle}>Choose the role you use most. It stays selected on this phone.</Text></View><RoleChoice description="Browse tee times and caddies before creating an account." icon="⛳" label="I’m a golfer" onPress={() => choose("golfer")} /><RoleChoice description="Preview the caddie roster and portfolio without logging in." icon="🏌️" label="I’m a caddie" onPress={() => choose("caddie")} /><Text style={styles.placeholderNote}>Golfers can add a caddie identity later from Profile.</Text></ScrollView></SafeAreaView>;
+  return <SafeAreaView edges={["top", "bottom"]} style={styles.authSafe}><ScrollView contentContainerStyle={styles.authContent}><Image accessibilityLabel="NoBogey logo" resizeMode="contain" source={NoBogeyLogo} style={styles.authLogo} /><View style={styles.authHeader}><Text accessibilityRole="header" style={styles.authTitle}>How do you play?</Text><Text style={styles.authSubtitle}>Choose the role you use most. It stays selected on this phone.</Text></View><RoleChoice description="Browse tee times and caddies before creating an account." icon="⛳" label="I’m a golfer" onPress={() => choose("golfer")} /><RoleChoice description="Create a professional profile for verification by your home club." icon="🏌️" label="I’m a caddie" onPress={() => choose("caddie")} /><Text style={styles.placeholderNote}>Golfers can add a caddie identity later from Profile.</Text></ScrollView></SafeAreaView>;
 }
 
 export function AuthScreen() {
@@ -50,7 +50,7 @@ export function AuthScreen() {
   const submit = () => {
     signInAs(role);
     if (role === "caddie") {
-      router.replace(caddieVerification === "verified" ? "/caddie/dashboard" : "/caddie/dashboard?verification=pending");
+      router.replace(caddieVerification === "verified" ? "/caddie/dashboard" : caddieVerification === "draft" ? "/caddie/onboarding" : "/caddie/verification");
       return;
     }
     if (params.returnTo === "/golfer/caddies") {
@@ -60,7 +60,7 @@ export function AuthScreen() {
     router.replace("/golfer/home");
   };
   const submitLabel = mode === "login" ? "Log in" : `Create ${role} account`;
-  return <SafeAreaView edges={["top", "bottom"]} style={styles.authSafe}><ScrollView contentContainerStyle={styles.authContent} keyboardShouldPersistTaps="handled"><View style={styles.authHeader}><Image accessibilityLabel="NoBogey logo" resizeMode="contain" source={NoBogeyLogo} style={styles.authLogo} /><Text accessibilityRole="header" style={styles.authTitle}>{mode === "login" ? "Welcome back." : "Join the fairway."}</Text><Text style={styles.authSubtitle}>{role === "caddie" ? "Caddie accounts are reviewed by their home club before offers can arrive." : "Create an account only when you’re ready to pay."}</Text></View><View style={styles.modeTabs}><Tab active={mode === "login"} label="Log in" onPress={() => setMode("login")} /><Tab active={mode === "register"} label="Create account" onPress={() => setMode("register")} /></View>{role === "caddie" && <View style={styles.roleGroup}><Text style={styles.fieldLabel}>Creating a caddie account</Text><Text style={styles.placeholderNote}>Your partially completed signup will resume on this device. // TODO(spec): set the signup-draft expiry TTL with product.</Text></View>}<View style={styles.form}>{mode === "register" && <Field label="Full name" placeholder="Enter your full name" />}{role === "caddie" && <Field label="Home course" placeholder="Enter your home course" />}{mode === "register" && role === "caddie" && <Field label="Caddie registry number" placeholder="Enter your registry number" />}<Field keyboardType="email-address" label="Email address" placeholder="Enter your email address" /><Field label="Password" placeholder="Enter your password" secureTextEntry /><Button accessibilityLabel={submitLabel} onPress={submit}>{submitLabel}</Button></View><Pressable accessibilityLabel="Return to role selection" accessibilityRole="button" onPress={() => router.replace("/onboarding")}><Text style={styles.secondaryLink}>Back to role selection</Text></Pressable></ScrollView></SafeAreaView>;
+  return <SafeAreaView edges={["top", "bottom"]} style={styles.authSafe}><ScrollView contentContainerStyle={styles.authContent} keyboardShouldPersistTaps="handled"><View style={styles.authHeader}><Image accessibilityLabel="NoBogey logo" resizeMode="contain" source={NoBogeyLogo} style={styles.authLogo} /><Text accessibilityRole="header" style={styles.authTitle}>{mode === "login" ? "Welcome back." : "Join the fairway."}</Text><Text style={styles.authSubtitle}>{role === "caddie" ? "Create your professional profile, then submit it to your home club for verification." : "Create an account only when you’re ready to pay."}</Text></View><View style={styles.modeTabs}><Tab active={mode === "login"} label="Log in" onPress={() => setMode("login")} /><Tab active={mode === "register"} label="Create account" onPress={() => setMode("register")} /></View>{role === "caddie" && <View style={styles.roleGroup}><Text style={styles.fieldLabel}>Creating a caddie account</Text><Text style={styles.placeholderNote}>Your onboarding progress is saved on this device until it is submitted.</Text></View>}<View style={styles.form}>{role !== "caddie" && mode === "register" && <Field label="Full name" placeholder="Enter your full name" />}<Field keyboardType="email-address" label="Email address" placeholder="Enter your email address" />{role !== "caddie" && <Field label="Password" placeholder="Enter your password" secureTextEntry />}<Button accessibilityLabel={role === "caddie" ? "Start caddie onboarding" : submitLabel} onPress={submit}>{role === "caddie" ? "Start caddie onboarding" : submitLabel}</Button></View><Pressable accessibilityLabel="Return to role selection" accessibilityRole="button" onPress={() => router.replace("/onboarding")}><Text style={styles.secondaryLink}>Back to role selection</Text></Pressable></ScrollView></SafeAreaView>;
 }
 
 function Field({ label, ...inputProps }: { label: string } & React.ComponentProps<typeof TextInput>) { return <View style={styles.field}><Text style={styles.fieldLabel}>{label}</Text><TextInput accessibilityLabel={label} placeholderTextColor="#788179" style={styles.input} {...inputProps} /></View>; }
