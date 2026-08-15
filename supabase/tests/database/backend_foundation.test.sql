@@ -1,7 +1,7 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select plan(25);
+select plan(28);
 
 select has_table('public', 'profiles', 'profiles exists');
 select has_table('public', 'user_roles', 'role assignments exist');
@@ -19,6 +19,9 @@ select ok((select relrowsecurity from pg_class where oid = 'public.payment_inten
 select ok((select relrowsecurity from pg_class where oid = 'public.verification_documents'::regclass), 'verification metadata has RLS');
 select ok(not has_table_privilege('anon', 'public.bookings', 'SELECT'), 'anonymous users cannot read bookings');
 select ok(not has_table_privilege('authenticated', 'private.financial_ledger', 'SELECT'), 'clients cannot read the private ledger');
+select ok((select relrowsecurity from pg_class where oid = 'private.financial_ledger'::regclass), 'private ledger has defense-in-depth RLS');
+select ok((select relrowsecurity from pg_class where oid = 'private.payment_callback_events'::regclass), 'private callbacks have defense-in-depth RLS');
+select ok((select relrowsecurity from pg_class where oid = 'private.audit_logs'::regclass), 'private audit logs have defense-in-depth RLS');
 select ok(not has_function_privilege('authenticated', 'private.process_verified_payment_event(text,text,text,text,bigint)', 'EXECUTE'), 'clients cannot invoke payment callbacks');
 select ok(has_function_privilege('service_role', 'private.process_verified_payment_event(text,text,text,text,bigint)', 'EXECUTE'), 'service role can invoke payment callbacks');
 select ok(exists(select 1 from storage.buckets where id = 'verification-documents' and not public), 'verification bucket is private');
