@@ -1,7 +1,7 @@
 import type { PropsWithChildren } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
-import { createCaddieOnboardingDraft, createVerificationRequest, type CaddieOnboardingDraft, type CaddieVerificationStatus, type OnboardingStep } from "../caddie-onboarding/model";
+import { createCaddieOnboardingDraft, type CaddieOnboardingDraft, type CaddieVerificationStatus, type OnboardingStep } from "../caddie-onboarding/model";
 
 export type AppRole = "golfer" | "caddie";
 export type CaddieVerificationState = CaddieVerificationStatus;
@@ -95,8 +95,7 @@ export function AppSessionProvider({ children }: PropsWithChildren) {
     },
     submitCaddieOnboarding: () => {
       setCaddieOnboarding((current) => {
-        const submittedAt = new Date().toISOString();
-        const next = { ...current, step: 5 as OnboardingStep, verificationStatus: "pending" as const, submittedAt, onboardingCompletedAt: submittedAt, verificationRequest: createVerificationRequest(current, submittedAt) };
+        const next = { ...current, step: 5 as OnboardingStep };
         persistCaddieOnboarding(next);
         return next;
       });

@@ -9,9 +9,15 @@ describe("caddie onboarding model", () => {
     expect(passwordMeetsRequirements("golf")).toBe(false);
   });
 
-  it("requires a directory course and supports club requirements", () => {
-    const draft = { ...createCaddieOnboardingDraft(), homeCourseId: "manila-golf-country-club", yearsExperience: "three_to_five" as const };
-    expect(validateStep(draft, 2)).toMatchObject({ registryNumber: expect.any(String), employmentStatus: expect.any(String) });
+  it("does not let Terms acceptance replace password validation", () => {
+    const draft = { ...createCaddieOnboardingDraft(), fullName: "Rafa Dizon", email: "rafa@example.com", profilePhotoUri: "avatar://caddie-hat", termsAcceptedAt: "2026-08-15T00:00:00.000Z" };
+    expect(validateStep(draft, 1)).toMatchObject({ password: expect.any(String) });
+  });
+
+  it("requires a directory course and experience selection", () => {
+    const draft = createCaddieOnboardingDraft();
+    expect(validateStep(draft, 2)).toMatchObject({ homeCourse: expect.any(String), yearsExperience: expect.any(String) });
+    expect(validateStep({ ...draft, homeCourseId: "manila-golf-country-club", yearsExperience: "three_to_five" }, 2)).toEqual({});
   });
 
   it("enforces two languages and produces a versioned verification request", () => {

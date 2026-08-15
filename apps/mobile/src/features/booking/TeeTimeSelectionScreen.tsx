@@ -5,38 +5,35 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { colors, radius, spacing, typography } from "@nobogey/ui";
 import { formatTeeTime } from "@nobogey/utils";
-import { courses } from "../../data/catalog";
 import { EmptyState } from "../../ui/EmptyState";
 import { BookingStepper, PrimaryButton, StickyActionBar } from "../../ui/booking-design";
 import { canSelectTeeTime, clubTeeSheet } from "./clubTeeSheet";
 import { ResponsiveContent } from "../../ui/ResponsiveContent";
+import { useMobileData } from "../data/useMobileData";
 
 const partySize = 4;
-const dates = [0, 1].map((offset) => {
-  const date = new Date();
-  date.setDate(date.getDate() + offset);
-  return date.toISOString().slice(0, 10);
-});
+const dates: readonly string[] = [];
 
 export function TeeTimeSelectionScreen() {
+  const { courses } = useMobileData();
   const { courseId } = useLocalSearchParams<{ courseId?: string }>();
   const course = courses.find((item) => item.id === courseId);
-  const [date, setDate] = useState(dates[0]!);
+  const [date, setDate] = useState<string>();
   const [slots, setSlots] = useState<TeeTimeSlot[]>([]);
   const [selectedSlotId, setSelectedSlotId] = useState<string>();
 
   useEffect(() => {
     let active = true;
     setSelectedSlotId(undefined);
-    if (course) void clubTeeSheet.getTeeTimes(course.id, date).then((result) => { if (active) setSlots(result); });
+    if (course && date) void clubTeeSheet.getTeeTimes(course.id, date).then((result) => { if (active) setSlots(result); }).catch(() => { if (active) setSlots([]); });
     return () => { active = false; };
   }, [course, date]);
 
   const selectedSlot = useMemo(() => slots.find((slot) => slot.id === selectedSlotId), [selectedSlotId, slots]);
-  const friday = new Date(`${date}T12:00:00+08:00`).getDay() === 5;
+  const friday = date ? new Date(`${date}T12:00:00+08:00`).getDay() === 5 : false;
 
   if (!course) {
-    return <SafeAreaView edges={["top", "bottom"]} style={styles.safeArea}><View style={styles.emptyPage}><EmptyState description="Choose a course after the catalog service is connected." icon="golf" title="Course unavailable" /></View></SafeAreaView>;
+    return <SafeAreaView edges={["top", "bottom"]} style={styles.safeArea}><View style={styles.emptyPage}><EmptyState description="Choose a course after the catalog service is connected." icon="golf" minHeight={680} title="Course unavailable" /></View></SafeAreaView>;
   }
 
   return <SafeAreaView edges={["top", "bottom"]} style={styles.safeArea}>
@@ -55,16 +52,16 @@ export function TeeTimeSelectionScreen() {
       </View>
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Select a date</Text>
-        <View style={styles.dateRow}>{dates.map((value) => <DateButton key={value} selected={date === value} value={value} onPress={() => setDate(value)} />)}</View>
+        {dates.length ? <View style={styles.dateRow}>{dates.map((value) => <DateButton key={value} selected={date === value} value={value} onPress={() => setDate(value)} />)}</View> : <EmptyState description="Dates will appear when the club tee-sheet service is connected." icon="calendar-blank-outline" minHeight={112} title="No dates available" />}
       </View>
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Club tee sheet</Text>
         <Text style={styles.sectionNote}>Live club availability · slots need room for all 4 golfers.</Text>
-        {slots.length ? <View style={styles.slotList}>{slots.map((slot) => <TeeTimeButton key={slot.id} selected={slot.id === selectedSlotId} slot={slot} onPress={() => canSelectTeeTime(slot, partySize) && setSelectedSlotId(slot.id)} />)}</View> : <Text style={styles.empty}>No tee times are available on this date.</Text>}
+        {slots.length ? <View style={styles.slotList}>{slots.map((slot) => <TeeTimeButton key={slot.id} selected={slot.id === selectedSlotId} slot={slot} onPress={() => canSelectTeeTime(slot, partySize) && setSelectedSlotId(slot.id)} />)}</View> : <EmptyState description="Tee times will appear after the club tee-sheet service is connected." icon="calendar-blank-outline" minHeight={330} title="No tee times available" />}
       </View>
       {selectedSlot ? <View style={styles.selectedSummary}><Text style={styles.selectedSummaryTitle}>Tee time selected</Text><Text style={styles.selectedSummaryText}>{formatTeeTime(selectedSlot.startsAt)} · Next, choose a preferred caddie</Text></View> : null}
     </ResponsiveContent></ScrollView>
-    <StickyActionBar><PrimaryButton disabled={!selectedSlot} label={selectedSlot ? "Confirm tee time" : "Choose a tee time for 4 golfers"} onPress={() => selectedSlot && router.push({ pathname: "/golfer/bookings/new/tee-time-confirmation", params: { courseId: course.id, date, teeTimeId: selectedSlot.id } })} /></StickyActionBar>
+    <StickyActionBar><PrimaryButton disabled={!selectedSlot} label={selectedSlot ? "Confirm tee time" : "Choose a tee time for 4 golfers"} onPress={() => selectedSlot && router.push({ pathname: "/golfer/bookings/new/tee-time-confirmation", params: { courseId: course.id, date, teeTimeId: selectedSlot.id, time: selectedSlot.startsAt } })} /></StickyActionBar>
   </SafeAreaView>;
 }
 

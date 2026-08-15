@@ -5,12 +5,13 @@ import { colors, radius, spacing, typography } from "@nobogey/ui";
 type EmptyStateProps = {
   description: string;
   icon?: React.ComponentProps<typeof MaterialCommunityIcons>["name"];
+  minHeight?: number;
   title: string;
 };
 
-export function EmptyState({ description, icon = "database-off-outline", title }: EmptyStateProps) {
+export function EmptyState({ description, icon = "database-off-outline", minHeight, title }: EmptyStateProps) {
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, minHeight ? { minHeight } : undefined]}>
       <MaterialCommunityIcons color={colors.fairwayDark} name={icon} size={30} />
       <Text accessibilityRole="header" style={styles.title}>{title}</Text>
       <Text style={styles.description}>{description}</Text>

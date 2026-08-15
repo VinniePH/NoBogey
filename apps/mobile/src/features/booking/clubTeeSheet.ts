@@ -1,4 +1,5 @@
 import type { TeeTimeSlot } from "@nobogey/contracts";
+import { mobileDataService } from "../../../backend/mock.service";
 
 export interface ClubTeeSheetGateway {
   getTeeTimes(courseId: string, date: string): Promise<TeeTimeSlot[]>;
@@ -10,10 +11,7 @@ export interface ClubTeeSheetGateway {
  */
 export const clubTeeSheet: ClubTeeSheetGateway = {
   async getTeeTimes(courseId, date) {
-    // TODO: wire up the real club tee-sheet data source.
-    void courseId;
-    void date;
-    return [];
+    return mobileDataService.listTeeTimes(courseId, date);
   }
 };
 

@@ -3,20 +3,21 @@ import { router, useLocalSearchParams } from "expo-router";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { colors, radius, spacing, typography } from "@nobogey/ui";
-import { caddies, courses } from "../../data/catalog";
 import { PrimaryButton, ScreenSection } from "../../ui/booking-design";
 import { EmptyState } from "../../ui/EmptyState";
 import { CaddieCard } from "../booking/components/MarketplaceCards";
 import { ResponsiveContent } from "../../ui/ResponsiveContent";
+import { useMobileData } from "../data/useMobileData";
 
 export function CourseProfileScreen() {
+  const { caddies, courses } = useMobileData();
   const { courseId } = useLocalSearchParams<{ courseId?: string }>();
   const course = courses.find((item) => item.id === courseId);
-  if (!course) return <SafeAreaView edges={["top", "bottom"]} style={styles.safeArea}><View style={styles.emptyPage}><EmptyState description="Course details will appear after the catalog service is connected." icon="golf" title="Course unavailable" /></View></SafeAreaView>;
+  if (!course) return <SafeAreaView edges={["top", "bottom"]} style={styles.safeArea}><View style={styles.emptyPage}><EmptyState description="Course details will appear after the catalog service is connected." icon="golf" minHeight={700} title="Course unavailable" /></View></SafeAreaView>;
   const available = caddies.filter((item) => item.homeCourseId === course.id);
   return <SafeAreaView edges={["top", "bottom"]} style={styles.safeArea}><ScrollView contentContainerStyle={styles.content} contentInsetAdjustmentBehavior="automatic" showsVerticalScrollIndicator={false}><ResponsiveContent style={styles.frame}>
     <View><View accessibilityLabel={`${course.name} course`} accessibilityRole="image" style={styles.heroImage}><MaterialCommunityIcons color={colors.fairwayDark} name="golf" size={48} /></View><View style={styles.introCard}><Text style={styles.kicker}>{course.city}, {course.province}</Text><Text accessibilityRole="header" style={styles.title}>{course.name}</Text><View style={styles.rule}/><View style={styles.stats}><Stat label="PAR" value={String(course.par)}/><Stat label="YARDS" value={course.yardage.toLocaleString()}/><Stat label="HOLES" value={String(course.holes)}/><Stat label="AVAILABLE" value={`${course.caddieCount} caddies`}/></View></View></View>
-    <ScreenSection title="Available caddies" action={<Pressable accessibilityLabel="See all available caddies" accessibilityRole="button" hitSlop={8} onPress={() => router.push({ pathname: "/golfer/caddies", params: { courseId: course.id } })} style={styles.seeAllButton}><Text style={styles.seeAll}>See All</Text></Pressable>}>{available.length ? <ScrollView horizontal contentContainerStyle={styles.horizontalList} showsHorizontalScrollIndicator={false}>{available.map((caddie) => <CaddieCard caddie={caddie} key={caddie.id} onPress={() => router.push({ pathname: "/golfer/caddies/[caddieId]", params: { caddieId: caddie.id, courseId: course.id } })} />)}</ScrollView> : <View style={styles.emptyCaddies}><EmptyState description="Caddies will appear after the directory service is connected." icon="account-group-outline" title="No caddies available" /></View>}</ScreenSection>
+    <ScreenSection title="Available caddies" action={<Pressable accessibilityLabel="See all available caddies" accessibilityRole="button" hitSlop={8} onPress={() => router.push({ pathname: "/golfer/caddies", params: { courseId: course.id } })} style={styles.seeAllButton}><Text style={styles.seeAll}>See All</Text></Pressable>}>{available.length ? <ScrollView horizontal contentContainerStyle={styles.horizontalList} showsHorizontalScrollIndicator={false}>{available.map((caddie) => <CaddieCard caddie={caddie} key={caddie.id} onPress={() => router.push({ pathname: "/golfer/caddies/[caddieId]", params: { caddieId: caddie.id, courseId: course.id } })} />)}</ScrollView> : <View style={styles.emptyCaddies}><EmptyState description="Caddies will appear after the directory service is connected." icon="account-group-outline" minHeight={590} title="No caddies available" /></View>}</ScreenSection>
     <View style={styles.locationCard}><View style={styles.locationCopy}><Text style={styles.kicker}>LOCATION</Text><Text style={styles.locationName}>{course.name}</Text><Text style={styles.address}>⌾ {course.city}, {course.province}</Text><PrimaryButton label="Get Directions" /></View></View>
   </ResponsiveContent></ScrollView></SafeAreaView>;
 }

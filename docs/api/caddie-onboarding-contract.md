@@ -23,4 +23,9 @@ The mobile app currently persists the onboarding draft only on the device so the
 
 `draft | pending | verified | changes_requested | rejected`
 
+This is the `CaddieVerificationStatus` vocabulary in `packages/contracts` and
+is also used by the local admin-web review adapter. Matching terms do not make
+the two frontend mocks synchronized: each application retains its own local
+fixtures until an authenticated API persists and distributes these records.
+
 Client validation exists for immediate feedback only. The server repeats every validation rule, including course-ID ownership, club-specific requirements, credential shape, supported-language limit, and legal status transitions.

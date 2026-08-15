@@ -36,7 +36,58 @@ export interface Caddie {
   completedRounds: number;
   portfolioHighlights: string[];
   rate: MoneyAmount;
-  verified: boolean;
+  verificationStatus: CaddieVerificationStatus;
+}
+
+export type CaddieVerificationStatus =
+  | "draft"
+  | "pending"
+  | "verified"
+  | "changes_requested"
+  | "rejected";
+
+export type VerificationStatusFilter = CaddieVerificationStatus | "all";
+
+export type CaddieVerificationDocumentKind = "government_id" | "club_reference" | "training_certificate" | "profile_photo";
+
+export interface CaddieVerificationDocument {
+  id: string;
+  kind: CaddieVerificationDocumentKind;
+  label: string;
+  fileName: string;
+  /** Opaque reference supplied by storage; the UI must not fetch it directly. */
+  reference: string;
+  submittedAt: string;
+}
+
+export interface CaddieVerificationHistoryEntry {
+  id: string;
+  status: CaddieVerificationStatus;
+  occurredAt: string;
+  reviewerNote?: string;
+}
+
+export interface CaddieVerificationSummary {
+  caddieId: string;
+  courseId: string;
+  displayName: string;
+  tier: string;
+  submittedAt: string;
+  status: CaddieVerificationStatus;
+}
+
+export interface CaddieVerificationDetail extends CaddieVerificationSummary {
+  clubName: string;
+  yearsExperience: number;
+  languages: string[];
+  documents: CaddieVerificationDocument[];
+  history: CaddieVerificationHistoryEntry[];
+}
+
+export type CaddieVerificationErrorCode = "NOT_FOUND" | "VALIDATION_FAILED" | "UNAVAILABLE";
+
+export interface CaddieVerificationErrorShape extends Omit<ApiError, "code"> {
+  code: CaddieVerificationErrorCode;
 }
 
 export interface GolfCourse {
@@ -151,6 +202,7 @@ export type ApiErrorCode =
   | "BOOKING_CONFLICT"
   | "PAYMENT_FAILED"
   | "RATE_LIMITED"
+  | "UNAVAILABLE"
   | "UNKNOWN";
 
 export interface ApiError {

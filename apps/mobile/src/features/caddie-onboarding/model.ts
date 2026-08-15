@@ -1,4 +1,6 @@
-export type CaddieVerificationStatus = "draft" | "pending" | "verified" | "changes_requested" | "rejected";
+import type { CaddieVerificationStatus } from "@nobogey/contracts";
+
+export type { CaddieVerificationStatus };
 export type OnboardingStep = 1 | 2 | 3 | 4 | 5;
 export type ExperienceRange = "less_than_one" | "one_to_two" | "three_to_five" | "six_to_ten" | "ten_plus";
 export type GolferSkillRange = "beginner" | "recreational" | "intermediate" | "advanced" | "competitive" | "professional";
@@ -74,6 +76,8 @@ export type CaddieOnboardingDraft = {
   languages: SupportedLanguage[];
   workSampleUris: string[];
   verificationStatus: CaddieVerificationStatus;
+  termsAcceptedAt?: string;
+  termsVersion?: string;
   submittedAt?: string;
   verificationRequest?: VerificationRequest;
   changeReason?: string;
@@ -98,8 +102,8 @@ export function selectedCourse(draft: CaddieOnboardingDraft) {
 
 export function validateStep(draft: CaddieOnboardingDraft, step: OnboardingStep): Record<string, string> {
   const course = selectedCourse(draft);
-  if (step === 1) return { ...(draft.fullName.trim() ? {} : { fullName: "Enter your full name." }), ...(/^\S+@\S+\.\S+$/.test(draft.email) ? {} : { email: "Enter a valid email address." }), ...(passwordMeetsRequirements(draft.password) ? {} : { password: "Use 8+ characters with an uppercase letter and a number." }), ...(draft.profilePhotoUri ? {} : { profilePhoto: "Add a profile photo to continue." }) };
-  if (step === 2) return { ...(course ? {} : { homeCourse: "Select a course from the directory." }), ...(draft.yearsExperience ? {} : { yearsExperience: "Choose your years of experience." }), ...(course?.registryNumberRequired && !draft.registryNumber.trim() ? { registryNumber: "This club requires a registry number." } : {}), ...(course?.employmentStatusRequired && !draft.employmentStatus ? { employmentStatus: "Select your club status." } : {}) };
+  if (step === 1) return { ...(draft.fullName.trim() ? {} : { fullName: "Enter your full name." }), ...(/^\S+@\S+\.\S+$/.test(draft.email) ? {} : { email: "Enter a valid email address." }), ...(passwordMeetsRequirements(draft.password) ? {} : { password: "Use 8+ characters with an uppercase letter and a number." }), ...(draft.profilePhotoUri ? {} : { profilePhoto: "Choose an avatar icon to continue." }) };
+  if (step === 2) return { ...(course ? {} : { homeCourse: "Select a course from the directory." }), ...(draft.yearsExperience ? {} : { yearsExperience: "Choose your years of experience." }) };
   if (step === 4) return { ...(draft.tagline.trim() ? {} : { tagline: "Add a professional tagline." }), ...(draft.languages.length > 2 ? { languages: "Choose no more than two languages." } : {}), ...draft.credentials.reduce<Record<string, string>>((errors, credential) => ({ ...errors, ...(credential.name.trim() && credential.issuer.trim() && credential.issueDate ? {} : { [`credential-${credential.id}`]: "Each credential needs a name, issuer, and issue date." }) }), {}) };
   return {};
 }
