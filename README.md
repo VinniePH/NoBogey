@@ -37,7 +37,7 @@ Admin placeholder:
 pnpm dev:admin
 ```
 
-Backend implementation is intentionally deferred. See `docs/api/backend-boundary.md` for the route groups, lifecycle states, permission expectations, and future GCash payment boundary.
+The first Supabase database foundation now lives in `supabase/migrations`; see `docs/backend/foundation.md` for its security and transaction boundaries and `docs/api/backend-boundary.md` for the planned API surface. Frontend services remain on mocks until their adapters are migrated deliberately.
 
 ## Mobile Release Work
 

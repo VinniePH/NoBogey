@@ -1,12 +1,12 @@
 # NoBogey Backend Boundary
 
-The backend runtime is not selected yet. This document defines the expected API surface and ownership rules so mobile work can proceed without locking the platform into a premature framework choice.
+Supabase Postgres, Auth, Storage, and Row Level Security are the selected backend foundation. This document defines the expected API surface; frontend adapters are not connected to the new schema yet.
 
 ## Auth and Sessions
 
-- Golfers, caddies, and admins are distinct roles.
-- Mobile starts with a local role switch only; real authentication is out of scope for the foundation.
-- Future API requests should include a session identity and role claims.
+- Supported roles are `golfer`, `caddie`, `club_manager`, `admin`, and `super_admin`.
+- Supabase Auth owns identity. Database-owned `user_roles` and `club_staff` rows own authorization; user-editable metadata is never authoritative.
+- API requests use the verified Supabase session identity. Callers do not submit an authoritative user, role, or club ID.
 - Permission failures should return `PERMISSION_DENIED` with a stable request id.
 
 ## Route Groups
@@ -22,6 +22,8 @@ The backend runtime is not selected yet. This document defines the expected API 
 ## Booking Lifecycle
 
 Allowed booking states are `draft`, `requested`, `confirmed`, `in_progress`, `completed`, `canceled`, `declined`, and `conflicted`.
+
+The persistence model begins at `pending`; the future frontend adapter maps persisted `pending` to the existing public-contract `requested` value. Client-only `draft` remains outside the database. This preserves the shared frontend contract while ensuring no booking is confirmed before a verified provider callback.
 
 The backend owns conflict checks. A booking request must fail with `BOOKING_CONFLICT` when the selected caddie is no longer available, the time slot is invalid, or the slot is already booked.
 
