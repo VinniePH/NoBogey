@@ -1,8 +1,8 @@
-import { router } from "expo-router";
 import { View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { spacing } from "@nobogey/ui";
 import { EmptyState } from "../../ui/EmptyState";
+import { backToPreviousPage } from "../../ui/navigation";
 import { Button } from "../../ui/primitives";
 
 export function CaddieMatchDetailScreen() {
@@ -15,7 +15,7 @@ export function CaddieMatchDetailScreen() {
           icon="calendar-remove-outline"
           title="Match unavailable"
         />
-        <Button onPress={() => router.back()}>Back to match history</Button>
+        <Button onPress={() => backToPreviousPage("/caddie/dashboard")}>Back to match history</Button>
       </View>
     </SafeAreaView>
   );

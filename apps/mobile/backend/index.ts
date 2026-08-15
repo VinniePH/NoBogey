@@ -17,6 +17,6 @@ export * from './bookings/bookings.types';
 export * from './caddies/caddies.service';
 export * from './caddies/caddies.types';
 export * from './matching/matching.service';
+export * from './mock.service';
 export * from './shared/config';
 export * from './shared/errors';
-

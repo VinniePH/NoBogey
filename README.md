@@ -38,3 +38,7 @@ pnpm dev:admin
 ```
 
 Backend implementation is intentionally deferred. See `docs/api/backend-boundary.md` for the route groups, lifecycle states, permission expectations, and future GCash payment boundary.
+
+## Mobile Release Work
+
+The current six-phase frontend and Android readiness cycle is tracked in [`docs/release/README.md`](docs/release/README.md). It includes the current Phase 0–3 closure gaps, remaining Phase 4–6 work, validation commands, manual QA, and the final no-commit review gate.

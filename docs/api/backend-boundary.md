@@ -38,6 +38,30 @@ GCash integration is future work. The backend should own payment intent creation
 - Backend owns persistence, identity, permission checks, booking conflicts, payment state, audit trails, and external integrations.
 - Shared contracts define domain language but do not replace backend validation.
 
+## Phase 5: Mobile and Admin-Web Contract Compatibility
+
+`packages/contracts` is the canonical vocabulary for both frontends. It uses
+the same opaque string identifiers (`courseId`, `caddieId`, `bookingId`, and
+tee-time `slotId`), ISO 8601 timestamps with an explicit offset, Philippine
+pesos represented as `MoneyAmount.amountInCentavos`, and these lifecycle
+values:
+
+- Tee times: `open`, `held`, `full`, `closed`.
+- Bookings: `draft`, `requested`, `confirmed`, `in_progress`, `completed`,
+  `canceled`, `declined`, `conflicted`.
+- Caddie assignment: `preferred_requested`, `preferred_assigned`,
+  `replacement_assigned`, `no_caddie_available`.
+- Verification: `draft`, `pending`, `changes_requested`, `verified`,
+  `rejected`.
+
+The mobile and admin web mocks remain independent local fixtures. Admin fleet
+records map whole-peso rates and display dates/times into the shared money and
+timestamp formats at their local adapter boundary. A decision in admin-web
+does **not** update mobile data, and mobile data does **not** update admin-web.
+This phase establishes compatibility only; a future authenticated API must own
+persistence, cross-application synchronization, authorization, and lifecycle
+transition validation.
+
 ## Common Error Responses
 
 - `AUTH_REQUIRED`: no valid user session.

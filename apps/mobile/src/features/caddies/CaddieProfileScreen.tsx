@@ -3,16 +3,18 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { radius, spacing, typography } from "@nobogey/ui";
 import { formatMoney } from "@nobogey/utils";
-import { caddies, courses } from "../../data/catalog";
 import { PrimaryButton, StickyActionBar } from "../../ui/booking-design";
 import { EmptyState } from "../../ui/EmptyState";
+import { backToPreviousPage } from "../../ui/navigation";
 import { ResponsiveContent } from "../../ui/ResponsiveContent";
 import { CaddieAvatar } from "./components/CaddieAvatar";
+import { useMobileData } from "../data/useMobileData";
 
 export function CaddieProfileScreen() {
+  const { caddies, courses } = useMobileData();
   const { caddieId, courseId } = useLocalSearchParams<{ caddieId?: string; courseId?: string }>();
   const caddie = caddies.find((item) => item.id === caddieId);
-  if (!caddie) return <SafeAreaView edges={["top", "bottom"]} style={styles.safeArea}><View style={styles.emptyPage}><EmptyState description="Caddie details will appear after the directory service is connected." icon="account-off-outline" title="Caddie unavailable" /></View></SafeAreaView>;
+  if (!caddie) return <SafeAreaView edges={["top", "bottom"]} style={styles.safeArea}><View style={styles.emptyPage}><EmptyState description="Caddie details will appear after the directory service is connected." icon="account-off-outline" minHeight={640} title="Caddie unavailable" /></View></SafeAreaView>;
   const course = courses.find((item) => item.id === (courseId ?? caddie.homeCourseId));
   return <SafeAreaView edges={["top", "bottom"]} style={styles.safeArea}>
     <ScrollView contentContainerStyle={styles.content} contentInsetAdjustmentBehavior="automatic" showsVerticalScrollIndicator={false}><ResponsiveContent>
@@ -23,7 +25,7 @@ export function CaddieProfileScreen() {
       </View>
       <View style={styles.about}><Section title="ABOUT"><Text selectable style={styles.aboutText}>{caddie.bio}</Text><Text selectable style={styles.homeCourse}>Home Course: <Text style={styles.homeCourseValue}>{course?.name ?? "Not set"}</Text></Text></Section><Section title="SPECIALTIES"><View style={styles.tags}>{caddie.specialties.map((item) => <Text key={item} style={styles.tag}>{item}</Text>)}</View></Section><Section title="PREFERRED-CADDIE REQUEST"><Text selectable style={styles.scheduleNote}>Choose a tee time from the club’s live tee sheet. This caddie is requested first; the course assigns the next qualified caddie if their prior round is still in progress.</Text></Section></View>
     </ResponsiveContent></ScrollView>
-    <StickyActionBar><View style={styles.actions}><Pressable accessibilityLabel="Close caddie profile" accessibilityRole="button" onPress={() => router.back()} style={styles.close}><Text style={styles.closeText}>Close</Text></Pressable><View style={styles.book}><PrimaryButton label="Choose tee time" onPress={() => router.push({ pathname: "/golfer/bookings/new/tee-times", params: { caddieId: caddie.id, courseId } })} /></View></View></StickyActionBar>
+    <StickyActionBar><View style={styles.actions}><Pressable accessibilityLabel="Close caddie profile" accessibilityRole="button" onPress={() => backToPreviousPage("/golfer/home")} style={styles.close}><Text style={styles.closeText}>Close</Text></Pressable><View style={styles.book}><PrimaryButton label="Choose tee time" onPress={() => router.push({ pathname: "/golfer/bookings/new/tee-times", params: { caddieId: caddie.id, courseId } })} /></View></View></StickyActionBar>
   </SafeAreaView>;
 }
 

@@ -1,5 +1,5 @@
-import { CaddiePublicProfileScreen } from "../caddie-onboarding/CaddiePublicProfileScreen";
+import { RoleProfileScreen } from "./RoleProfileScreen";
 
 export function CaddieProfileScreen() {
-  return <CaddiePublicProfileScreen />;
+  return <RoleProfileScreen role="caddie" />;
 }

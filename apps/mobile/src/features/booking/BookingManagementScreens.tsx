@@ -4,11 +4,14 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { formatMoney, formatTeeTime } from "@nobogey/utils";
 import { colors, radius, spacing, typography } from "@nobogey/ui";
-import { bookings, caddies, courses } from "../../data/catalog";
 import { EmptyState } from "../../ui/EmptyState";
+import { backToPreviousPage } from "../../ui/navigation";
 import { Button } from "../../ui/primitives";
+import { useMobileData } from "../data/useMobileData";
+import { MobileBottomNavigation } from "../../ui/MobileBottomNavigation";
 
 export function MyBookingsScreen() {
+  const { bookings } = useMobileData();
   const upcomingBookings = bookings.filter((booking) => booking.status === "requested" || booking.status === "confirmed");
   return (
     <SafeAreaView edges={["bottom"]} style={styles.safeArea}>
@@ -19,12 +22,14 @@ export function MyBookingsScreen() {
         </View>
         {upcomingBookings.length
           ? upcomingBookings.map((booking) => <BookingCard booking={booking} key={booking.id} />)
-          : <EmptyState description="Confirmed and requested rounds will appear after the booking service is connected." icon="calendar-blank-outline" title="No upcoming bookings" />}
+          : <EmptyState description="Confirmed and requested rounds will appear after the booking service is connected." icon="calendar-blank-outline" minHeight={390} title="No upcoming bookings" />}
       </ScrollView>
+      <MobileBottomNavigation active="bookings" />
     </SafeAreaView>
   );
 }
 export function BookingDetailsScreen() {
+  const { bookings, caddies, courses } = useMobileData();
   const { bookingId } = useLocalSearchParams<{ bookingId?: string }>();
   const booking = bookings.find((item) => item.id === bookingId);
   const caddie = caddies.find((item) => item.id === booking?.caddieId);
@@ -62,8 +67,8 @@ function UnavailableBooking({ title }: { title: string }) {
   return (
     <SafeAreaView edges={["bottom"]} style={styles.safeArea}>
       <View style={styles.unavailable}>
-        <EmptyState description="Booking details will appear after the booking service is connected." icon="calendar-remove-outline" title={title} />
-        <Button onPress={() => router.replace("/golfer/bookings")}>Back to bookings</Button>
+        <EmptyState description="Booking details will appear after the booking service is connected." icon="calendar-remove-outline" minHeight={500} title={title} />
+        <Button onPress={() => backToPreviousPage("/golfer/bookings")}>Back to bookings</Button>
       </View>
     </SafeAreaView>
   );
@@ -114,7 +119,7 @@ const styles = StyleSheet.create({
   },
   intro: { gap: spacing.sm },
   label: { color: colors.textMuted, fontSize: typography.small, fontWeight: "800", textTransform: "uppercase" },
-  page: { gap: spacing.lg, padding: spacing.xl },
+  page: { gap: spacing.lg, padding: spacing.xl, paddingBottom: 112 },
   safeArea: { backgroundColor: colors.canvas, flex: 1 },
   subtitle: { color: colors.textMuted, fontSize: typography.body },
   title: { color: colors.text, fontSize: typography.heading, fontWeight: "900" },

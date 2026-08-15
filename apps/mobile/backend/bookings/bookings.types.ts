@@ -1,30 +1,15 @@
-/**
- * Bookings types — tee-time and caddie-required booking contracts for golfers.
- *
- * Expected inputs/outputs: tee-time choices and caddie assignment requests in, booking records out.
- * Supabase target (future): tee_times, bookings, and caddie_assignments tables.
- * Status: PLACEHOLDER — not wired to Supabase yet.
- */
-export type BookingStatus = 'pending_caddie' | 'confirmed' | 'cancelled';
+import type { Booking as ContractBooking, BookingStatus as ContractBookingStatus, TeeTimeSlot } from "@nobogey/contracts";
 
-export interface TeeTime {
-  id: string;
-  courseId: string;
-  startsAt: string;
-  status: 'open' | 'held' | 'booked';
-}
+/**
+ * The mobile backend boundary uses the shared booking language. Transport
+ * fields belong in adapters when a real service is selected.
+ */
+export type BookingStatus = ContractBookingStatus;
+export type TeeTime = TeeTimeSlot;
+export type Booking = ContractBooking;
 
 export interface CreateBookingInput {
   teeTimeId: string;
   golferId: string;
   caddieId: string;
 }
-
-export interface Booking {
-  id: string;
-  teeTimeId: string;
-  golferId: string;
-  caddieId: string;
-  status: BookingStatus;
-}
-

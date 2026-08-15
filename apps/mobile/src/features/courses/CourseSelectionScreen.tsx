@@ -3,13 +3,14 @@ import { useEffect, useState } from "react";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { spacing, typography } from "@nobogey/ui";
-import { courses } from "../../data/catalog";
+import { useMobileData } from "../data/useMobileData";
 import { EmptyState } from "../../ui/EmptyState";
 import { BookingStepper, PrimaryButton, StickyActionBar } from "../../ui/booking-design";
 import { CourseCard } from "../booking/components/MarketplaceCards";
 import { ResponsiveContent } from "../../ui/ResponsiveContent";
 
 export function CourseSelectionScreen() {
+  const { courses } = useMobileData();
   const { caddieId, courseId, date } = useLocalSearchParams<{ caddieId?: string; courseId?: string; date?: string }>();
   const [selectedId, setSelectedId] = useState<string | undefined>(courseId);
 
@@ -21,7 +22,7 @@ export function CourseSelectionScreen() {
     <ScrollView contentContainerStyle={styles.content} contentInsetAdjustmentBehavior="automatic" showsVerticalScrollIndicator={false}><ResponsiveContent style={styles.frame}>
       <BookingStepper step={1} />
       <View style={styles.heading}><Text accessibilityRole="header" style={styles.title}>Pick your course.</Text><Text style={styles.subtitle}>{date ? `Courses staffed by NoBogey on ${date}.` : "Browse courses currently staffed by NoBogey."}</Text></View>
-      <View accessibilityRole="radiogroup" style={styles.list}>{courses.length ? courses.map((course) => <CourseCard course={course} key={course.id} onPress={() => setSelectedId(course.id)} selected={selectedId === course.id} />) : <EmptyState description="Courses will appear after the catalog service is connected." icon="golf" title="No courses available" />}</View>
+      <View accessibilityRole="radiogroup" style={styles.list}>{courses.length ? courses.map((course) => <CourseCard course={course} key={course.id} onPress={() => setSelectedId(course.id)} selected={selectedId === course.id} />) : <EmptyState description="Courses will appear after the catalog service is connected." icon="golf" minHeight={430} title="No courses available" />}</View>
     </ResponsiveContent></ScrollView>
     <StickyActionBar><PrimaryButton disabled={!selectedId} label="Choose tee time" onPress={() => router.push({ pathname: "/golfer/bookings/new/tee-times", params: { caddieId, courseId: selectedId, date } })} /></StickyActionBar>
   </SafeAreaView>;
