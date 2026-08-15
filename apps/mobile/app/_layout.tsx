@@ -6,7 +6,7 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 import { colors } from "@nobogey/ui";
 import InterFont from "../assets/fonts/Inter-Variable.ttf";
 import JetBrainsMonoFont from "../assets/fonts/JetBrainsMono-Regular.ttf";
-import { AppSessionProvider } from "../src/features/session/AppSession";
+import { AppSessionProvider, useAppSession } from "../src/features/session/AppSession";
 
 void SplashScreen.preventAutoHideAsync();
 
@@ -16,32 +16,44 @@ export default function RootLayout() {
     JetBrainsMono: JetBrainsMonoFont
   });
 
+  return (
+    <SafeAreaProvider>
+      <AppSessionProvider>
+        <RootNavigator fontsLoaded={fontsLoaded} />
+      </AppSessionProvider>
+    </SafeAreaProvider>
+  );
+}
+
+function RootNavigator({ fontsLoaded }: { fontsLoaded: boolean }) {
+  const { isAuthenticated, isHydrated } = useAppSession();
+
   useEffect(() => {
-    if (fontsLoaded) {
+    if (fontsLoaded && isHydrated) {
       void SplashScreen.hideAsync();
     }
-  }, [fontsLoaded]);
+  }, [fontsLoaded, isHydrated]);
 
-  if (!fontsLoaded) {
+  if (!fontsLoaded || !isHydrated) {
     return null;
   }
 
   return (
-    <SafeAreaProvider>
-      <AppSessionProvider>
-        <StatusBar style="dark" />
-        <Stack
-          screenOptions={{
-            contentStyle: { backgroundColor: colors.canvas },
-            headerShown: false
-          }}
-        >
+    <>
+      <StatusBar style="dark" />
+      <Stack
+        screenOptions={{
+          contentStyle: { backgroundColor: colors.canvas },
+          headerShown: false
+        }}
+      >
         <Stack.Screen name="index" options={{ headerShown: false }} />
-          <Stack.Screen name="(public)" />
-          <Stack.Screen name="(auth)" />
+        <Stack.Screen name="(public)" />
+        <Stack.Screen name="(auth)" />
+        <Stack.Protected guard={isAuthenticated}>
           <Stack.Screen name="(app)" />
-        </Stack>
-      </AppSessionProvider>
-    </SafeAreaProvider>
+        </Stack.Protected>
+      </Stack>
+    </>
   );
 }

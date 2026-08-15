@@ -24,7 +24,7 @@ export function SettingsScreen({ role = "golfer" }: { role?: SettingsRole }) {
     setIsLoggingOut(true);
     try {
       await signOut();
-      router.replace("/sign-in");
+      router.replace({ pathname: "/sign-in", params: { role } });
     } finally {
       setIsLoggingOut(false);
     }
@@ -37,7 +37,7 @@ export function SettingsScreen({ role = "golfer" }: { role?: SettingsRole }) {
         <View style={styles.headerSpacer} />
       </View>
 
-      {sections.map((section, index) => <SettingsSection items={section.items} key={section.title} title={section.title} />)}
+      {sections.map((section) => <SettingsSection items={section.items} key={section.title} title={section.title} />)}
 
       <Pressable accessibilityLabel="Log out" accessibilityRole="button" accessibilityState={{ busy: isLoggingOut, disabled: isLoggingOut }} disabled={isLoggingOut} onPress={() => void logOut()} style={({ pressed }) => [styles.logoutCard, pressed && styles.logoutPressed, isLoggingOut && styles.logoutDisabled]}><MaterialCommunityIcons color="#FF2028" name="logout-variant" size={25} /><Text style={styles.logoutText}>{isLoggingOut ? "Logging out…" : "Log out"}</Text><MaterialCommunityIcons color="#FF2028" name="chevron-right" size={24} /></Pressable>
     </ResponsiveContent></ScrollView>

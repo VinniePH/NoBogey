@@ -18,6 +18,7 @@ NoBogey is an on-demand golf caddie booking product. This repository is being re
 
 ```bash
 pnpm install
+cp apps/mobile/.env.example apps/mobile/.env
 pnpm dev:mobile
 ```
 
@@ -37,4 +38,4 @@ Admin placeholder:
 pnpm dev:admin
 ```
 
-Backend implementation is intentionally deferred. See `docs/api/backend-boundary.md` for the route groups, lifecycle states, permission expectations, and future GCash payment boundary.
+Supabase email/password Auth is live in the mobile app and the `(app)` route group requires an authenticated session. Domain data is still mocked while database schemas, RLS policies, booking persistence, and payments remain deferred. See `docs/api/backend-boundary.md` for those boundaries.

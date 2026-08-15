@@ -1,12 +1,14 @@
 # NoBogey Backend Boundary
 
-The backend runtime is not selected yet. This document defines the expected API surface and ownership rules so mobile work can proceed without locking the platform into a premature framework choice.
+Supabase Auth is the selected mobile identity provider. Domain persistence is not selected yet; this document defines the remaining API surface and ownership rules.
 
 ## Auth and Sessions
 
 - Golfers, caddies, and admins are distinct roles.
-- Mobile starts with a local role switch only; real authentication is out of scope for the foundation.
-- Future API requests should include a session identity and role claims.
+- Mobile uses Supabase email/password Auth with persisted sessions.
+- Expo Router protects the `(app)` group whenever there is no authenticated Supabase session.
+- The stored `preferred_role` user metadata is a UI preference only. It must never authorize golfer, caddie, or admin operations.
+- Role authorization must come from database-backed profile state or trusted `app_metadata`, with RLS enforcing ownership for every exposed table.
 - Permission failures should return `PERMISSION_DENIED` with a stable request id.
 
 ## Route Groups

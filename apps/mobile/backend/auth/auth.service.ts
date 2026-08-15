@@ -1,34 +1,59 @@
-/**
- * Auth service — isolates golfer and caddie authentication for the mobile app.
- *
- * Expected inputs/outputs: credentials or a session request in, session/identity data out.
- * Supabase target (future): auth.users, auth.sessions, and the Auth API.
- * Status: PLACEHOLDER — not wired to Supabase yet.
- * Wire-up TODO: call Supabase Auth and synchronize the authenticated user with profiles.
- */
-import type { AuthSession, SignInInput, SignUpInput } from './auth.types';
+import type { Session as SupabaseSession } from '@supabase/supabase-js';
+import { getSupabaseClient } from '../client';
+import type { AuthSession, SignInInput, SignUpInput, SignUpResult } from './auth.types';
 
-/** Sign up a golfer or caddie. Will call Supabase Auth and create the related profile. */
-export async function signUp(input: SignUpInput): Promise<AuthSession> {
-  // TODO(supabase): supabase.auth.signUp({ email: input.email, password: input.password }).
-  throw new Error('Not implemented');
+function toAuthSession(session: SupabaseSession): AuthSession {
+  return {
+    email: session.user.email ?? null,
+    expiresAt: new Date((session.expires_at ?? 0) * 1000).toISOString(),
+    userId: session.user.id
+  };
 }
 
-/** Sign in an existing account. Will call Supabase Auth password sign-in. */
+/** Sign up a golfer or caddie with email and password. */
+export async function signUp(input: SignUpInput): Promise<SignUpResult> {
+  const { data, error } = await getSupabaseClient().auth.signUp({
+    email: input.email,
+    password: input.password,
+    options: {
+      // This is a user-owned UI preference, never an authorization claim.
+      data: { display_name: input.displayName, preferred_role: input.preferredRole }
+    }
+  });
+
+  if (error) throw error;
+
+  return {
+    requiresEmailConfirmation: data.session === null,
+    session: data.session ? toAuthSession(data.session) : null
+  };
+}
+
+/** Sign in an existing account with email and password. */
 export async function signIn(input: SignInInput): Promise<AuthSession> {
-  // TODO(supabase): supabase.auth.signInWithPassword(input).
-  throw new Error('Not implemented');
+  const { data, error } = await getSupabaseClient().auth.signInWithPassword(input);
+  if (error) throw error;
+  return toAuthSession(data.session);
 }
 
-/** Sign out the current account. Will invalidate the local Supabase Auth session. */
+/** Sign out only the current device session. */
 export async function signOut(): Promise<void> {
-  // TODO(supabase): supabase.auth.signOut().
-  throw new Error('Not implemented');
+  const { error } = await getSupabaseClient().auth.signOut({ scope: 'local' });
+  if (error) throw error;
 }
 
-/** Read the current session. Will retrieve the active Supabase Auth session. */
+/** Read the persisted Supabase Auth session. */
 export async function getSession(): Promise<AuthSession | null> {
-  // TODO(supabase): supabase.auth.getSession().
-  throw new Error('Not implemented');
+  const { data, error } = await getSupabaseClient().auth.getSession();
+  if (error) throw error;
+  return data.session ? toAuthSession(data.session) : null;
 }
 
+/** Subscribe to login, refresh, and logout events from Supabase Auth. */
+export function subscribeToAuthState(listener: (session: AuthSession | null) => void): () => void {
+  const { data } = getSupabaseClient().auth.onAuthStateChange((_event, session) => {
+    listener(session ? toAuthSession(session) : null);
+  });
+
+  return () => data.subscription.unsubscribe();
+}

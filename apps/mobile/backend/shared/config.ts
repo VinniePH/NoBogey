@@ -1,18 +1,35 @@
-/**
- * Shared config — future environment/config boundary for the mobile backend modules.
- *
- * Expected inputs/outputs: application config source in, non-secret configuration shape out.
- * Supabase target (future): Supabase project URL and publishable client key environment values.
- * Status: PLACEHOLDER — not wired to Supabase yet.
- */
 export interface BackendConfig {
-  supabaseUrl: string | null;
-  supabasePublishableKey: string | null;
+  supabaseUrl: string;
+  supabasePublishableKey: string;
 }
 
-/** Read backend configuration. Will read Expo-safe public environment variables without embedding secrets. */
+type PublicEnvironment = {
+  EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY?: string | undefined;
+  EXPO_PUBLIC_SUPABASE_URL?: string | undefined;
+};
+
+/** Resolve the Expo-safe public values used by the mobile Supabase client. */
+export function resolveBackendConfig(environment: PublicEnvironment): BackendConfig {
+  const supabaseUrl = environment.EXPO_PUBLIC_SUPABASE_URL?.trim();
+  const supabasePublishableKey = environment.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY?.trim();
+
+  if (!supabaseUrl || !supabasePublishableKey) {
+    throw new Error(
+      "Supabase is not configured. Set EXPO_PUBLIC_SUPABASE_URL and EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY."
+    );
+  }
+
+  if (!/^https?:\/\//u.test(supabaseUrl)) {
+    throw new Error("EXPO_PUBLIC_SUPABASE_URL must be an absolute HTTP(S) URL.");
+  }
+
+  return { supabasePublishableKey, supabaseUrl };
+}
+
+/** Read backend configuration from Expo's public build-time environment. */
 export function getBackendConfig(): BackendConfig {
-  // TODO(supabase): read EXPO_PUBLIC_SUPABASE_URL and EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY.
-  throw new Error('Not implemented');
+  return resolveBackendConfig({
+    EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY: process.env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
+    EXPO_PUBLIC_SUPABASE_URL: process.env.EXPO_PUBLIC_SUPABASE_URL
+  });
 }
-

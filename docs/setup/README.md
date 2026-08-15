@@ -25,7 +25,7 @@ docs/
   setup/       Setup and local runbooks
 ```
 
-The backend is intentionally deferred. Mobile screens currently use typed mock data while shared contracts preserve the future API language.
+Supabase Auth is connected for mobile email/password sessions and protected navigation. Domain screens still use typed mock data while shared contracts preserve the future API language.
 
 ## 2. Prerequisites
 
@@ -88,6 +88,14 @@ Workspace packages are linked through `workspace:*`, so local package changes ar
 
 ## 5. Start The Mobile App
 
+Create the local Expo environment file on a fresh checkout:
+
+```bash
+cp apps/mobile/.env.example apps/mobile/.env
+```
+
+The two `EXPO_PUBLIC_` values identify the Supabase project and its publishable client key. They are intentionally safe for a public mobile bundle; never add a Supabase secret or `service_role` key to Expo environment variables.
+
 Start Expo from the workspace root:
 
 ```bash
@@ -117,6 +125,8 @@ pnpm --filter @nobogey/mobile ios
 Notes:
 
 - The app uses Expo Router through `expo-router/entry`.
+- Supabase Auth sessions persist through AsyncStorage and refresh while the native app is active.
+- Expo Router protects the entire `(app)` group until Supabase reports an authenticated session.
 - The native Android project exists at `apps/mobile/android`.
 - Because `expo-dev-client` is installed, native development builds are available when Expo Go is not enough.
 
