@@ -14,6 +14,8 @@ type CaddieMatchSheetProps = {
   course: GolfCourse | undefined;
   golfer: Golfer | undefined;
   assignmentWindowState?: AssignmentWindowState;
+  isAccepting?: boolean;
+  isAssignmentAccepted?: boolean;
   onAcceptAssignment?: ((booking: Booking) => void) | undefined;
   onClose: () => void;
   onDeclineAssignment?: ((booking: Booking) => void) | undefined;
@@ -21,7 +23,7 @@ type CaddieMatchSheetProps = {
 };
 
 /** Displays a dashboard-selected assignment without creating another navigation state. */
-export function CaddieMatchSheet({ assignmentWindowState = "unknown", booking, caddie, course, golfer, onAcceptAssignment, onClose, onDeclineAssignment, visible }: CaddieMatchSheetProps) {
+export function CaddieMatchSheet({ assignmentWindowState = "unknown", booking, caddie, course, golfer, isAccepting = false, isAssignmentAccepted = false, onAcceptAssignment, onClose, onDeclineAssignment, visible }: CaddieMatchSheetProps) {
   const insets = useSafeAreaInsets();
   const [declineConfirmationVisible, setDeclineConfirmationVisible] = useState(false);
   const isUnavailable = !booking || !caddie || !course;
@@ -62,6 +64,8 @@ export function CaddieMatchSheet({ assignmentWindowState = "unknown", booking, c
               <Text style={styles.assignmentNote}>{caddie.displayName} is shown from the local assignment record. Club confirmation remains authoritative.</Text>
               <AssignmentActions
                 booking={booking}
+                isAccepting={isAccepting}
+                isAssignmentAccepted={isAssignmentAccepted}
                 onAccept={onAcceptAssignment}
                 onDecline={onDeclineAssignment ? () => setDeclineConfirmationVisible(true) : undefined}
                 windowState={assignmentWindowState}
@@ -84,21 +88,22 @@ export function CaddieMatchSheet({ assignmentWindowState = "unknown", booking, c
   );
 }
 
-function AssignmentActions({ booking, onAccept, onDecline, windowState }: { booking: Booking; onAccept: ((booking: Booking) => void) | undefined; onDecline: (() => void) | undefined; windowState: AssignmentWindowState }) {
+function AssignmentActions({ booking, isAccepting, isAssignmentAccepted, onAccept, onDecline, windowState }: { booking: Booking; isAccepting: boolean; isAssignmentAccepted: boolean; onAccept: ((booking: Booking) => void) | undefined; onDecline: (() => void) | undefined; windowState: AssignmentWindowState }) {
   const presentation = getActionsForStatus(booking.status, windowState);
 
+  if (isAssignmentAccepted) return <View style={styles.assignmentActions}><View accessibilityLabel="Assignment accepted" style={[styles.statusBadge, styles.confirmedBadge]}><Text style={styles.confirmedText}>Accepted</Text></View><Text selectable style={styles.actionNote}>Accepted in this device-only demo. The booking payment status was not changed.</Text></View>;
   if (presentation.kind === "confirmed") return <View style={styles.actionRow}><View accessibilityLabel="Assignment confirmed" style={[styles.statusBadge, styles.confirmedBadge]}><Text style={styles.confirmedText}>Confirmed</Text></View></View>;
   if (presentation.kind === "expired") return <View style={styles.actionRow}><View accessibilityLabel="Assignment expired" style={[styles.statusBadge, styles.expiredBadge]}><Text style={styles.expiredText}>Expired</Text></View></View>;
   if (presentation.kind === "none") return null;
 
-  const acceptEnabled = presentation.enabled && Boolean(onAccept);
-  const declineEnabled = presentation.enabled && Boolean(onDecline);
+  const acceptEnabled = presentation.enabled && Boolean(onAccept) && !isAccepting;
+  const declineEnabled = presentation.enabled && Boolean(onDecline) && !isAccepting;
   return <View style={styles.assignmentActions}>
     <View style={styles.actionRow}>
-      <Pressable accessibilityLabel="Accept assignment" accessibilityRole="button" accessibilityState={{ disabled: !acceptEnabled }} disabled={!acceptEnabled} onPress={() => onAccept?.(booking)} style={({ pressed }) => [styles.actionButton, styles.acceptButton, !acceptEnabled && styles.disabledButton, pressed && styles.pressedButton]}><Text style={styles.acceptText}>Accept Assignment</Text></Pressable>
-      <Pressable accessibilityLabel="Decline assignment" accessibilityRole="button" accessibilityState={{ disabled: !declineEnabled }} disabled={!declineEnabled} onPress={onDecline} style={({ pressed }) => [styles.actionButton, styles.declineButton, !declineEnabled && styles.disabledButton, pressed && styles.pressedButton]}><Text style={styles.declineText}>Decline</Text></Pressable>
+      <Pressable accessibilityLabel="Accept assignment" accessibilityRole="button" accessibilityState={{ busy: isAccepting, disabled: !acceptEnabled }} disabled={!acceptEnabled} onPress={() => onAccept?.(booking)} style={({ pressed }) => [styles.actionButton, styles.acceptButton, !acceptEnabled && styles.disabledButton, pressed && styles.pressedButton]}><Text style={styles.acceptText}>{isAccepting ? "Accepting…" : "Accept Assignment"}</Text></Pressable>
+      {onDecline ? <Pressable accessibilityLabel="Decline assignment" accessibilityRole="button" accessibilityState={{ disabled: !declineEnabled }} disabled={!declineEnabled} onPress={onDecline} style={({ pressed }) => [styles.actionButton, styles.declineButton, !declineEnabled && styles.disabledButton, pressed && styles.pressedButton]}><Text style={styles.declineText}>Decline</Text></Pressable> : null}
     </View>
-    {!presentation.enabled ? <Text selectable style={styles.actionNote}>Confirmation becomes available when the booking window is connected.</Text> : !onAccept || !onDecline ? <Text selectable style={styles.actionNote}>Confirmation becomes available when the booking service is connected.</Text> : null}
+    {!presentation.enabled ? <Text selectable style={styles.actionNote}>Confirmation becomes available when the booking window is connected.</Text> : !onAccept ? <Text selectable style={styles.actionNote}>Confirmation becomes available when the booking service is connected.</Text> : null}
   </View>;
 }
 

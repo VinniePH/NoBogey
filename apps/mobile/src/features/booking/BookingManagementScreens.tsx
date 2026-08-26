@@ -1,5 +1,6 @@
-import type { Booking } from "@nobogey/contracts";
+import type { Booking, Caddie, GolfCourse } from "@nobogey/contracts";
 import { router, useLocalSearchParams } from "expo-router";
+import { useEffect } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { formatMoney, formatTeeTime } from "@nobogey/utils";
@@ -9,9 +10,12 @@ import { backToPreviousPage } from "../../ui/navigation";
 import { Button } from "../../ui/primitives";
 import { useMobileData } from "../data/useMobileData";
 import { MobileBottomNavigation } from "../../ui/MobileBottomNavigation";
+import { CaddieContactCard } from "../contact/CaddieContactCard";
+import { useNotificationAlerts } from "../notifications/NotificationAlertProvider";
 
 export function MyBookingsScreen() {
-  const { bookings } = useMobileData();
+  const { bookings, caddies, courses } = useMobileData();
+  const { hasUnreadAlert, isAssignmentAccepted, markBookingOpened } = useNotificationAlerts();
   const upcomingBookings = bookings.filter((booking) => booking.status === "requested" || booking.status === "confirmed");
   return (
     <SafeAreaView edges={["bottom"]} style={styles.safeArea}>
@@ -21,7 +25,7 @@ export function MyBookingsScreen() {
           <Text style={styles.subtitle}>Your upcoming bookings are listed here.</Text>
         </View>
         {upcomingBookings.length
-          ? upcomingBookings.map((booking) => <BookingCard booking={booking} key={booking.id} />)
+          ? upcomingBookings.map((booking) => <BookingCard booking={booking} caddie={caddies.find((item) => item.id === booking.caddieId)} course={courses.find((item) => item.id === booking.courseId)} isAccepted={isAssignmentAccepted(booking.id)} isUnread={hasUnreadAlert("golfer", booking.id, "booking_assignment_accepted")} key={booking.id} onOpen={() => markBookingOpened(booking.id, "golfer")} />)
           : <EmptyState description="Confirmed and requested rounds will appear after the booking service is connected." icon="calendar-blank-outline" minHeight={390} title="No upcoming bookings" />}
       </ScrollView>
       <MobileBottomNavigation active="bookings" />
@@ -30,14 +34,20 @@ export function MyBookingsScreen() {
 }
 export function BookingDetailsScreen() {
   const { bookings, caddies, courses } = useMobileData();
+  const { isAssignmentAccepted, markBookingOpened } = useNotificationAlerts();
   const { bookingId } = useLocalSearchParams<{ bookingId?: string }>();
   const booking = bookings.find((item) => item.id === bookingId);
   const caddie = caddies.find((item) => item.id === booking?.caddieId);
   const course = courses.find((item) => item.id === booking?.courseId);
 
+  useEffect(() => {
+    if (bookingId) markBookingOpened(bookingId, "golfer");
+  }, [bookingId, markBookingOpened]);
+
   if (!booking || !caddie || !course) {
     return <UnavailableBooking title="Booking unavailable" />;
   }
+  const assignmentAccepted = isAssignmentAccepted(booking.id);
 
   return (
     <SafeAreaView edges={["bottom"]} style={styles.safeArea}>
@@ -52,7 +62,9 @@ export function BookingDetailsScreen() {
           <Detail label="Group size" value={`${booking.partySize} golfers`} />
           <Detail label="Caddie rate" value={formatMoney(booking.quotedRate.amountInCentavos)} />
           <Detail label="Status" value={booking.status} />
+          <Detail label="Caddie response" value={assignmentAccepted ? "Accepted" : "Awaiting response"} />
         </View>
+        <CaddieContactCard isAccepted={assignmentAccepted} />
       </ScrollView>
     </SafeAreaView>
   );
@@ -74,21 +86,20 @@ function UnavailableBooking({ title }: { title: string }) {
   );
 }
 
-function BookingCard({ booking }: { booking: Booking }) {
-  const caddie = caddies.find((item) => item.id === booking.caddieId);
-  const course = courses.find((item) => item.id === booking.courseId);
+function BookingCard({ booking, caddie, course, isAccepted, isUnread, onOpen }: { booking: Booking; caddie: Caddie | undefined; course: GolfCourse | undefined; isAccepted: boolean; isUnread: boolean; onOpen: () => void }) {
   if (!caddie || !course) return null;
 
   return (
     <Pressable
       accessibilityLabel={`View booking at ${course.name}`}
       accessibilityRole="button"
-      onPress={() => router.push({ pathname: "/golfer/bookings/[bookingId]", params: { bookingId: booking.id } })}
-      style={styles.bookingCard}
+      onPress={() => { onOpen(); router.push({ pathname: "/golfer/bookings/[bookingId]", params: { bookingId: booking.id } }); }}
+      style={[styles.bookingCard, isUnread && styles.bookingCardUnread]}
     >
-      <Text style={styles.cardTitle}>{course.name}</Text>
+      <View style={styles.cardTitleRow}><Text style={styles.cardTitle}>{course.name}</Text>{isUnread ? <Text style={styles.updateBadge}>New update</Text> : null}</View>
       <Text style={styles.cardMeta}>{formatTeeTime(booking.teeTime)}</Text>
       <Text style={styles.cardMeta}>{caddie.displayName}</Text>
+      <Text style={[styles.assignmentStatus, isAccepted && styles.assignmentAccepted]}>{isAccepted ? "Caddie accepted" : "Awaiting caddie response"}</Text>
     </Pressable>
   );
 }
@@ -106,8 +117,12 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
     padding: spacing.lg
   },
+  bookingCardUnread: { backgroundColor: "#FBF7E8", borderColor: colors.warning, borderWidth: 2 },
+  assignmentAccepted: { color: colors.fairwayDark },
+  assignmentStatus: { color: colors.textMuted, fontSize: typography.small, fontWeight: "800", paddingTop: spacing.xs },
   cardMeta: { color: colors.textMuted, fontSize: typography.small },
   cardTitle: { color: colors.fairwayDark, fontSize: typography.title, fontWeight: "800" },
+  cardTitleRow: { alignItems: "flex-start", flexDirection: "row", gap: spacing.sm, justifyContent: "space-between" },
   detail: { gap: spacing.xs },
   detailCard: {
     backgroundColor: colors.surface,
@@ -123,6 +138,7 @@ const styles = StyleSheet.create({
   safeArea: { backgroundColor: colors.canvas, flex: 1 },
   subtitle: { color: colors.textMuted, fontSize: typography.body },
   title: { color: colors.text, fontSize: typography.heading, fontWeight: "900" },
+  updateBadge: { backgroundColor: "#FFF0B8", borderRadius: 999, color: "#785E0A", fontSize: 9, fontWeight: "900", overflow: "hidden", paddingHorizontal: 7, paddingVertical: 4, textTransform: "uppercase" },
   unavailable: { flex: 1, gap: spacing.lg, justifyContent: "center", padding: spacing.xl },
   value: { color: colors.fairwayDark, fontSize: typography.body, fontWeight: "700" }
 });
