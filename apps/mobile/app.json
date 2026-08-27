@@ -30,7 +30,7 @@
         "expo-splash-screen",
         {
           "backgroundColor": "#1F7A4D",
-          "image": "../../assets/logo/NoBogey-Logo.png",
+          "image": "../../assets/logo/splash-logo-1024x1024.png",
           "imageWidth": 180,
           "resizeMode": "contain"
         }
