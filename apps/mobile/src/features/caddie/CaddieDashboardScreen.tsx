@@ -1,108 +1,91 @@
-import { useState } from "react";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import { Image, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import type { Booking } from "@nobogey/contracts";
 import { router } from "expo-router";
+import { useRef, useState } from "react";
+import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { colors, fonts, radius, spacing, typography } from "@nobogey/ui";
+import { colors, spacing } from "@nobogey/ui";
+import { EmptyState } from "../../ui/EmptyState";
+import { backToPreviousPage } from "../../ui/navigation";
 import { ResponsiveContent } from "../../ui/ResponsiveContent";
-import { CaddieAvailabilityEditor, CaddieSchedulePanel, initialAvailabilitySlots, normalizeAvailabilitySlots } from "./CaddieScheduleScreen";
+import { useMobileData } from "../data/useMobileData";
+import { CaddieAvailabilityEditor, CaddieSchedulePanel, initialAvailabilitySlots } from "./CaddieScheduleScreen";
+import { CaddieMatchSheet } from "./CaddieMatchSheet";
+import { isUpcomingCaddieBooking, type UpcomingCaddieBooking } from "./caddie-assignment-ui";
+import { respondToBooking } from '../../../backend/bookings/bookings.service';
+import { InAppAlertBanner } from "../notifications/InAppAlertBanner";
+import { NotificationBell } from "../notifications/NotificationBell";
+import { useNotificationAlerts } from "../notifications/NotificationAlertProvider";
 
 type DashboardTab = "schedule" | "roster" | "portfolio";
-
-const roster = [
-  { name: "Robert Tan", detail: "Sat · 07:30 AM · Manila Southwoods", status: "Confirmed", tone: "confirmed" },
-  { name: "Gov. Luis Arana", detail: "Sat · 12:45 PM · Wack Wack G&CC", status: "Pending", tone: "pending" },
-  { name: "Maria Reyes", detail: "Sun · 06:15 AM · Tagaytay Highlands", status: "Canceled", tone: "canceled" }
-] as const;
-
-const feedback = [
-  { name: "Robert Tan", rating: "5★", comment: "Read the greens at #14 perfectly. Saved me three strokes." },
-  { name: "Maria R.", rating: "4★", comment: "Professional, on-time, great course knowledge." },
-  { name: "Daniel L.", rating: "4★", comment: "Solid club selection advice. Will book again." }
-];
-
+type MetricTrend = { detail: string; direction: "negative" | "positive" };
 export function CaddieDashboardScreen() {
+  const { bookings, caddies, courses, refresh } = useMobileData();
+  const { acceptAssignment, dismissBanner, getUnreadCount, getVisibleAlert, hasUnreadAlert, isAssignmentAccepted, markBookingOpened } = useNotificationAlerts();
   const [tab, setTab] = useState<DashboardTab>("roster");
-  const [clientNotified, setClientNotified] = useState(false);
   const [availabilityEditorVisible, setAvailabilityEditorVisible] = useState(false);
   const [availabilitySlots, setAvailabilitySlots] = useState(initialAvailabilitySlots);
-  const scheduleSlots = normalizeAvailabilitySlots(availabilitySlots);
-
-  return (
-    <SafeAreaView edges={["top", "bottom"]} style={styles.safeArea}>
-      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        <ResponsiveContent style={styles.content}>
-          <View style={styles.header}>
-            <Pressable accessibilityLabel="Open caddie profile" accessibilityRole="button" onPress={() => router.push("/caddie/profile")}><Text style={styles.back}>‹</Text></Pressable>
-            <Pressable accessibilityRole="button" onPress={() => router.push("/caddie/profile")}><Text accessibilityRole="header" style={styles.title}>My Profile</Text></Pressable>
-            <Pressable accessibilityLabel="Open settings" accessibilityRole="button" onPress={() => router.push("/caddie/settings")}><Text style={styles.settings}>⚙</Text></Pressable>
-          </View>
-
-          <NextClientCard clientNotified={clientNotified} onEditAvailability={() => setAvailabilityEditorVisible(true)} onNotify={() => setClientNotified(true)} />
-
-          <View style={styles.weekHeading}>
-            <Text style={styles.eyebrow}>Caddie · Berto</Text>
-            <Text style={styles.weekTitle}>This Week’s Loop</Text>
-          </View>
-          <WeeklyMetrics />
-
-          <View accessibilityRole="tablist" style={styles.tabs}>
-            <Tab active={tab === "schedule"} label="Schedule" onPress={() => setTab("schedule")} />
-            <Tab active={tab === "roster"} label="Roster" onPress={() => setTab("roster")} />
-            <Tab active={tab === "portfolio"} label="Portfolio" onPress={() => setTab("portfolio")} />
-          </View>
-
-          {tab === "schedule" ? <CaddieSchedulePanel onEditAvailability={() => setAvailabilityEditorVisible(true)} slots={scheduleSlots} /> : tab === "roster" ? <RosterPanel /> : <PortfolioPanel />}
-        </ResponsiveContent>
-      </ScrollView>
-      {availabilityEditorVisible ? <CaddieAvailabilityEditor onClose={() => setAvailabilityEditorVisible(false)} onSave={setAvailabilitySlots} slots={scheduleSlots} /> : null}
-    </SafeAreaView>
-  );
+  const [notified, setNotified] = useState(false);
+  const [selectedBookingId, setSelectedBookingId] = useState<string | undefined>();
+  const [acceptingBookingId, setAcceptingBookingId] = useState<string | undefined>();
+  const scrollRef = useRef<ScrollView>(null);
+  const [rosterY, setRosterY] = useState(0);
+  const selectedBooking = bookings.find((booking) => booking.id === selectedBookingId);
+  const selectedCaddie = caddies.find((caddie) => caddie.id === selectedBooking?.caddieId);
+  const selectedCourse = courses.find((course) => course.id === selectedBooking?.courseId);
+  const rosterBookings = bookings.filter(isUpcomingCaddieBooking);
+  const alert = getVisibleAlert("caddie");
+  const focusRoster = () => {
+    setTab("roster");
+    requestAnimationFrame(() => scrollRef.current?.scrollTo({ animated: true, y: Math.max(0, rosterY - spacing.lg) }));
+  };
+  const openBooking = (bookingId: string) => {
+    setTab("roster");
+    setSelectedBookingId(bookingId);
+    markBookingOpened(bookingId, "caddie");
+  };
+  const handleAccept = async (booking: Booking) => {
+    if (isAssignmentAccepted(booking.id)) return;
+    setAcceptingBookingId(booking.id);
+    try {
+      await respondToBooking(booking.id, true);
+      acceptAssignment(booking.id);
+      setSelectedBookingId(undefined);
+      refresh();
+    } finally {
+      setAcceptingBookingId(undefined);
+    }
+  };
+  const handleDecline = async (booking: Booking) => { await respondToBooking(booking.id, false); setSelectedBookingId(undefined); refresh(); };
+  return <SafeAreaView edges={["top", "bottom"]} style={styles.safeArea}><ScrollView ref={scrollRef} contentContainerStyle={styles.scrollContent} contentInsetAdjustmentBehavior="automatic" showsVerticalScrollIndicator={false}><ResponsiveContent style={styles.content}>
+    <DashboardHeader notificationCount={getUnreadCount("caddie")} onNotifications={focusRoster} />
+    {alert ? <InAppAlertBanner actionLabel="View request" body={alert.body} onAction={() => openBooking(alert.bookingId)} onDismiss={() => dismissBanner(alert.id)} title={alert.title} /> : null}
+    <NextClient notified={notified} onEdit={() => setAvailabilityEditorVisible(true)} onNotify={() => setNotified(true)} />
+    <View style={styles.identity}><Text style={styles.identityText}>Caddie</Text><Text accessibilityRole="header" style={styles.loopTitle}>This Week&apos;s Loop</Text></View>
+    <Metrics />
+    <View accessibilityRole="tablist" style={styles.tabs}><Tab active={tab === "schedule"} label="Schedule" onPress={() => setTab("schedule")} /><Tab active={tab === "roster"} label="Roster" onPress={() => setTab("roster")} /><Tab active={tab === "portfolio"} label="Portfolio" onPress={() => setTab("portfolio")} /></View>
+    <View onLayout={(event) => setRosterY(event.nativeEvent.layout.y)}>{tab === "schedule" ? <CaddieSchedulePanel onEditAvailability={() => setAvailabilityEditorVisible(true)} slots={availabilitySlots} /> : tab === "roster" ? <Roster bookings={rosterBookings} hasUnreadRequest={(bookingId) => hasUnreadAlert("caddie", bookingId, "booking_assignment_requested")} isAccepted={isAssignmentAccepted} onSelect={openBooking} /> : <Portfolio />}</View>
+  </ResponsiveContent></ScrollView>{availabilityEditorVisible ? <CaddieAvailabilityEditor onClose={() => setAvailabilityEditorVisible(false)} onSave={setAvailabilitySlots} slots={availabilitySlots} /> : null}<CaddieMatchSheet assignmentWindowState="eligible" booking={selectedBooking} caddie={selectedCaddie} course={selectedCourse} golfer={undefined} isAccepting={selectedBookingId === acceptingBookingId} isAssignmentAccepted={selectedBookingId ? isAssignmentAccepted(selectedBookingId) : false} onAcceptAssignment={(booking) => void handleAccept(booking)} onClose={() => setSelectedBookingId(undefined)} onDeclineAssignment={(booking) => void handleDecline(booking)} visible={Boolean(selectedBookingId)} /></SafeAreaView>;
 }
 
-function NextClientCard({ clientNotified, onEditAvailability, onNotify }: { clientNotified: boolean; onEditAvailability: () => void; onNotify: () => void }) {
-  return <View style={styles.nextClient}>
-    <View style={styles.clientIcon}><MaterialCommunityIcons color={colors.surface} name="clock-outline" size={24} /></View>
-    <View style={styles.clientCopy}><Text style={styles.clientLabel}>NEXT CLIENT</Text><Text style={styles.clientName}>Raf Vincent</Text><Text style={styles.clientDetail}>⌾ 7:30 AM · Manila Golf & Country Club</Text></View>
-    <View style={styles.clientActions}><Pressable accessibilityLabel="Notify client" accessibilityRole="button" onPress={onNotify} style={styles.notifyButton}><Text style={styles.notifyText}>{clientNotified ? "Client Notified" : "Notify Client"}</Text></Pressable><Pressable accessibilityLabel="Edit availability" accessibilityRole="button" onPress={onEditAvailability} style={styles.availabilityButton}><Text style={styles.availabilityText}>Edit Availability</Text></Pressable></View>
-  </View>;
-}
-
-function WeeklyMetrics() {
-  return <View style={styles.metrics}>
-    <Metric label="EARNINGS (WEEK)" value="₱18,400" change="+12%" positive />
-    <Metric label="BOOKED SLOTS" value="7" change="21 Open" positive />
-    <Metric label="AVG. RATING" value="4.9" change="-1%" />
-    <Metric label="REPEAT CLIENTS" value="6" change="-7%" />
-  </View>;
-}
-
-function Metric({ change, label, positive = false, value }: { change: string; label: string; positive?: boolean; value: string }) {
-  return <View style={styles.metric}><Text style={styles.metricLabel}>{label}</Text><View style={styles.metricValueRow}><Text style={styles.metricValue}>{value}</Text><Text style={[styles.metricChange, positive ? styles.positive : styles.negative]}>{change}</Text></View></View>;
-}
-
-function RosterPanel() {
-  return <View style={styles.panelStack}>
-    <View style={styles.panel}><View style={styles.panelHeader}><Text style={styles.panelTitle}>Upcoming Roster</Text><Text style={styles.panelCount}>3 BOOKINGS</Text></View>{roster.map((booking, index) => <View key={booking.name} style={[styles.booking, index > 0 && styles.bookingDivider]}><View style={styles.bookingCopy}><Text style={styles.bookingName}>{booking.name}</Text><Text style={styles.bookingDetail}>{booking.detail}</Text></View><Text style={[styles.status, styles[booking.tone]]}>{booking.status.toUpperCase()}</Text></View>)}</View>
-    <View style={styles.panel}><Text style={styles.panelTitle}>Recent Feedback</Text>{feedback.map((item) => <View key={item.name} style={styles.feedback}><View style={styles.feedbackHeading}><Text style={styles.bookingName}>{item.name}</Text><Text style={styles.rating}>{item.rating}</Text></View><Text style={styles.feedbackComment}>{item.comment}</Text></View>)}</View>
-  </View>;
-}
-
-function PortfolioPanel() {
-  return <View style={styles.panelStack}>
-    <View style={[styles.profileCard, { alignSelf: "stretch", maxWidth: "100%" }]}><Image accessibilityLabel="Berto caddie profile photo" source={{ uri: "https://i.pravatar.cc/320?img=57" }} style={styles.avatar} /><View style={styles.profileTop}><View><Text style={styles.profileName}>Berto</Text><Text style={styles.profileMeta}>12 Years Pro · English, Tagalog</Text></View><Text style={styles.profileRating}>4.9 ★★★★★</Text></View><View style={styles.profileStats}><ProfileChip label="READING" value="Expert Greens" /><ProfileChip label="ROUNDS" value="142" /><ProfileChip label="RATING" value="₱1,500" /><ProfileChip label="HANDICAP" value="Low (0-10)" /></View><Pressable accessibilityLabel="Share portfolio" accessibilityRole="button" style={styles.shareButton}><Text style={styles.shareText}>Share Portfolio</Text></Pressable></View>
-    <View style={styles.portfolioHero}><Text style={styles.heroEyebrow}>PROFESSIONAL PORTFOLIO</Text><Text style={styles.heroTitle}>A-Class certified looper.</Text><Text style={styles.heroText}>Berto has looped at Manila Southwoods since 2013. Known for ice-cold green reads and a calming presence under pressure.</Text></View>
-    <View style={styles.panel}><Text style={styles.portfolioLabel}>CREDENTIALS</Text><Text style={styles.bullet}>•  PGA Caddie Certified</Text><Text style={styles.bullet}>•  First Aid / CPR</Text><Text style={styles.bullet}>•  Rules of Golf Level 2</Text></View>
-    <View style={styles.panel}><Text style={styles.portfolioLabel}>SPECIALTIES</Text><View style={styles.specialties}><Pill label="Bermuda greens" /><Pill label="Wind play" /><Pill label="Low-handicap strategy" /></View></View>
-    <View style={styles.panel}><Text style={styles.portfolioLabel}>PERFORMANCE HIGHLIGHTS</Text><View style={styles.highlights}><Highlight label="Tier" value="A-CLASS" /><Highlight label="Tenure" value="12 years" /><Highlight label="Total Rounds" value="142" /><Highlight label="Repeat Rate" value="67%" /><Highlight label="ON-TIME" value="98%" /><Highlight label="AVG HCP" value="Low (0-9)" /><Highlight label="Languages" value="English, Filipino" /><Highlight label="Specialty" value="Expert Greens" /></View></View>
-  </View>;
-}
-
-function Tab({ active, disabled = false, label, onPress }: { active: boolean; disabled?: boolean; label: string; onPress?: () => void }) { return <Pressable accessibilityRole="tab" accessibilityState={{ disabled, selected: active }} disabled={disabled} onPress={onPress} style={[styles.tab, active && styles.tabActive]}><Text style={[styles.tabText, active && styles.tabTextActive, disabled && styles.tabTextDisabled]}>{label}</Text></Pressable>; }
-function ProfileChip({ label, value }: { label: string; value: string }) { return <View style={styles.profileChip}><Text style={styles.chipLabel}>{label}</Text><Text style={styles.chipValue}>{value}</Text></View>; }
-function Pill({ label }: { label: string }) { return <View style={styles.pill}><Text style={styles.pillText}>{label}</Text></View>; }
-function Highlight({ label, value }: { label: string; value: string }) { return <View style={[styles.highlight, { alignItems: "flex-start", justifyContent: "center" }]}><Text style={[styles.highlightLabel, { fontWeight: "600", textAlign: "left" }]}>{label}</Text><Text style={[styles.highlightValue, { fontWeight: "700", textAlign: "left" }]}>{value}</Text></View>; }
+function DashboardHeader({ notificationCount, onNotifications }: { notificationCount: number; onNotifications: () => void }) { return <View style={styles.header}><Pressable accessibilityLabel="Go back" accessibilityRole="button" hitSlop={8} onPress={() => backToPreviousPage("/caddie/profile")} style={styles.headerAction}><MaterialCommunityIcons color={colors.ink} name="chevron-left" size={32} /></Pressable><Text accessibilityRole="header" style={styles.headerTitle}>My Profile</Text><View style={styles.headerActions}><NotificationBell count={notificationCount} onPress={onNotifications} /><Pressable accessibilityLabel="Open settings" accessibilityRole="button" hitSlop={8} onPress={() => router.push("/caddie/settings")} style={styles.headerAction}><MaterialCommunityIcons color={colors.fairwayDark} name="cog" size={20} /></Pressable></View></View>; }
+function NextClient({ onEdit }: { notified: boolean; onEdit: () => void; onNotify: () => void }) { return <View style={styles.nextClient}><View style={styles.nextRow}><View style={styles.clock}><MaterialCommunityIcons color={colors.surface} name="clock-outline" size={24} /></View><View><Text style={styles.nextLabel}>Next client</Text><Text style={styles.nextName}>No assignment data</Text><Text style={styles.nextMeta}>Connected bookings will appear here</Text></View></View><View style={styles.nextActions}><Pressable accessibilityLabel="Edit availability" accessibilityRole="button" onPress={onEdit} style={styles.editAvailability}><Text style={styles.editAvailabilityText}>Edit Availability</Text></Pressable></View></View>; }
+function Metrics() { return <View style={styles.metrics}><Metric label="Earnings (week)" /><Metric label="Booked slots" /><Metric label="Avg. rating" /><Metric label="Repeat clients" /></View>; }
+function Metric({ label, trend }: { label: string; trend?: MetricTrend | undefined }) { const positive = trend?.direction === "positive"; return <View style={styles.metric}><Text style={styles.metricLabel}>{label}</Text><View style={styles.metricValueRow}><Text accessibilityLabel={`${label} unavailable`} style={styles.metricValue}>—</Text>{trend ? <Text accessibilityLabel={`${positive ? "Increased" : "Decreased"} ${trend.detail}`} selectable style={[styles.change, positive ? styles.positive : styles.negative]}>{positive ? "▲" : "▼"} {trend.detail}</Text> : <Text style={styles.change}>Not connected</Text>}</View></View>; }
+function Roster({ bookings: rosterBookings, hasUnreadRequest, isAccepted, onSelect }: { bookings: UpcomingCaddieBooking[]; hasUnreadRequest: (bookingId: string) => boolean; isAccepted: (bookingId: string) => boolean; onSelect: (bookingId: string) => void }) { return <><View style={styles.sectionCard}><View style={styles.sectionHeader}><Text accessibilityRole="header" style={styles.sectionTitle}>Upcoming Roster</Text><Text style={styles.count}>{rosterBookings.length} {rosterBookings.length === 1 ? "booking" : "bookings"}</Text></View>{rosterBookings.length ? rosterBookings.map((booking, index) => { const unread = hasUnreadRequest(booking.id); const accepted = isAccepted(booking.id); return <Pressable accessibilityLabel="View match" accessibilityRole="button" key={booking.id} onPress={() => onSelect(booking.id)} style={[styles.rosterRow, index > 0 && styles.rowBorder, unread && styles.rosterRowUnread]}><View style={styles.rosterCopy}><View style={styles.rosterTitleRow}><Text style={styles.clientName}>Assigned golfer</Text>{unread ? <Text style={styles.newBadge}>New request</Text> : null}</View><Text style={styles.clientMeta}>{formatRosterTime(booking.teeTime)}</Text></View><Text style={[styles.status, accepted ? styles.accepted : styles[booking.status]]}>{accepted ? "accepted" : booking.status}</Text></Pressable>; }) : <EmptyState description="Assignments will appear here after the booking service is connected." icon="clipboard-text-outline" minHeight={260} title="No upcoming assignments" />}</View><Feedback /></>; }
+function Feedback() { return <View style={styles.sectionCard}><Text accessibilityRole="header" style={styles.sectionTitle}>Recent Feedback</Text><FeedbackPlaceholder /><FeedbackPlaceholder /><FeedbackPlaceholder /></View>; }
+function FeedbackPlaceholder() { return <View style={styles.feedback}><View style={styles.feedbackHeader}><Text style={styles.clientName}>Feedback unavailable</Text><Text style={styles.rating}>—</Text></View><Text style={styles.feedbackText}>Completed-round feedback will appear here after the review service is connected.</Text></View>; }
+function Portfolio() { return <View style={styles.portfolio}><View style={styles.profilePreview}><View style={styles.previewAvatar}><MaterialCommunityIcons color={colors.surface} name="account-outline" size={44} /></View><View style={styles.previewFooter}><View><Text style={styles.previewName}>Portfolio unavailable</Text><Text style={styles.previewMeta}>Profile service not connected</Text></View><Text style={styles.previewRating}>—</Text></View><View accessibilityState={{ disabled: true }} style={styles.shareButton}><Text style={styles.shareText}>Share Portfolio</Text></View></View><View style={styles.portfolioHero}><Text style={styles.nextLabel}>Professional portfolio</Text><Text style={styles.portfolioHeadline}>Details unavailable</Text><Text style={styles.portfolioCopy}>Profile information will appear here when the caddie service is connected.</Text></View><PortfolioBlock title="Credentials"><EmptyState description="Credentials will appear here." icon="certificate-outline" minHeight={150} title="No credential data" /></PortfolioBlock><PortfolioBlock title="Specialties"><EmptyState description="Specialties will appear here." icon="star-outline" minHeight={120} title="No specialty data" /></PortfolioBlock><PortfolioBlock title="Performance highlights"><View style={styles.performance}><Performance label="Tier" /><Performance label="Tenure" /><Performance label="Total rounds" /><Performance label="Repeat rate" /><Performance label="On-time" /><Performance label="Avg HCP" /></View></PortfolioBlock></View>; }
+function PortfolioBlock({ children, title }: { children: React.ReactNode; title: string }) { const isPerformanceHighlights = title === "Performance highlights"; return <View style={styles.sectionCard}><Text style={styles.blockTitle}>{title}</Text><View style={isPerformanceHighlights ? { alignSelf: "center", maxWidth: 680, width: "100%" } : undefined}>{children}</View></View>; }
+function Performance({ label }: { label: string }) { return <View style={styles.performanceItem}><Text style={[styles.performanceLabel, { textAlign: "left" }]}>{label}</Text><Text accessibilityLabel={`${label} unavailable`} style={[styles.performanceValue, { textAlign: "left" }]}>—</Text></View>; }
+function Tab({ active, label, onPress }: { active: boolean; label: string; onPress: () => void }) { return <Pressable accessibilityRole="tab" accessibilityState={{ selected: active }} onPress={onPress} style={[styles.tab, active && styles.tabActive]}><Text style={[styles.tabText, active && styles.tabTextActive]}>{label}</Text></Pressable>; }
+function formatRosterTime(teeTime: string) { return new Intl.DateTimeFormat("en-US", { hour: "numeric", hour12: true, minute: "2-digit", weekday: "short", timeZone: "Asia/Manila" }).format(new Date(teeTime)); }
 
 const styles = StyleSheet.create({
-  availabilityButton: { alignItems: "center", backgroundColor: colors.surface, borderRadius: radius.lg, justifyContent: "center", minHeight: 38, paddingHorizontal: spacing.md }, availabilityText: { color: colors.fairwayDark, fontSize: 12, fontWeight: "800" }, avatar: { borderRadius: radius.sm, height: 150, width: "100%" }, back: { color: colors.ink, fontSize: 42, fontWeight: "300", lineHeight: 40 }, booking: { alignItems: "flex-start", flexDirection: "row", gap: spacing.sm, justifyContent: "space-between", paddingVertical: spacing.md }, bookingCopy: { flex: 1, gap: 3 }, bookingDetail: { color: "#4A6256", fontSize: typography.body, lineHeight: 23 }, bookingDivider: { borderTopColor: "#B7BAB5", borderTopWidth: 1 }, bookingName: { color: "#16372A", fontSize: typography.title, fontWeight: "800" }, bullet: { color: "#264336", fontSize: typography.body, lineHeight: 27 }, canceled: { backgroundColor: "#FFD0D0", color: "#982326" }, chipLabel: { color: "#5D7868", fontFamily: fonts.mono, fontSize: 7, fontWeight: "700" }, chipValue: { color: "#264336", fontSize: 9, fontWeight: "700" }, clientActions: { flexDirection: "row", gap: spacing.md, marginLeft: 50, marginTop: spacing.lg }, clientCopy: { marginLeft: 50 }, clientDetail: { color: "#D6E3D9", fontSize: 12 }, clientIcon: { alignItems: "center", backgroundColor: "#39725B", borderRadius: radius.lg, height: 42, justifyContent: "center", left: spacing.lg, position: "absolute", top: 48, width: 42 }, clientIconText: { color: colors.surface, fontSize: 28 }, clientLabel: { color: "#CADBD0", fontFamily: fonts.mono, fontSize: 11, letterSpacing: 2 }, clientName: { color: colors.surface, fontSize: 24, fontWeight: "800" }, confirmed: { backgroundColor: "#C5F2CE", color: "#316F42" }, content: { gap: spacing.xl }, eyebrrow: {}, eyebrow: { color: "#5B8871", fontFamily: fonts.mono, fontSize: 11 }, feedback: { gap: 4, paddingTop: spacing.lg }, feedbackComment: { color: "#4B6256", fontSize: typography.body, lineHeight: 23 }, feedbackHeading: { alignItems: "center", flexDirection: "row", justifyContent: "space-between" }, header: { alignItems: "center", flexDirection: "row", justifyContent: "space-between", paddingHorizontal: spacing.xs }, highlight: { backgroundColor: "#E8E6DF", borderRadius: 18, flexBasis: "48%", flexGrow: 1, gap: 2, minHeight: 78, padding: spacing.md }, highlightLabel: { color: "#5D806C", fontFamily: fonts.mono, fontSize: 10 }, highlightValue: { color: "#264336", fontFamily: fonts.mono, fontSize: 15, fontWeight: "800" }, highlights: { flexDirection: "row", flexWrap: "wrap", gap: spacing.sm, marginTop: spacing.sm }, heroEyebrow: { color: "#C8D8CB", fontFamily: fonts.mono, fontSize: 10, letterSpacing: 2 }, heroText: { color: "#D8E3DA", fontSize: 12, lineHeight: 15 }, heroTitle: { color: colors.surface, fontSize: 23, fontWeight: "900" }, metric: { backgroundColor: colors.surface, borderColor: "#B7BAB5", borderRadius: 22, borderWidth: 1, gap: spacing.md, minHeight: 108, padding: spacing.lg }, metricChange: { fontFamily: fonts.mono, fontSize: 11, fontWeight: "800", marginBottom: 4 }, metricLabel: { color: "#518064", fontSize: 12, fontWeight: "800" }, metricValue: { color: colors.ink, fontSize: 30, fontWeight: "900" }, metricValueRow: { alignItems: "baseline", flexDirection: "row", gap: 5 }, metrics: { gap: spacing.md }, negative: { color: "#FF5252" }, nextClient: { backgroundColor: "#123F2D", borderRadius: 22, padding: spacing.lg, paddingVertical: spacing.xl }, notifyButton: { alignItems: "center", backgroundColor: colors.primary, borderRadius: radius.lg, justifyContent: "center", minHeight: 38, paddingHorizontal: spacing.lg }, notifyText: { color: colors.surface, fontSize: 12, fontWeight: "800" }, panel: { backgroundColor: colors.surface, borderColor: "#B7BAB5", borderRadius: 22, borderWidth: 1, gap: spacing.sm, padding: spacing.xl }, panelCount: { color: "#6D8276", fontFamily: fonts.mono, fontSize: 13, letterSpacing: 1 }, panelHeader: { alignItems: "center", flexDirection: "row", justifyContent: "space-between" }, panelStack: { gap: spacing.xl }, panelTitle: { color: "#16372A", fontSize: 24, fontWeight: "900" }, pending: { backgroundColor: "#FFF6B7", color: "#8D7413" }, pill: { alignItems: "center", backgroundColor: "#DFDBD1", borderRadius: radius.md, flexGrow: 1, justifyContent: "center", minHeight: 28, paddingHorizontal: spacing.md }, pillText: { color: "#264336", fontSize: 13, fontWeight: "700" }, portfolioHero: { backgroundColor: "#123F2D", borderRadius: 22, gap: spacing.sm, padding: spacing.xl }, portfolioLabel: { color: "#70857A", fontFamily: fonts.mono, fontSize: 13, letterSpacing: 1 }, positive: { color: "#478E68" }, profileCard: { alignSelf: "center", backgroundColor: colors.surface, borderColor: "#888B85", borderRadius: radius.md, borderWidth: 1, gap: spacing.sm, maxWidth: 270, padding: spacing.sm, width: "100%" }, profileChip: { backgroundColor: "#E8E6DF", borderRadius: radius.sm, flex: 1, gap: 2, padding: 6 }, profileMeta: { color: "#879087", fontSize: 8 }, profileName: { color: colors.ink, fontSize: 15, fontWeight: "900" }, profileRating: { color: "#2D5944", fontSize: 9, fontWeight: "800", textAlign: "right" }, profileStats: { flexDirection: "row", flexWrap: "wrap", gap: 4 }, profileTop: { flexDirection: "row", justifyContent: "space-between" }, rating: { color: "#16372A", fontSize: 24, fontWeight: "900" }, safeArea: { backgroundColor: colors.canvas, flex: 1 }, scrollContent: { padding: spacing.lg, paddingBottom: spacing.xxl }, settings: { color: "#285640", fontSize: 26 }, shareButton: { alignItems: "center", backgroundColor: "#417C5B", borderRadius: radius.sm, minHeight: 26, justifyContent: "center" }, shareText: { color: colors.surface, fontSize: 9, fontWeight: "800" }, specialties: { flexDirection: "row", flexWrap: "wrap", gap: spacing.sm, marginTop: spacing.sm }, status: { borderRadius: radius.sm, fontFamily: fonts.mono, fontSize: 12, fontWeight: "800", overflow: "hidden", paddingHorizontal: spacing.sm, paddingVertical: 4 }, tab: { alignItems: "center", borderRadius: radius.sm, flex: 1, justifyContent: "center", minHeight: 34 }, tabActive: { backgroundColor: "#123F2D" }, tabText: { color: "#42765A", fontFamily: fonts.mono, fontSize: 12, fontWeight: "800" }, tabTextActive: { color: colors.surface }, tabTextDisabled: { opacity: 0.55 }, tabs: { backgroundColor: "#DFE0E0", borderRadius: radius.md, flexDirection: "row", padding: 4 }, title: { color: "#050806", fontSize: 28, fontWeight: "900" }, weekHeading: { gap: spacing.sm }, weekTitle: { color: colors.ink, fontSize: 29, fontWeight: "900" }
+  accepted: { backgroundColor: "#C5F0D4", color: "#347457" },
+  headerActions: { alignItems: "center", flexDirection: "row" },
+  newBadge: { backgroundColor: "#FFF0B8", borderRadius: 999, color: "#785E0A", fontSize: 9, fontWeight: "900", overflow: "hidden", paddingHorizontal: 7, paddingVertical: 4, textTransform: "uppercase" },
+  rosterRowUnread: { backgroundColor: "#F8F1D7", borderColor: colors.warning, borderRadius: 12, borderWidth: 1, paddingHorizontal: spacing.sm },
+  rosterTitleRow: { alignItems: "center", flexDirection: "row", flexWrap: "wrap", gap: spacing.sm },
+  blockTitle: { color: "#829A8C", fontSize: 11, fontWeight: "800", letterSpacing: 1.2, textTransform: "uppercase" }, change: { fontSize: 11, fontWeight: "800", marginBottom: 3 }, clientMeta: { color: "#436054", fontSize: 15, marginTop: 4 }, clientName: { color: "#173F2E", fontSize: 19, fontWeight: "900" }, clock: { alignItems: "center", backgroundColor: "#3F8563", borderRadius: 10, height: 44, justifyContent: "center", width: 44 }, content: { gap: spacing.lg }, count: { color: "#547367", fontSize: 11, letterSpacing: 1.6, textTransform: "uppercase" }, editAvailability: { alignItems: "center", backgroundColor: colors.surface, borderRadius: 12, justifyContent: "center", minHeight: 38, paddingHorizontal: spacing.md }, editAvailabilityText: { color: colors.fairwayDark, fontSize: 12, fontWeight: "900" }, feedback: { gap: 6, marginTop: spacing.lg }, feedbackHeader: { alignItems: "center", flexDirection: "row", justifyContent: "space-between" }, feedbackText: { color: "#436054", fontSize: 15, lineHeight: 23 }, header: { alignItems: "center", flexDirection: "row", justifyContent: "space-between", minHeight: 42 }, headerAction: { alignItems: "center", justifyContent: "center", minHeight: 38, minWidth: 38 }, headerTitle: { color: colors.ink, fontSize: 27, fontWeight: "900", letterSpacing: -1 }, identity: { gap: 5 }, identityText: { color: "#4F8168", fontSize: 11, fontWeight: "700", letterSpacing: 1.1 }, loopTitle: { color: colors.ink, fontSize: 30, fontWeight: "900", letterSpacing: -1.1 }, metric: { backgroundColor: colors.surface, borderColor: "#B9BDB7", borderRadius: 22, borderWidth: 1, gap: spacing.md, minHeight: 108, padding: spacing.lg }, metricLabel: { color: "#4E8066", fontSize: 12, fontWeight: "900", textTransform: "uppercase" }, metricValue: { color: colors.ink, fontSize: 31, fontWeight: "900" }, metricValueRow: { alignItems: "baseline", flexDirection: "row", gap: 7 }, metrics: { gap: spacing.md }, negative: { color: "#EB6871" }, nextActions: { flexDirection: "row", gap: spacing.md, justifyContent: "center" }, nextClient: { backgroundColor: "#164730", borderRadius: 24, gap: spacing.md, padding: spacing.lg }, nextLabel: { color: "#B9D2C0", fontSize: 10, fontWeight: "800", letterSpacing: 2, textTransform: "uppercase" }, nextMeta: { color: "#DCE7DE", fontSize: 12, fontWeight: "700", marginTop: 2 }, nextName: { color: colors.surface, fontSize: 24, fontWeight: "900", lineHeight: 28 }, nextRow: { alignItems: "center", flexDirection: "row", gap: spacing.sm }, notifyButton: { alignItems: "center", backgroundColor: "#3F8A62", borderRadius: 12, justifyContent: "center", minHeight: 38, paddingHorizontal: spacing.md }, notifyText: { color: colors.surface, fontSize: 12, fontWeight: "900" }, performance: { flexDirection: "row", flexWrap: "wrap", gap: spacing.sm }, performanceItem: { backgroundColor: "#E8E6DE", borderRadius: 16, flexBasis: "48%", gap: 3, minHeight: 76, padding: spacing.md }, performanceLabel: { color: "#719181", fontSize: 9, fontWeight: "800" }, performanceValue: { color: "#47665A", fontSize: 15, fontWeight: "900" }, portfolio: { gap: spacing.lg }, portfolioCopy: { color: "#D6E5DA", fontSize: 13, lineHeight: 18 }, portfolioHeadline: { color: colors.surface, fontSize: 23, fontWeight: "900" }, portfolioHero: { backgroundColor: "#164730", borderRadius: 22, gap: spacing.sm, padding: spacing.lg }, positive: { color: "#499572" }, previewAvatar: { alignItems: "center", backgroundColor: "#235B3B", borderRadius: 4, height: 170, justifyContent: "center" }, previewFooter: { alignItems: "center", flexDirection: "row", justifyContent: "space-between" }, previewMeta: { color: colors.textMuted, fontSize: 8 }, previewName: { color: colors.ink, fontSize: 16, fontWeight: "900" }, previewRating: { color: "#3F8563", fontSize: 9, fontWeight: "900" }, profilePreview: { alignSelf: "center", backgroundColor: colors.surface, borderColor: "#969C95", borderRadius: 8, borderWidth: 1, gap: spacing.sm, maxWidth: 240, padding: 7, width: "70%" }, rating: { color: "#164730", fontSize: 24, fontWeight: "900" }, rosterCopy: { flex: 1, paddingRight: spacing.sm }, rosterRow: { alignItems: "center", flexDirection: "row", justifyContent: "space-between", minHeight: 80, paddingVertical: spacing.md }, rowBorder: { borderTopColor: "#B9BDB7", borderTopWidth: 1 }, safeArea: { backgroundColor: colors.canvas, flex: 1 }, scrollContent: { padding: spacing.lg, paddingBottom: spacing.xxl }, sectionCard: { backgroundColor: colors.surface, borderColor: "#B9BDB7", borderRadius: 22, borderWidth: 1, gap: spacing.sm, padding: spacing.lg }, sectionHeader: { alignItems: "center", flexDirection: "row", justifyContent: "space-between" }, sectionTitle: { color: "#173F2E", fontSize: 24, fontWeight: "900", letterSpacing: -0.7 }, shareButton: { alignItems: "center", backgroundColor: "#3F8A62", borderRadius: 6, justifyContent: "center", minHeight: 30 }, shareText: { color: colors.surface, fontSize: 9, fontWeight: "900" }, status: { borderRadius: 6, fontSize: 10, fontWeight: "800", letterSpacing: .7, overflow: "hidden", paddingHorizontal: 8, paddingVertical: 6, textTransform: "uppercase" }, canceled: { backgroundColor: "#FFDADD", color: "#B44D55" }, confirmed: { backgroundColor: "#C5F0D4", color: "#347457" }, pending: { backgroundColor: "#FFF0B8", color: "#957516" }, requested: { backgroundColor: "#FFF0B8", color: "#957516" }, tab: { alignItems: "center", borderRadius: 6, flex: 1, justifyContent: "center", minHeight: 36 }, tabActive: { backgroundColor: "#164730" }, tabText: { color: "#4E8066", fontSize: 12, fontWeight: "800" }, tabTextActive: { color: colors.surface }, tabs: { backgroundColor: "#DFE1E0", borderRadius: 6, flexDirection: "row", padding: 4 }
 });

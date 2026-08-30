@@ -1,15 +1,23 @@
-/**
- * Supabase client placeholder — future composition point for a single mobile Supabase client.
- *
- * Expected inputs/outputs: backend configuration in, typed Supabase client out.
- * Supabase target (future): project REST/Auth client; no table is queried here.
- * Status: PLACEHOLDER — not wired to Supabase yet.
- * Wire-up TODO: initialize createClient with public Expo environment values after project linking.
- */
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 
-/** Get the mobile Supabase client. Will initialize and return the configured Supabase JS client. */
-export function getSupabaseClient(): null {
-  // TODO(supabase): return createClient(url, publishableKey) after live project setup.
-  throw new Error('Not implemented');
+import { getBackendConfig } from './shared/config';
+
+let client: SupabaseClient | undefined;
+
+/** Get the single persisted Supabase Auth/API client used by the mobile app. */
+export function getSupabaseClient(): SupabaseClient {
+  if (!client) {
+    const { supabaseUrl, supabasePublishableKey } = getBackendConfig();
+    client = createClient(supabaseUrl, supabasePublishableKey, {
+      auth: {
+        storage: AsyncStorage,
+        autoRefreshToken: true,
+        persistSession: true,
+        detectSessionInUrl: false,
+      },
+    });
+  }
+  return client;
 }
 

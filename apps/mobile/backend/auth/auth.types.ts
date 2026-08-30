@@ -9,6 +9,8 @@ export interface SignUpInput {
   email: string;
   password: string;
   displayName: string;
+  username?: string;
+  role: 'golfer' | 'caddie';
 }
 
 export interface SignInInput {
@@ -19,6 +21,14 @@ export interface SignInInput {
 export interface AuthSession {
   userId: string;
   accessToken: string;
-  expiresAt: string;
+  expiresAt: number;
+  email: string;
+  roles: Array<'golfer' | 'caddie' | 'admin' | 'super_admin'>;
+}
+
+export interface SignUpResult {
+  userId: string;
+  needsEmailConfirmation: boolean;
+  session: AuthSession | null;
 }
 

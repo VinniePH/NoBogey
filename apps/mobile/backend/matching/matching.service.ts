@@ -10,9 +10,9 @@ import type { CaddieCandidate } from '../caddies/caddies.types';
 
 /** Match a golfer with compatible available caddies. Will combine profile fit and availability signals. */
 export async function matchCaddiesForGolfer(
-  golferId: string,
-  courseId: string,
-  startsAt: string,
+  _golferId: string,
+  _courseId: string,
+  _startsAt: string,
 ): Promise<CaddieCandidate[]> {
   // TODO(supabase): supabase.rpc('match_caddie', { golfer_id: golferId, course_id: courseId, starts_at: startsAt }).
   throw new Error('Not implemented');

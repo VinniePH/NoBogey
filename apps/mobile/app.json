@@ -18,7 +18,15 @@
         "foregroundImage": "../../assets/logo/NoBogey-Logo.png",
         "backgroundColor": "#1F7A4D"
       },
-      "package": "com.anonymous.nobogeymobile"
+      "package": "com.anonymous.nobogeymobile",
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "autoVerify": true,
+          "data": [{ "scheme": "https", "host": "nobogeyofficial.com", "pathPrefix": "/" }],
+          "category": ["BROWSABLE", "DEFAULT"]
+        }
+      ]
     },
     "web": {
       "bundler": "metro",
@@ -30,7 +38,7 @@
         "expo-splash-screen",
         {
           "backgroundColor": "#1F7A4D",
-          "image": "../../assets/logo/NoBogey-Logo.png",
+          "image": "../../assets/logo/splash-logo-1024x1024.png",
           "imageWidth": 180,
           "resizeMode": "contain"
         }

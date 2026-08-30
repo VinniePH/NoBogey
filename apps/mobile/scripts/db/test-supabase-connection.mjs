@@ -5,6 +5,7 @@
  * Supabase target (live): the Postgres database identified by `SUPABASE_DB_URL`.
  * Status: LIVE CONNECTION CHECK — no schema, authentication, or application data is read or changed.
  */
+/* global process, console */
 import pg from 'pg';
 
 const { Client } = pg;

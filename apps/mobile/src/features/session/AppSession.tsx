@@ -1,38 +1,58 @@
 import type { PropsWithChildren } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import { createCaddieOnboardingDraft, type CaddieOnboardingDraft, type CaddieVerificationStatus, type OnboardingStep } from "../caddie-onboarding/model";
+import { getSession, signOut as signOutFromSupabase } from '../../../backend/auth/auth.service';
 
 export type AppRole = "golfer" | "caddie";
-export type CaddieVerificationState = "pending" | "verified" | "rejected" | "retry";
+export type CaddieVerificationState = CaddieVerificationStatus;
 
 type Session = {
   activeRole: AppRole | null;
   initialRole: AppRole | null;
   isHydrated: boolean;
   caddieVerification: CaddieVerificationState;
+  caddieOnboarding: CaddieOnboardingDraft;
   golferSignedIn: boolean;
   selectInitialRole: (role: AppRole) => void;
   signInAs: (role: AppRole) => void;
   signOut: () => Promise<void>;
   switchRole: (role: AppRole) => void;
+  updateCaddieOnboarding: (update: Partial<CaddieOnboardingDraft>) => void;
+  setCaddieOnboardingStep: (step: OnboardingStep) => void;
+  submitCaddieOnboarding: () => void;
 };
 
 const SessionContext = createContext<Session | null>(null);
 const roleStorageKey = "nobogey.initial-role";
+const caddieOnboardingStorageKey = "nobogey.caddie-onboarding";
+
+function persistCaddieOnboarding(draft: CaddieOnboardingDraft) {
+  const { password: _password, ...persistedDraft } = draft;
+  void AsyncStorage.setItem(caddieOnboardingStorageKey, JSON.stringify(persistedDraft));
+}
 
 export function AppSessionProvider({ children }: PropsWithChildren) {
   const [activeRole, setActiveRole] = useState<AppRole | null>(null);
   const [initialRole, setInitialRole] = useState<AppRole | null>(null);
   const [isHydrated, setIsHydrated] = useState(false);
   const [golferSignedIn, setGolferSignedIn] = useState(false);
-  const [caddieVerification] = useState<CaddieVerificationState>("pending");
+  const [caddieOnboarding, setCaddieOnboarding] = useState<CaddieOnboardingDraft>(createCaddieOnboardingDraft);
 
   useEffect(() => {
-    void AsyncStorage.getItem(roleStorageKey)
-      .then((storedRole) => {
-        if (storedRole === "golfer" || storedRole === "caddie") {
+    void Promise.all([AsyncStorage.getItem(roleStorageKey), AsyncStorage.getItem(caddieOnboardingStorageKey), getSession().catch(() => null)])
+      .then(([storedRole, storedDraft, authSession]) => {
+        if ((storedRole === "golfer" || storedRole === "caddie") && authSession?.roles.includes(storedRole)) {
           setInitialRole(storedRole);
           setActiveRole(storedRole);
+          if (storedRole === 'golfer') setGolferSignedIn(true);
+        }
+        if (storedDraft) {
+          try {
+            setCaddieOnboarding({ ...createCaddieOnboardingDraft(), ...JSON.parse(storedDraft) } as CaddieOnboardingDraft);
+          } catch {
+            void AsyncStorage.removeItem(caddieOnboardingStorageKey);
+          }
         }
       })
       .finally(() => setIsHydrated(true));
@@ -42,7 +62,8 @@ export function AppSessionProvider({ children }: PropsWithChildren) {
     activeRole,
     initialRole,
     isHydrated,
-    caddieVerification,
+    caddieVerification: caddieOnboarding.verificationStatus,
+    caddieOnboarding,
     golferSignedIn,
     selectInitialRole: (role) => {
       setInitialRole(role);
@@ -54,13 +75,35 @@ export function AppSessionProvider({ children }: PropsWithChildren) {
       if (role === "golfer") setGolferSignedIn(true);
     },
     signOut: async () => {
+      await signOutFromSupabase();
       await AsyncStorage.removeItem(roleStorageKey);
       setActiveRole(null);
       setInitialRole(null);
       setGolferSignedIn(false);
     },
-    switchRole: setActiveRole
-  }), [activeRole, caddieVerification, golferSignedIn, initialRole, isHydrated]);
+    switchRole: setActiveRole,
+    updateCaddieOnboarding: (update) => {
+      setCaddieOnboarding((current) => {
+        const next = { ...current, ...update };
+        persistCaddieOnboarding(next);
+        return next;
+      });
+    },
+    setCaddieOnboardingStep: (step) => {
+      setCaddieOnboarding((current) => {
+        const next = { ...current, step };
+        persistCaddieOnboarding(next);
+        return next;
+      });
+    },
+    submitCaddieOnboarding: () => {
+      setCaddieOnboarding((current) => {
+        const next = { ...current, step: 5 as OnboardingStep };
+        persistCaddieOnboarding(next);
+        return next;
+      });
+    }
+  }), [activeRole, caddieOnboarding, golferSignedIn, initialRole, isHydrated]);
 
   return <SessionContext.Provider value={value}>{children}</SessionContext.Provider>;
 }
@@ -70,5 +113,3 @@ export function useAppSession() {
   if (!session) throw new Error("useAppSession must be used within AppSessionProvider");
   return session;
 }
-
-// TODO(spec): persist caddie signup drafts keyed to phone/email and set the product-approved expiry TTL.

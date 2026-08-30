@@ -37,4 +37,8 @@ Admin placeholder:
 pnpm dev:admin
 ```
 
-Backend implementation is intentionally deferred. See `docs/api/backend-boundary.md` for the route groups, lifecycle states, permission expectations, and future GCash payment boundary.
+The first Supabase database foundation now lives in `supabase/migrations`; see `docs/backend/foundation.md` for its security and transaction boundaries and `docs/api/backend-boundary.md` for the planned API surface. Frontend services remain on mocks until their adapters are migrated deliberately.
+
+## Mobile Release Work
+
+The current six-phase frontend and Android readiness cycle is tracked in [`docs/release/README.md`](docs/release/README.md). It includes the current Phase 0–3 closure gaps, remaining Phase 4–6 work, validation commands, manual QA, and the final no-commit review gate.

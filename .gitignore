@@ -53,3 +53,7 @@ yarn-error.log*
 *.apk
 *.aab
 *.ipa
+
+# Mock Data
+apps/mock-admin-web
+apps/mock-mobile

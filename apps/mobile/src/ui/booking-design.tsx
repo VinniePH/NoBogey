@@ -3,16 +3,6 @@ import { StyleSheet, View } from "react-native";
 import { AppText, Button } from "./primitives";
 import { colors, spacing, typography } from "@nobogey/ui";
 
-export function ImagePlaceholder({ label, style }: { label: string; style?: object }) {
-  return (
-    <View accessibilityLabel={`${label} image placeholder`} accessibilityRole="image" style={[styles.imagePlaceholder, style]}>
-      <View style={styles.placeholderSun} />
-      <View style={styles.placeholderHill} />
-      <AppText selectable={false} style={styles.placeholderText}>{label}</AppText>
-    </View>
-  );
-}
-
 export function BookingStepper({ step }: { step: 1 | 2 | 3 | 4 }) {
   return (
     <View accessibilityLabel={`Booking step ${step} of 4`} style={styles.stepper}>
@@ -53,10 +43,6 @@ export function StickyActionBar({ children }: PropsWithChildren) {
 
 const styles = StyleSheet.create({
   buttonDisabled: { backgroundColor: colors.line },
-  imagePlaceholder: { alignItems: "center", backgroundColor: "#B4C4A5", justifyContent: "center", overflow: "hidden" },
-  placeholderHill: { backgroundColor: "#65875C", borderRadius: 999, bottom: -36, height: 96, left: -16, position: "absolute", right: -16 },
-  placeholderSun: { backgroundColor: "#F4EDC8", borderRadius: 999, height: 58, opacity: 0.9, position: "absolute", right: 20, top: 18, width: 58 },
-  placeholderText: { color: colors.surface, fontSize: typography.small, fontWeight: "800", letterSpacing: 1, textTransform: "uppercase" },
   section: { gap: spacing.md },
   sectionHeader: { alignItems: "center", flexDirection: "row", justifyContent: "space-between" },
   sectionTitle: { color: "#000000", fontSize: typography.heading, fontWeight: "800" },

@@ -1,6 +1,7 @@
 {
   "cli": {
-    "version": ">= 20.5.1"
+    "version": ">= 20.5.1",
+    "appVersionSource": "remote"
   },
   "build": {
     "preview": {
@@ -15,7 +16,11 @@
     },
     "production": {
       "node": "22.22.2",
-      "pnpm": "11.17.0"
+      "pnpm": "11.17.0",
+      "autoIncrement": true
     }
+  },
+  "submit": {
+    "production": {}
   }
 }
