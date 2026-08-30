@@ -9,13 +9,17 @@ import { backToPreviousPage } from "../../ui/navigation";
 import { ResponsiveContent } from "../../ui/ResponsiveContent";
 import { CaddieAvatar } from "./components/CaddieAvatar";
 import { useMobileData } from "../data/useMobileData";
+import { CaddieContactCard } from "../contact/CaddieContactCard";
+import { useNotificationAlerts } from "../notifications/NotificationAlertProvider";
 
 export function CaddieProfileScreen() {
-  const { caddies, courses } = useMobileData();
+  const { bookings, caddies, courses } = useMobileData();
+  const { isAssignmentAccepted } = useNotificationAlerts();
   const { caddieId, courseId } = useLocalSearchParams<{ caddieId?: string; courseId?: string }>();
   const caddie = caddies.find((item) => item.id === caddieId);
   if (!caddie) return <SafeAreaView edges={["top", "bottom"]} style={styles.safeArea}><View style={styles.emptyPage}><EmptyState description="Caddie details will appear after the directory service is connected." icon="account-off-outline" minHeight={640} title="Caddie unavailable" /></View></SafeAreaView>;
   const course = courses.find((item) => item.id === (courseId ?? caddie.homeCourseId));
+  const hasAcceptedBooking = bookings.some((booking) => booking.caddieId === caddie.id && isAssignmentAccepted(booking.id));
   return <SafeAreaView edges={["top", "bottom"]} style={styles.safeArea}>
     <ScrollView contentContainerStyle={styles.content} contentInsetAdjustmentBehavior="automatic" showsVerticalScrollIndicator={false}><ResponsiveContent>
       <View style={styles.pageBody}>
@@ -23,7 +27,7 @@ export function CaddieProfileScreen() {
         <Text style={styles.classLabel}>A - CLASS</Text><Text accessibilityRole="header" selectable style={styles.name}>{caddie.displayName}</Text><Text selectable style={styles.meta}>{caddie.yearsExperience} Years Pro · {caddie.languages.join(", ")}</Text>
         <View style={styles.statGrid}><Stat label="RATING" value={caddie.ratingAverage.toFixed(1)} /><Stat label="ROUNDS" value={String(caddie.completedRounds)} /><Stat label="RATE" value={formatMoney(caddie.rate.amountInCentavos)} /><Stat label="REVIEWS" value={String(caddie.reviewCount)} /></View>
       </View>
-      <View style={styles.about}><Section title="ABOUT"><Text selectable style={styles.aboutText}>{caddie.bio}</Text><Text selectable style={styles.homeCourse}>Home Course: <Text style={styles.homeCourseValue}>{course?.name ?? "Not set"}</Text></Text></Section><Section title="SPECIALTIES"><View style={styles.tags}>{caddie.specialties.map((item) => <Text key={item} style={styles.tag}>{item}</Text>)}</View></Section><Section title="PREFERRED-CADDIE REQUEST"><Text selectable style={styles.scheduleNote}>Choose a tee time from the club’s live tee sheet. This caddie is requested first; the course assigns the next qualified caddie if their prior round is still in progress.</Text></Section></View>
+      <View style={styles.about}><Section title="ABOUT"><Text selectable style={styles.aboutText}>{caddie.bio}</Text><Text selectable style={styles.homeCourse}>Home Course: <Text style={styles.homeCourseValue}>{course?.name ?? "Not set"}</Text></Text></Section><Section title="SPECIALTIES"><View style={styles.tags}>{caddie.specialties.map((item) => <Text key={item} style={styles.tag}>{item}</Text>)}</View></Section><Section title="CONTACT"><CaddieContactCard isAccepted={hasAcceptedBooking} /></Section><Section title="PREFERRED-CADDIE REQUEST"><Text selectable style={styles.scheduleNote}>Choose a tee time from the club’s live tee sheet. This caddie is requested first; the course assigns the next qualified caddie if their prior round is still in progress.</Text></Section></View>
     </ResponsiveContent></ScrollView>
     <StickyActionBar><View style={styles.actions}><Pressable accessibilityLabel="Close caddie profile" accessibilityRole="button" onPress={() => backToPreviousPage("/golfer/home")} style={styles.close}><Text style={styles.closeText}>Close</Text></Pressable><View style={styles.book}><PrimaryButton label="Choose tee time" onPress={() => router.push({ pathname: "/golfer/bookings/new/tee-times", params: { caddieId: caddie.id, courseId } })} /></View></View></StickyActionBar>
   </SafeAreaView>;
