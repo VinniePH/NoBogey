@@ -1,28 +1,14 @@
-/**
- * Users service — owns golfer and caddie profile reads and edits.
- *
- * Expected inputs/outputs: user IDs and profile changes in, profile records out.
- * Supabase target (future): profiles, golfer_profiles, and caddie_profiles tables.
- * Status: PLACEHOLDER — not wired to Supabase yet.
- * Wire-up TODO: query profile data under role-aware RLS policies.
- */
-import type { UpdateUserProfileInput, UserProfile } from './users.types';
+import { getSupabaseClient } from "../client";
 
-/** Fetch a golfer or caddie profile. Will select profile tables by authenticated user ID. */
-export async function getUserProfile(_userId: string): Promise<UserProfile | null> {
-  // TODO(supabase): supabase.from('profiles').select(...).eq('id', userId).single().
-  throw new Error('Not implemented');
+export async function loadCaddieOnboardingDraft<T>(): Promise<T | null> {
+  const { data: auth } = await getSupabaseClient().auth.getUser(); if (!auth.user) return null;
+  const { data, error } = await getSupabaseClient().from("caddie_onboarding_drafts").select("draft").eq("user_id", auth.user.id).maybeSingle();
+  if (error) throw error; return (data?.draft as T | undefined) ?? null;
 }
-
-/** Update a golfer or caddie profile. Will update the appropriate profile table. */
-export async function updateUserProfile(_userId: string, _input: UpdateUserProfileInput): Promise<UserProfile> {
-  // TODO(supabase): supabase.from('profiles').update(input).eq('id', userId).
-  throw new Error('Not implemented');
+export async function saveCaddieOnboardingDraft(draft: unknown, submitted = false): Promise<void> {
+  const { data: auth } = await getSupabaseClient().auth.getUser(); if (!auth.user) return;
+  const { error } = await getSupabaseClient().from("caddie_onboarding_drafts").upsert({ user_id: auth.user.id, draft, updated_at: new Date().toISOString(), ...(submitted ? { submitted_at: new Date().toISOString() } : {}) });
+  if (error) throw error;
 }
-
-/** Create an app profile after sign-up. Will insert a role-specific profile record. */
-export async function createUserProfile(_profile: UserProfile): Promise<UserProfile> {
-  // TODO(supabase): supabase.from('profiles').insert(profile).select().single().
-  throw new Error('Not implemented');
-}
-
+export async function loadPreferences<T>(): Promise<T | null> { const { data: auth } = await getSupabaseClient().auth.getUser(); if (!auth.user) return null; const { data, error } = await getSupabaseClient().from("user_preferences").select("preferences").eq("user_id", auth.user.id).maybeSingle(); if (error) throw error; return (data?.preferences as T | undefined) ?? null; }
+export async function savePreferences(preferences: unknown): Promise<void> { const { data: auth } = await getSupabaseClient().auth.getUser(); if (!auth.user) throw new Error("AUTH_REQUIRED"); const { error } = await getSupabaseClient().from("user_preferences").upsert({ user_id: auth.user.id, preferences, updated_at: new Date().toISOString() }); if (error) throw error; }

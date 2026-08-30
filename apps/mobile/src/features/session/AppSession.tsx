@@ -3,6 +3,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { createCaddieOnboardingDraft, type CaddieOnboardingDraft, type CaddieVerificationStatus, type OnboardingStep } from "../caddie-onboarding/model";
 import { getSession, signOut as signOutFromSupabase } from '../../../backend/auth/auth.service';
+import { loadCaddieOnboardingDraft, saveCaddieOnboardingDraft } from '../../../backend/users/users.service';
 
 export type AppRole = "golfer" | "caddie";
 export type CaddieVerificationState = CaddieVerificationStatus;
@@ -40,14 +41,15 @@ export function AppSessionProvider({ children }: PropsWithChildren) {
   const [caddieOnboarding, setCaddieOnboarding] = useState<CaddieOnboardingDraft>(createCaddieOnboardingDraft);
 
   useEffect(() => {
-    void Promise.all([AsyncStorage.getItem(roleStorageKey), AsyncStorage.getItem(caddieOnboardingStorageKey), getSession().catch(() => null)])
-      .then(([storedRole, storedDraft, authSession]) => {
+    void Promise.all([AsyncStorage.getItem(roleStorageKey), AsyncStorage.getItem(caddieOnboardingStorageKey), getSession().catch(() => null), loadCaddieOnboardingDraft<CaddieOnboardingDraft>().catch(() => null)])
+      .then(([storedRole, storedDraft, authSession, remoteDraft]) => {
         if ((storedRole === "golfer" || storedRole === "caddie") && authSession?.roles.includes(storedRole)) {
           setInitialRole(storedRole);
           setActiveRole(storedRole);
           if (storedRole === 'golfer') setGolferSignedIn(true);
         }
-        if (storedDraft) {
+        if (remoteDraft) setCaddieOnboarding({ ...createCaddieOnboardingDraft(), ...remoteDraft });
+        else if (storedDraft) {
           try {
             setCaddieOnboarding({ ...createCaddieOnboardingDraft(), ...JSON.parse(storedDraft) } as CaddieOnboardingDraft);
           } catch {
@@ -86,6 +88,7 @@ export function AppSessionProvider({ children }: PropsWithChildren) {
       setCaddieOnboarding((current) => {
         const next = { ...current, ...update };
         persistCaddieOnboarding(next);
+        void saveCaddieOnboardingDraft(next).catch(() => undefined);
         return next;
       });
     },
@@ -93,6 +96,7 @@ export function AppSessionProvider({ children }: PropsWithChildren) {
       setCaddieOnboarding((current) => {
         const next = { ...current, step };
         persistCaddieOnboarding(next);
+        void saveCaddieOnboardingDraft(next).catch(() => undefined);
         return next;
       });
     },
@@ -100,6 +104,7 @@ export function AppSessionProvider({ children }: PropsWithChildren) {
       setCaddieOnboarding((current) => {
         const next = { ...current, step: 5 as OnboardingStep };
         persistCaddieOnboarding(next);
+        void saveCaddieOnboardingDraft(next, true).catch(() => undefined);
         return next;
       });
     }
