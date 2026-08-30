@@ -2,6 +2,7 @@ import type { PropsWithChildren } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { createCaddieOnboardingDraft, type CaddieOnboardingDraft, type CaddieVerificationStatus, type OnboardingStep } from "../caddie-onboarding/model";
+import { getSession, signOut as signOutFromSupabase } from '../../../backend/auth/auth.service';
 
 export type AppRole = "golfer" | "caddie";
 export type CaddieVerificationState = CaddieVerificationStatus;
@@ -39,11 +40,12 @@ export function AppSessionProvider({ children }: PropsWithChildren) {
   const [caddieOnboarding, setCaddieOnboarding] = useState<CaddieOnboardingDraft>(createCaddieOnboardingDraft);
 
   useEffect(() => {
-    void Promise.all([AsyncStorage.getItem(roleStorageKey), AsyncStorage.getItem(caddieOnboardingStorageKey)])
-      .then(([storedRole, storedDraft]) => {
-        if (storedRole === "golfer" || storedRole === "caddie") {
+    void Promise.all([AsyncStorage.getItem(roleStorageKey), AsyncStorage.getItem(caddieOnboardingStorageKey), getSession().catch(() => null)])
+      .then(([storedRole, storedDraft, authSession]) => {
+        if ((storedRole === "golfer" || storedRole === "caddie") && authSession?.roles.includes(storedRole)) {
           setInitialRole(storedRole);
           setActiveRole(storedRole);
+          if (storedRole === 'golfer') setGolferSignedIn(true);
         }
         if (storedDraft) {
           try {
@@ -73,6 +75,7 @@ export function AppSessionProvider({ children }: PropsWithChildren) {
       if (role === "golfer") setGolferSignedIn(true);
     },
     signOut: async () => {
+      await signOutFromSupabase();
       await AsyncStorage.removeItem(roleStorageKey);
       setActiveRole(null);
       setInitialRole(null);

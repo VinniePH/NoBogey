@@ -11,7 +11,7 @@ export class CaddieVerificationAdapterError extends Error implements CaddieVerif
     this.name = "CaddieVerificationAdapterError";
     this.code = error.code;
     this.requestId = error.requestId;
-    this.fieldErrors = error.fieldErrors;
+    if (error.fieldErrors !== undefined) this.fieldErrors = error.fieldErrors;
   }
 }
 

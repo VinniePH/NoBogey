@@ -9,7 +9,10 @@ export type TeeTime = TeeTimeSlot;
 export type Booking = ContractBooking;
 
 export interface CreateBookingInput {
-  teeTimeId: string;
-  golferId: string;
   caddieId: string;
+  courseId: string;
+  startsAt: string;
+  endsAt: string;
+  partySize: number;
+  idempotencyKey: string;
 }

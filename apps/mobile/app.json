@@ -18,7 +18,15 @@
         "foregroundImage": "../../assets/logo/NoBogey-Logo.png",
         "backgroundColor": "#1F7A4D"
       },
-      "package": "com.anonymous.nobogeymobile"
+      "package": "com.anonymous.nobogeymobile",
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "autoVerify": true,
+          "data": [{ "scheme": "https", "host": "nobogeyofficial.com", "pathPrefix": "/" }],
+          "category": ["BROWSABLE", "DEFAULT"]
+        }
+      ]
     },
     "web": {
       "bundler": "metro",

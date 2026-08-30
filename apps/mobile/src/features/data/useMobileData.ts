@@ -14,6 +14,7 @@ const emptyData: MobileData = { bookings: [], caddies: [], courses: [], teeTimes
 /** Reads the app's data seam without allowing feature UI to reach into fixtures. */
 export function useMobileData() {
   const [data, setData] = useState<MobileData>(emptyData);
+  const [reloadToken, setReloadToken] = useState(0);
 
   useEffect(() => {
     let active = true;
@@ -27,7 +28,7 @@ export function useMobileData() {
       if (active) setData(emptyData);
     });
     return () => { active = false; };
-  }, []);
+  }, [reloadToken]);
 
-  return data;
+  return { ...data, refresh: () => setReloadToken((value) => value + 1) };
 }

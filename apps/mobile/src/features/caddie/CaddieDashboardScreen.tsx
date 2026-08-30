@@ -11,11 +11,12 @@ import { useMobileData } from "../data/useMobileData";
 import { CaddieAvailabilityEditor, CaddieSchedulePanel, initialAvailabilitySlots } from "./CaddieScheduleScreen";
 import { CaddieMatchSheet } from "./CaddieMatchSheet";
 import { isUpcomingCaddieBooking, type UpcomingCaddieBooking } from "./caddie-assignment-ui";
+import { respondToBooking } from '../../../backend/bookings/bookings.service';
 
 type DashboardTab = "schedule" | "roster" | "portfolio";
 type MetricTrend = { detail: string; direction: "negative" | "positive" };
 export function CaddieDashboardScreen() {
-  const { bookings, caddies, courses } = useMobileData();
+  const { bookings, caddies, courses, refresh } = useMobileData();
   const [tab, setTab] = useState<DashboardTab>("roster");
   const [availabilityEditorVisible, setAvailabilityEditorVisible] = useState(false);
   const [availabilitySlots, setAvailabilitySlots] = useState(initialAvailabilitySlots);
@@ -25,6 +26,7 @@ export function CaddieDashboardScreen() {
   const selectedCaddie = caddies.find((caddie) => caddie.id === selectedBooking?.caddieId);
   const selectedCourse = courses.find((course) => course.id === selectedBooking?.courseId);
   const rosterBookings = bookings.filter(isUpcomingCaddieBooking);
+  const respond = async (bookingId: string, accept: boolean) => { await respondToBooking(bookingId, accept); setSelectedBookingId(undefined); refresh(); };
   return <SafeAreaView edges={["top", "bottom"]} style={styles.safeArea}><ScrollView contentContainerStyle={styles.scrollContent} contentInsetAdjustmentBehavior="automatic" showsVerticalScrollIndicator={false}><ResponsiveContent style={styles.content}>
     <DashboardHeader />
     <NextClient notified={notified} onEdit={() => setAvailabilityEditorVisible(true)} onNotify={() => setNotified(true)} />
@@ -32,7 +34,7 @@ export function CaddieDashboardScreen() {
     <Metrics />
     <View accessibilityRole="tablist" style={styles.tabs}><Tab active={tab === "schedule"} label="Schedule" onPress={() => setTab("schedule")} /><Tab active={tab === "roster"} label="Roster" onPress={() => setTab("roster")} /><Tab active={tab === "portfolio"} label="Portfolio" onPress={() => setTab("portfolio")} /></View>
     {tab === "schedule" ? <CaddieSchedulePanel onEditAvailability={() => setAvailabilityEditorVisible(true)} slots={availabilitySlots} /> : tab === "roster" ? <Roster bookings={rosterBookings} onSelect={setSelectedBookingId} /> : <Portfolio />}
-  </ResponsiveContent></ScrollView>{availabilityEditorVisible ? <CaddieAvailabilityEditor onClose={() => setAvailabilityEditorVisible(false)} onSave={setAvailabilitySlots} slots={availabilitySlots} /> : null}<CaddieMatchSheet booking={selectedBooking} caddie={selectedCaddie} course={selectedCourse} golfer={undefined} onClose={() => setSelectedBookingId(undefined)} visible={Boolean(selectedBookingId)} /></SafeAreaView>;
+  </ResponsiveContent></ScrollView>{availabilityEditorVisible ? <CaddieAvailabilityEditor onClose={() => setAvailabilityEditorVisible(false)} onSave={setAvailabilitySlots} slots={availabilitySlots} /> : null}<CaddieMatchSheet assignmentWindowState="eligible" booking={selectedBooking} caddie={selectedCaddie} course={selectedCourse} golfer={undefined} onAcceptAssignment={(booking) => void respond(booking.id, true)} onClose={() => setSelectedBookingId(undefined)} onDeclineAssignment={(booking) => void respond(booking.id, false)} visible={Boolean(selectedBookingId)} /></SafeAreaView>;
 }
 
 function DashboardHeader() { return <View style={styles.header}><Pressable accessibilityLabel="Go back" accessibilityRole="button" hitSlop={8} onPress={() => backToPreviousPage("/caddie/profile")} style={styles.headerAction}><MaterialCommunityIcons color={colors.ink} name="chevron-left" size={32} /></Pressable><Text accessibilityRole="header" style={styles.headerTitle}>My Profile</Text><Pressable accessibilityLabel="Open settings" accessibilityRole="button" hitSlop={8} onPress={() => router.push("/caddie/settings")} style={styles.headerAction}><MaterialCommunityIcons color={colors.fairwayDark} name="cog" size={20} /></Pressable></View>; }

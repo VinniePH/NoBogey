@@ -1,7 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { Pressable, StyleSheet, Text, View } from "react-native";
-import { colors, spacing } from "@nobogey/ui";
+import { spacing } from "@nobogey/ui";
 
 type MobileNavigationTab = "bookings" | "caddies" | "home" | "profile";
 

@@ -69,7 +69,7 @@ export function SettingsScreen({ role = "golfer" }: { role?: SettingsRole }) {
   );
 }
 
-function getSections(role: SettingsRole, actions: { openSheet: (sheet: SettingsSheet) => void; openTerms: () => void }) {
+function getSections(role: SettingsRole, actions: { openSheet: (sheet: SettingsSheet) => void; openTerms: () => void }): Array<{ title: string; items: SettingsItem[] }> {
   const profilePath = role === "golfer" ? "/golfer/profile" : "/caddie/profile";
   return [
     { title: "ACCOUNT", items: [
@@ -77,7 +77,7 @@ function getSections(role: SettingsRole, actions: { openSheet: (sheet: SettingsS
       { detail: role === "golfer" ? "Preferred courses, language, group size" : "Home course, languages, availability", icon: "calendar-check-outline" as const, label: role === "golfer" ? "Booking Preferences" : "Caddie Preferences", onPress: () => actions.openSheet("preferences") }
     ] },
     { title: "PAYMENT", items: [
-      { detail: role === "golfer" ? "Review local payment setup" : "Review local payout setup", icon: role === "golfer" ? "credit-card-outline" : "bank-outline", label: role === "golfer" ? "Payment Methods" : "Payout Method", onPress: () => actions.openSheet("payment") }
+      { detail: role === "golfer" ? "Review local payment setup" : "Review local payout setup", icon: (role === "golfer" ? "credit-card-outline" : "bank-outline") as SettingsItem['icon'], label: role === "golfer" ? "Payment Methods" : "Payout Method", onPress: () => actions.openSheet("payment") }
     ] },
     { title: "PREFERENCES", items: [
       { detail: role === "golfer" ? "Tee-time alerts, messages, promotions" : "Match alerts, messages, promotions", icon: "bell-outline" as const, label: "Notifications", onPress: () => actions.openSheet("notifications") },

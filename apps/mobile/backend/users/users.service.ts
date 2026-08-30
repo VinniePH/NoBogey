@@ -9,19 +9,19 @@
 import type { UpdateUserProfileInput, UserProfile } from './users.types';
 
 /** Fetch a golfer or caddie profile. Will select profile tables by authenticated user ID. */
-export async function getUserProfile(userId: string): Promise<UserProfile | null> {
+export async function getUserProfile(_userId: string): Promise<UserProfile | null> {
   // TODO(supabase): supabase.from('profiles').select(...).eq('id', userId).single().
   throw new Error('Not implemented');
 }
 
 /** Update a golfer or caddie profile. Will update the appropriate profile table. */
-export async function updateUserProfile(userId: string, input: UpdateUserProfileInput): Promise<UserProfile> {
+export async function updateUserProfile(_userId: string, _input: UpdateUserProfileInput): Promise<UserProfile> {
   // TODO(supabase): supabase.from('profiles').update(input).eq('id', userId).
   throw new Error('Not implemented');
 }
 
 /** Create an app profile after sign-up. Will insert a role-specific profile record. */
-export async function createUserProfile(profile: UserProfile): Promise<UserProfile> {
+export async function createUserProfile(_profile: UserProfile): Promise<UserProfile> {
   // TODO(supabase): supabase.from('profiles').insert(profile).select().single().
   throw new Error('Not implemented');
 }

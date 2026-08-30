@@ -1,7 +1,7 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select plan(28);
+select plan(35);
 
 select has_table('public', 'profiles', 'profiles exists');
 select has_table('public', 'user_roles', 'role assignments exist');
@@ -10,9 +10,13 @@ select has_table('public', 'bookings', 'bookings exist');
 select has_table('public', 'payment_intents', 'payment intents exist');
 select has_table('private', 'financial_ledger', 'private ledger exists');
 select has_table('private', 'payment_callback_events', 'private callbacks exist');
+select has_table('private', 'notification_outbox', 'private notification outbox exists');
+select has_column('public', 'profiles', 'username', 'profiles have usernames');
 select has_function('public', 'create_booking', array['uuid','uuid','timestamp with time zone','timestamp with time zone','smallint','text'], 'booking RPC exists');
 select has_function('private', 'process_verified_payment_event', array['text','text','text','text','bigint'], 'payment callback transition exists');
 select has_function('private', 'complete_booking', array['uuid'], 'completion transition exists');
+select has_function('public', 'complete_signup', array['app_role'], 'signup completion RPC exists');
+select has_function('public', 'respond_to_booking', array['uuid','boolean'], 'caddie response RPC exists');
 
 select ok((select relrowsecurity from pg_class where oid = 'public.bookings'::regclass), 'bookings has RLS');
 select ok((select relrowsecurity from pg_class where oid = 'public.payment_intents'::regclass), 'payment intents have RLS');
@@ -22,6 +26,8 @@ select ok(not has_table_privilege('authenticated', 'private.financial_ledger', '
 select ok((select relrowsecurity from pg_class where oid = 'private.financial_ledger'::regclass), 'private ledger has defense-in-depth RLS');
 select ok((select relrowsecurity from pg_class where oid = 'private.payment_callback_events'::regclass), 'private callbacks have defense-in-depth RLS');
 select ok((select relrowsecurity from pg_class where oid = 'private.audit_logs'::regclass), 'private audit logs have defense-in-depth RLS');
+select ok((select relrowsecurity from pg_class where oid = 'private.notification_outbox'::regclass), 'private notification outbox has defense-in-depth RLS');
+select ok(has_table_privilege('anon', 'public.courses', 'SELECT'), 'anonymous users can browse active courses through RLS');
 select ok(not has_function_privilege('authenticated', 'private.process_verified_payment_event(text,text,text,text,bigint)', 'EXECUTE'), 'clients cannot invoke payment callbacks');
 select ok(has_function_privilege('service_role', 'private.process_verified_payment_event(text,text,text,text,bigint)', 'EXECUTE'), 'service role can invoke payment callbacks');
 select ok(exists(select 1 from storage.buckets where id = 'verification-documents' and not public), 'verification bucket is private');
@@ -65,6 +71,7 @@ select throws_ok(
 );
 select is((select count(*) from public.bookings where golfer_id = '10000000-0000-0000-0000-000000000001'), 1::bigint, 'only one active booking persists');
 reset role;
+select is((select count(*) from private.notification_outbox where booking_id = (select id from public.bookings limit 1)), 2::bigint, 'booking queues golfer and caddie receipt emails');
 
 update public.payment_intents set provider_reference = 'provider-payment-1' where booking_id = (select id from public.bookings limit 1);
 set local role service_role;

@@ -1,6 +1,7 @@
-import type { Booking } from "@nobogey/contracts";
+import type { Booking, Caddie, GolfCourse } from "@nobogey/contracts";
 import { router, useLocalSearchParams } from "expo-router";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { useState } from 'react';
 import { SafeAreaView } from "react-native-safe-area-context";
 import { formatMoney, formatTeeTime } from "@nobogey/utils";
 import { colors, radius, spacing, typography } from "@nobogey/ui";
@@ -9,9 +10,10 @@ import { backToPreviousPage } from "../../ui/navigation";
 import { Button } from "../../ui/primitives";
 import { useMobileData } from "../data/useMobileData";
 import { MobileBottomNavigation } from "../../ui/MobileBottomNavigation";
+import { cancelBooking } from '../../../backend/bookings/bookings.service';
 
 export function MyBookingsScreen() {
-  const { bookings } = useMobileData();
+  const { bookings, caddies, courses } = useMobileData();
   const upcomingBookings = bookings.filter((booking) => booking.status === "requested" || booking.status === "confirmed");
   return (
     <SafeAreaView edges={["bottom"]} style={styles.safeArea}>
@@ -21,7 +23,7 @@ export function MyBookingsScreen() {
           <Text style={styles.subtitle}>Your upcoming bookings are listed here.</Text>
         </View>
         {upcomingBookings.length
-          ? upcomingBookings.map((booking) => <BookingCard booking={booking} key={booking.id} />)
+          ? upcomingBookings.map((booking) => <BookingCard booking={booking} caddies={caddies} courses={courses} key={booking.id} />)
           : <EmptyState description="Confirmed and requested rounds will appear after the booking service is connected." icon="calendar-blank-outline" minHeight={390} title="No upcoming bookings" />}
       </ScrollView>
       <MobileBottomNavigation active="bookings" />
@@ -29,7 +31,8 @@ export function MyBookingsScreen() {
   );
 }
 export function BookingDetailsScreen() {
-  const { bookings, caddies, courses } = useMobileData();
+  const { bookings, caddies, courses, refresh } = useMobileData();
+  const [actionError, setActionError] = useState<string>();
   const { bookingId } = useLocalSearchParams<{ bookingId?: string }>();
   const booking = bookings.find((item) => item.id === bookingId);
   const caddie = caddies.find((item) => item.id === booking?.caddieId);
@@ -53,6 +56,8 @@ export function BookingDetailsScreen() {
           <Detail label="Caddie rate" value={formatMoney(booking.quotedRate.amountInCentavos)} />
           <Detail label="Status" value={booking.status} />
         </View>
+        {booking.status === 'requested' || booking.status === 'confirmed' ? <Button onPress={() => void cancelBooking(booking.id).then(refresh).catch((error) => setActionError(error instanceof Error ? error.message : 'Unable to cancel booking.'))}>Cancel booking</Button> : null}
+        {actionError ? <Text accessibilityLiveRegion="polite" style={styles.subtitle}>{actionError}</Text> : null}
       </ScrollView>
     </SafeAreaView>
   );
@@ -74,7 +79,7 @@ function UnavailableBooking({ title }: { title: string }) {
   );
 }
 
-function BookingCard({ booking }: { booking: Booking }) {
+function BookingCard({ booking, caddies, courses }: { booking: Booking; caddies: Caddie[]; courses: GolfCourse[] }) {
   const caddie = caddies.find((item) => item.id === booking.caddieId);
   const course = courses.find((item) => item.id === booking.courseId);
   if (!caddie || !course) return null;

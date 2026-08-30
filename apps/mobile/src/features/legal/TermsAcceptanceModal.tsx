@@ -79,7 +79,7 @@ const styles = StyleSheet.create({
   checkboxText: { color: colors.text, flex: 1, fontSize: 13, fontWeight: "700", lineHeight: 19 },
   checkmark: { color: colors.onPrimary, fontSize: 16, fontWeight: "900" },
   readHint: { color: colors.textMuted, fontSize: 12, fontWeight: "700", textAlign: "center" },
-  sheet: { backgroundColor: colors.canvas, borderTopLeftRadius: radius.xl, borderTopRightRadius: radius.xl, gap: spacing.md, maxHeight: "92%", padding: spacing.lg, paddingBottom: spacing.xl },
+  sheet: { backgroundColor: colors.canvas, borderTopLeftRadius: radius.lg, borderTopRightRadius: radius.lg, gap: spacing.md, maxHeight: "92%", padding: spacing.lg, paddingBottom: spacing.xl },
   subtitle: { color: colors.textMuted, fontSize: 14, lineHeight: 20 },
   termBody: { color: colors.textMuted, fontSize: 14, lineHeight: 20 },
   termSection: { gap: 4 },

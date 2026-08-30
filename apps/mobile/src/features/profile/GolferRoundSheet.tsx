@@ -24,7 +24,7 @@ export function GolferRoundSheet({ courseName, onClose, round, visible }: Golfer
     <Modal animationType="slide" onRequestClose={onClose} presentationStyle="overFullScreen" transparent visible={visible}>
       <View style={styles.backdrop}>
         <Pressable accessibilityLabel="Close round details" accessibilityRole="button" onPress={onClose} style={StyleSheet.absoluteFill} />
-        <View accessibilityLabel={round ? `Round details from ${round.date}` : "Round unavailable"} accessibilityRole="dialog" accessibilityViewIsModal style={[styles.sheet, { paddingBottom: Math.max(insets.bottom, spacing.md) }]}>
+        <View accessibilityLabel={round ? `Round details from ${round.date}` : "Round unavailable"} accessibilityViewIsModal style={[styles.sheet, { paddingBottom: Math.max(insets.bottom, spacing.md) }]}>
           <View style={styles.handle} />
           <View style={styles.header}>
             <Text accessibilityRole="header" style={styles.title}>Round details</Text>

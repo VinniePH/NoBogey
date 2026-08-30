@@ -10,9 +10,10 @@ import { BookingStepper, PrimaryButton, StickyActionBar } from "../../ui/booking
 import { canSelectTeeTime, clubTeeSheet } from "./clubTeeSheet";
 import { ResponsiveContent } from "../../ui/ResponsiveContent";
 import { useMobileData } from "../data/useMobileData";
+import { mobileDataService } from '../../../backend/mock.service';
 
 const partySize = 4;
-const dates: readonly string[] = [];
+const dates: readonly string[] = mobileDataService.listWeekDates();
 
 export function TeeTimeSelectionScreen() {
   const { courses } = useMobileData();

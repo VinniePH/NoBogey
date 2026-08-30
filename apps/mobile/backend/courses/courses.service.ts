@@ -15,7 +15,7 @@ export async function listCourses(): Promise<Course[]> {
 }
 
 /** Fetch course details. Will query the `courses` table by primary key. */
-export async function getCourse(courseId: string): Promise<Course | null> {
+export async function getCourse(_courseId: string): Promise<Course | null> {
   // TODO(supabase): supabase.from('courses').select(...).eq('id', courseId).single().
   throw new Error('Not implemented');
 }
