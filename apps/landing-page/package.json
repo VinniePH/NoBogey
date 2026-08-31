@@ -1,0 +1,30 @@
+{
+  "name": "@nobogey/landing-page",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 0.0.0.0",
+    "build": "vite build",
+    "lint": "eslint .",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run --passWithNoTests",
+    "clean": "rm -rf dist coverage"
+  },
+  "dependencies": {
+    "@radix-ui/react-accordion": "latest",
+    "lucide-react": "latest",
+    "qrcode.react": "4.2.0",
+    "react": "latest",
+    "react-dom": "latest"
+  },
+  "devDependencies": {
+    "@nobogey/config": "workspace:*",
+    "@tailwindcss/vite": "latest",
+    "@types/react": "latest",
+    "@types/react-dom": "latest",
+    "@vitejs/plugin-react": "latest",
+    "tailwindcss": "latest",
+    "vite": "latest"
+  }
+}
