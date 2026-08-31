@@ -1,7 +1,7 @@
 import type { Booking, Caddie, GolfCourse } from "@nobogey/contracts";
 import { router, useLocalSearchParams } from "expo-router";
 import { useEffect } from "react";
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { useState } from 'react';
 import { SafeAreaView } from "react-native-safe-area-context";
 import { formatMoney, formatTeeTime } from "@nobogey/utils";
@@ -14,6 +14,7 @@ import { MobileBottomNavigation } from "../../ui/MobileBottomNavigation";
 import { cancelBooking } from '../../../backend/bookings/bookings.service';
 import { CaddieContactCard } from "../contact/CaddieContactCard";
 import { useNotificationAlerts } from "../notifications/NotificationAlertProvider";
+import { getSupabaseClient } from "../../../backend/client";
 
 export function MyBookingsScreen() {
   const { bookings, caddies, courses } = useMobileData();
@@ -76,8 +77,13 @@ export function BookingDetailsScreen() {
 }
 
 export function RateCaddieScreen() {
-  // TODO: load the completed booking and submit feedback through the real review service.
-  return <UnavailableBooking title="Caddie rating unavailable" />;
+  const { bookingId } = useLocalSearchParams<{ bookingId?: string }>();
+  const { bookings } = useMobileData();
+  const booking = bookings.find((item) => item.id === bookingId);
+  const [score, setScore] = useState(5); const [comment, setComment] = useState(""); const [message, setMessage] = useState(""); const [saving, setSaving] = useState(false);
+  if (!booking) return <UnavailableBooking title="Caddie rating unavailable" />;
+  const submit = async () => { setSaving(true); setMessage(""); try { const { data: auth } = await getSupabaseClient().auth.getUser(); if (!auth.user) throw new Error("Sign in to submit a rating."); const { error } = await getSupabaseClient().from("ratings").insert({ booking_id: booking.id, rater_id: auth.user.id, ratee_id: booking.caddieId, score, comment: comment.trim() || null }); if (error) throw error; setMessage("Thank you. Your rating was saved."); } catch (error) { setMessage(error instanceof Error ? error.message : "Unable to save rating."); } finally { setSaving(false); } };
+  return <SafeAreaView edges={["bottom"]} style={styles.safeArea}><ScrollView contentContainerStyle={styles.page}><Text accessibilityRole="header" style={styles.title}>Rate your caddie</Text><View style={styles.ratingRow}>{[1,2,3,4,5].map((value) => <Pressable accessibilityLabel={`${value} stars`} accessibilityRole="button" key={value} onPress={() => setScore(value)}><Text style={styles.ratingStar}>{value <= score ? "★" : "☆"}</Text></Pressable>)}</View><TextInput accessibilityLabel="Rating comments" multiline onChangeText={setComment} placeholder="Share feedback about your round" style={styles.ratingInput} value={comment} />{message ? <Text style={styles.subtitle}>{message}</Text> : null}<Button disabled={saving} onPress={() => void submit()}>{saving ? "Saving…" : "Submit rating"}</Button></ScrollView></SafeAreaView>;
 }
 
 function UnavailableBooking({ title }: { title: string }) {
@@ -114,6 +120,9 @@ function Detail({ label, value }: { label: string; value: string }) {
 }
 
 const styles = StyleSheet.create({
+  ratingInput: { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.md, borderWidth: 1, color: colors.text, minHeight: 130, padding: spacing.md, textAlignVertical: "top" },
+  ratingRow: { flexDirection: "row", gap: spacing.sm },
+  ratingStar: { color: colors.warning, fontSize: 34 },
   bookingCard: {
     backgroundColor: colors.surface,
     borderColor: colors.border,

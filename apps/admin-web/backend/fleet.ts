@@ -6,7 +6,6 @@ export const MAX_STRIKES = 3;
 export const MAX_PER_TEE_TIME = 4;
 export const ROUND_MINUTES = 240;
 
-const key = "nobogey.admin.fleet.v1";
 const seed: FleetState = {
   bookingWindow: 3,
   defaultTimes: ["6:00 AM", "7:30 AM", "9:00 AM", "10:30 AM", "1:00 PM", "2:30 PM"],
@@ -15,23 +14,28 @@ const seed: FleetState = {
   caddies: [["Berto M.", "CLASS B", 1500, 12], ["Elena S.", "CLASS A", 1800, 8], ["Jun-Jun T.", "CLASS B", 1650, 15], ["Marco D.", "CLASS A", 1750, 10], ["Rosa L.", "CLASS B", 1550, 16], ["Tatay Edgar", "CLASS A", 1950, 28], ["Andres V.", "CLASS B", 1600, 9], ["Lina B.", "CLASS A", 1850, 11], ["Kiko R.", "TRAINER", 1300, 3]].map(([name, tier, rate, years], index) => ({ id: `c${index + 1}`, name: name as string, tier: tier as Tier, rate: rate as number, years: years as number, active: true, strikes: 0 }))
 };
 
-let state: FleetState = load();
+let state: FleetState = seed;
 const listeners = new Set<() => void>();
 
-function load(): FleetState {
-  try {
-    const saved = localStorage.getItem(key);
-    if (!saved) return seed;
-    const { audit: _audit, ...savedState } = JSON.parse(saved) as FleetState & { audit?: unknown };
-    return savedState;
-  } catch {
-    return seed;
-  }
+async function hydrate() {
+  const { data, error } = await supabase.from("admin_portal_state").select("state").eq("id", "primary").maybeSingle();
+  if (error) return;
+  if (data?.state) state = data.state as FleetState;
+  else await persist(state);
+  listeners.forEach(listener => listener());
 }
+async function persist(next: FleetState) {
+  const { data: auth } = await supabase.auth.getUser();
+  if (!auth.user) return;
+  await supabase.from("admin_portal_state").upsert({ id: "primary", state: next, updated_by: auth.user.id, updated_at: new Date().toISOString() });
+}
+void hydrate();
+supabase.auth.onAuthStateChange((event) => { if (event === "SIGNED_IN" || event === "INITIAL_SESSION") void hydrate(); });
+supabase.channel("admin-portal-state").on("postgres_changes", { event: "*", schema: "public", table: "admin_portal_state", filter: "id=eq.primary" }, () => void hydrate()).subscribe();
 
 function update(next: FleetState) {
   state = next;
-  localStorage.setItem(key, JSON.stringify(state));
+  void persist(state);
   listeners.forEach(listener => listener());
 }
 
@@ -72,3 +76,4 @@ export function assignCaddie(date: string, time: string, caddieId: string): { ok
   return { ok: true };
 }
 export function unassignCaddie(date: string, time: string) { const assignmentKey = `${date}|${time}`; const assigned = state.assignments[assignmentKey] ?? []; if (!assigned.length) return; update({ ...state, assignments: { ...state.assignments, [assignmentKey]: assigned.slice(0, -1) } }); }
+import { supabase } from "../src/lib/supabase";

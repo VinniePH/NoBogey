@@ -7,14 +7,14 @@
  * Wire-up TODO: rank eligible caddies by playstyle compatibility after availability has been checked.
  */
 import type { CaddieCandidate } from '../caddies/caddies.types';
+import { getAvailableCaddies } from '../caddies/caddies.service';
 
 /** Match a golfer with compatible available caddies. Will combine profile fit and availability signals. */
 export async function matchCaddiesForGolfer(
   _golferId: string,
-  _courseId: string,
-  _startsAt: string,
+  courseId: string,
+  startsAt: string,
 ): Promise<CaddieCandidate[]> {
-  // TODO(supabase): supabase.rpc('match_caddie', { golfer_id: golferId, course_id: courseId, starts_at: startsAt }).
-  throw new Error('Not implemented');
+  return getAvailableCaddies(courseId, startsAt);
 }
 

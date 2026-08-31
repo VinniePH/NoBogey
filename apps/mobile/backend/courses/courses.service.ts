@@ -7,16 +7,15 @@
  * Wire-up TODO: list active courses and model Manila Golf and Country Club first.
  */
 import type { Course } from './courses.types';
+import { mobileDataService } from '../mock.service';
 
 /** List bookable courses. Will query active `courses` records for the mobile app. */
 export async function listCourses(): Promise<Course[]> {
-  // TODO(supabase): supabase.from('courses').select(...).eq('is_active', true).
-  throw new Error('Not implemented');
+  return mobileDataService.listCourses();
 }
 
 /** Fetch course details. Will query the `courses` table by primary key. */
-export async function getCourse(_courseId: string): Promise<Course | null> {
-  // TODO(supabase): supabase.from('courses').select(...).eq('id', courseId).single().
-  throw new Error('Not implemented');
+export async function getCourse(courseId: string): Promise<Course | null> {
+  return mobileDataService.getCourse(courseId);
 }
 
