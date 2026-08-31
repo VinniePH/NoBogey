@@ -45,7 +45,7 @@ export const mobileDataService = {
     const courseRows = (courses ?? []) as CourseClubRow[];
     const ids = assignmentRows.map((item) => item.caddie_id);
     if (!ids.length) return [];
-    const { data: names, error: namesError } = await client.from('profiles').select('id,display_name').in('id', ids);
+    const { data: names, error: namesError } = await client.from('caddie_directory').select('id,display_name').in('id', ids);
     if (namesError) throw namesError;
     const nameRows = (names ?? []) as ProfileNameRow[];
     return caddieProfiles.filter((profile) => ids.includes(profile.user_id)).map((profile) => { const clubId = assignmentRows.find((item) => item.caddie_id === profile.user_id)?.club_id; return ({ id: profile.user_id, role: 'caddie', displayName: nameRows.find((item) => item.id === profile.user_id)?.display_name ?? 'NoBogey Caddie', homeCourseId: courseRows.find((item) => item.club_id === clubId)?.id ?? '', bio: profile.bio ?? profile.tagline ?? '', specialties: ['Course strategy', 'Green reading'], languages: ['English', 'Filipino'], courseKnowledge: [], yearsExperience: profile.years_experience ?? 0, ratingAverage: 5, reviewCount: 0, completedRounds: 0, portfolioHighlights: [], rate: { amountInCentavos: Number(profile.rate_amount_in_centavos), currency: 'PHP' }, verificationStatus: 'verified' }); });

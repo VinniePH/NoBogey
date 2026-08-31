@@ -1,7 +1,7 @@
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import type { Booking } from "@nobogey/contracts";
 import { router } from "expo-router";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { colors, spacing } from "@nobogey/ui";
@@ -16,6 +16,7 @@ import { respondToBooking } from '../../../backend/bookings/bookings.service';
 import { InAppAlertBanner } from "../notifications/InAppAlertBanner";
 import { NotificationBell } from "../notifications/NotificationBell";
 import { useNotificationAlerts } from "../notifications/NotificationAlertProvider";
+import { loadSchedule, saveSchedule } from "../../../backend/availability/availability.service";
 
 type DashboardTab = "schedule" | "roster" | "portfolio";
 type MetricTrend = { detail: string; direction: "negative" | "positive" };
@@ -25,6 +26,8 @@ export function CaddieDashboardScreen() {
   const [tab, setTab] = useState<DashboardTab>("roster");
   const [availabilityEditorVisible, setAvailabilityEditorVisible] = useState(false);
   const [availabilitySlots, setAvailabilitySlots] = useState(initialAvailabilitySlots);
+  useEffect(() => { void loadSchedule().then(setAvailabilitySlots).catch(() => undefined); }, []);
+  const updateAvailability = (slots: typeof availabilitySlots) => { setAvailabilitySlots(slots); void saveSchedule(slots).catch(() => undefined); };
   const [notified, setNotified] = useState(false);
   const [selectedBookingId, setSelectedBookingId] = useState<string | undefined>();
   const [acceptingBookingId, setAcceptingBookingId] = useState<string | undefined>();
@@ -65,7 +68,7 @@ export function CaddieDashboardScreen() {
     <Metrics />
     <View accessibilityRole="tablist" style={styles.tabs}><Tab active={tab === "schedule"} label="Schedule" onPress={() => setTab("schedule")} /><Tab active={tab === "roster"} label="Roster" onPress={() => setTab("roster")} /><Tab active={tab === "portfolio"} label="Portfolio" onPress={() => setTab("portfolio")} /></View>
     <View onLayout={(event) => setRosterY(event.nativeEvent.layout.y)}>{tab === "schedule" ? <CaddieSchedulePanel onEditAvailability={() => setAvailabilityEditorVisible(true)} slots={availabilitySlots} /> : tab === "roster" ? <Roster bookings={rosterBookings} hasUnreadRequest={(bookingId) => hasUnreadAlert("caddie", bookingId, "booking_assignment_requested")} isAccepted={isAssignmentAccepted} onSelect={openBooking} /> : <Portfolio />}</View>
-  </ResponsiveContent></ScrollView>{availabilityEditorVisible ? <CaddieAvailabilityEditor onClose={() => setAvailabilityEditorVisible(false)} onSave={setAvailabilitySlots} slots={availabilitySlots} /> : null}<CaddieMatchSheet assignmentWindowState="eligible" booking={selectedBooking} caddie={selectedCaddie} course={selectedCourse} golfer={undefined} isAccepting={selectedBookingId === acceptingBookingId} isAssignmentAccepted={selectedBookingId ? isAssignmentAccepted(selectedBookingId) : false} onAcceptAssignment={(booking) => void handleAccept(booking)} onClose={() => setSelectedBookingId(undefined)} onDeclineAssignment={(booking) => void handleDecline(booking)} visible={Boolean(selectedBookingId)} /></SafeAreaView>;
+  </ResponsiveContent></ScrollView>{availabilityEditorVisible ? <CaddieAvailabilityEditor onClose={() => setAvailabilityEditorVisible(false)} onSave={updateAvailability} slots={availabilitySlots} /> : null}<CaddieMatchSheet assignmentWindowState="eligible" booking={selectedBooking} caddie={selectedCaddie} course={selectedCourse} golfer={undefined} isAccepting={selectedBookingId === acceptingBookingId} isAssignmentAccepted={selectedBookingId ? isAssignmentAccepted(selectedBookingId) : false} onAcceptAssignment={(booking) => void handleAccept(booking)} onClose={() => setSelectedBookingId(undefined)} onDeclineAssignment={(booking) => void handleDecline(booking)} visible={Boolean(selectedBookingId)} /></SafeAreaView>;
 }
 
 function DashboardHeader({ notificationCount, onNotifications }: { notificationCount: number; onNotifications: () => void }) { return <View style={styles.header}><Pressable accessibilityLabel="Go back" accessibilityRole="button" hitSlop={8} onPress={() => backToPreviousPage("/caddie/profile")} style={styles.headerAction}><MaterialCommunityIcons color={colors.ink} name="chevron-left" size={32} /></Pressable><Text accessibilityRole="header" style={styles.headerTitle}>My Profile</Text><View style={styles.headerActions}><NotificationBell count={notificationCount} onPress={onNotifications} /><Pressable accessibilityLabel="Open settings" accessibilityRole="button" hitSlop={8} onPress={() => router.push("/caddie/settings")} style={styles.headerAction}><MaterialCommunityIcons color={colors.fairwayDark} name="cog" size={20} /></Pressable></View></View>; }

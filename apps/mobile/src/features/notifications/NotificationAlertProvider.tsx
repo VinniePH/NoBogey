@@ -1,38 +1,16 @@
 import type { PropsWithChildren } from "react";
-import { createContext, useContext, useMemo, useState } from "react";
-import { acceptAssignmentLocally, createInitialNotificationAlertState, dismissAlertBanner, markBookingAlertsRead } from "./notification-alert-state";
-import type { NotificationKind, NotificationRole } from "./notification-alert.types";
-
-type NotificationAlertContextValue = {
-  acceptAssignment: (bookingId: string) => void;
-  dismissBanner: (alertId: string) => void;
-  getUnreadCount: (role: NotificationRole) => number;
-  getVisibleAlert: (role: NotificationRole) => ReturnType<typeof createInitialNotificationAlertState>["alerts"][number] | undefined;
-  hasUnreadAlert: (role: NotificationRole, bookingId: string, kind: NotificationKind) => boolean;
-  isAssignmentAccepted: (bookingId: string) => boolean;
-  markBookingOpened: (bookingId: string, role: NotificationRole) => void;
-};
-
-const NotificationAlertContext = createContext<NotificationAlertContextValue | null>(null);
-
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { getSupabaseClient } from "../../../backend/client";
+import type { NotificationAlert, NotificationKind, NotificationRole } from "./notification-alert.types";
+type Row = { id: string; kind: string; title: string; body: string; data: { booking_id?: string }; read_at: string | null; created_at: string };
+type Value = { acceptAssignment: (id: string) => void; dismissBanner: (id: string) => void; getUnreadCount: (role: NotificationRole) => number; getVisibleAlert: (role: NotificationRole) => NotificationAlert | undefined; hasUnreadAlert: (role: NotificationRole, bookingId: string, kind: NotificationKind) => boolean; isAssignmentAccepted: (id: string) => boolean; markBookingOpened: (id: string, role: NotificationRole) => void };
+const Context = createContext<Value | null>(null);
+function map(row: Row): NotificationAlert | null { const bookingId = row.data?.booking_id; if (!bookingId) return null; const request = row.kind === "caddie_booking_assignment" || row.kind === "booking_assignment_requested"; return { id: row.id, kind: request ? "booking_assignment_requested" : "booking_assignment_accepted", recipientRole: request ? "caddie" : "golfer", bookingId, title: row.title, body: row.body, createdAt: row.created_at, ...(row.read_at ? { readAt: row.read_at } : {}) }; }
 export function NotificationAlertProvider({ children }: PropsWithChildren) {
-  const [state, setState] = useState(createInitialNotificationAlertState);
-
-  const value = useMemo<NotificationAlertContextValue>(() => ({
-    acceptAssignment: (bookingId) => setState((current) => acceptAssignmentLocally(current, bookingId)),
-    dismissBanner: (alertId) => setState((current) => dismissAlertBanner(current, alertId)),
-    getUnreadCount: (role) => state.alerts.filter((alert) => alert.recipientRole === role && !alert.readAt).length,
-    getVisibleAlert: (role) => state.alerts.find((alert) => alert.recipientRole === role && !alert.readAt && !state.dismissedAlertIds.includes(alert.id)),
-    hasUnreadAlert: (role, bookingId, kind) => state.alerts.some((alert) => alert.recipientRole === role && alert.bookingId === bookingId && alert.kind === kind && !alert.readAt),
-    isAssignmentAccepted: (bookingId) => state.acceptedBookingIds.includes(bookingId),
-    markBookingOpened: (bookingId, role) => setState((current) => markBookingAlertsRead(current, bookingId, role))
-  }), [state]);
-
-  return <NotificationAlertContext.Provider value={value}>{children}</NotificationAlertContext.Provider>;
+  const [alerts, setAlerts] = useState<NotificationAlert[]>([]); const [dismissed, setDismissed] = useState<string[]>([]); const [accepted, setAccepted] = useState<string[]>([]);
+  const load = useCallback(async () => { const { data, error } = await getSupabaseClient().from("notifications").select("id,kind,title,body,data,read_at,created_at").order("created_at", { ascending: false }).limit(100); if (!error) setAlerts(((data ?? []) as Row[]).map(map).filter((item): item is NotificationAlert => Boolean(item))); }, []);
+  useEffect(() => { void load(); const channel = getSupabaseClient().channel("mobile-notifications").on("postgres_changes", { event: "*", schema: "public", table: "notifications" }, () => void load()).subscribe(); return () => { void getSupabaseClient().removeChannel(channel); }; }, [load]);
+  const value = useMemo<Value>(() => ({ acceptAssignment: (id) => setAccepted((v) => v.includes(id) ? v : [...v, id]), dismissBanner: (id) => setDismissed((v) => v.includes(id) ? v : [...v, id]), getUnreadCount: (role) => alerts.filter((a) => a.recipientRole === role && !a.readAt).length, getVisibleAlert: (role) => alerts.find((a) => a.recipientRole === role && !a.readAt && !dismissed.includes(a.id)), hasUnreadAlert: (role, id, kind) => alerts.some((a) => a.recipientRole === role && a.bookingId === id && a.kind === kind && !a.readAt), isAssignmentAccepted: (id) => accepted.includes(id), markBookingOpened: (id, role) => { const ids = alerts.filter((a) => a.bookingId === id && a.recipientRole === role && !a.readAt).map((a) => a.id); if (!ids.length) return; const readAt = new Date().toISOString(); setAlerts((items) => items.map((a) => ids.includes(a.id) ? { ...a, readAt } : a)); void getSupabaseClient().from("notifications").update({ read_at: readAt }).in("id", ids); } }), [accepted, alerts, dismissed]);
+  return <Context.Provider value={value}>{children}</Context.Provider>;
 }
-
-export function useNotificationAlerts() {
-  const value = useContext(NotificationAlertContext);
-  if (!value) throw new Error("useNotificationAlerts must be used within NotificationAlertProvider");
-  return value;
-}
+export function useNotificationAlerts() { const value = useContext(Context); if (!value) throw new Error("useNotificationAlerts must be used within NotificationAlertProvider"); return value; }

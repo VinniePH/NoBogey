@@ -1,30 +1,9 @@
-import type { CaddieVerificationDetail, CaddieVerificationErrorShape, CaddieVerificationSummary, VerificationStatusFilter } from "@nobogey/contracts";
-
-/** The admin verification boundary remains stable until a real review API is connected. */
-export class CaddieVerificationAdapterError extends Error implements CaddieVerificationErrorShape {
-  readonly code: CaddieVerificationErrorShape["code"];
-  readonly requestId: string;
-  readonly fieldErrors?: Record<string, string>;
-
-  constructor(error: CaddieVerificationErrorShape) {
-    super(error.message);
-    this.name = "CaddieVerificationAdapterError";
-    this.code = error.code;
-    this.requestId = error.requestId;
-    if (error.fieldErrors !== undefined) this.fieldErrors = error.fieldErrors;
-  }
-}
-
-function unavailable(): never {
-  throw new CaddieVerificationAdapterError({ code: "UNAVAILABLE", message: "Caddie verification is not connected to a review service yet.", requestId: "local-unconfigured" });
-}
-
-/** Replace this body with the review-service query without changing the UI contract. */
-export async function listCaddiesForVerification(_filter: VerificationStatusFilter = "all"): Promise<CaddieVerificationSummary[]> { return []; }
-export async function getCaddieVerificationDetail(_caddieId: string): Promise<CaddieVerificationDetail> { return unavailable(); }
-export async function approveCaddieVerification(_caddieId: string, _reviewerNote?: string): Promise<CaddieVerificationDetail> { return unavailable(); }
-export async function rejectCaddieVerification(_caddieId: string, _reason: string): Promise<CaddieVerificationDetail> { return unavailable(); }
-export async function requestMoreInfo(_caddieId: string, _message: string): Promise<CaddieVerificationDetail> { return unavailable(); }
-
-/** Compatibility no-op retained for existing tests and non-production callers. */
-export function resetCaddieVerificationMock() {}
+import type { CaddieVerificationDetail, CaddieVerificationDocumentKind, CaddieVerificationErrorShape, CaddieVerificationStatus, CaddieVerificationSummary, VerificationStatusFilter } from "@nobogey/contracts";
+import { supabase } from "../src/lib/supabase";
+export class CaddieVerificationAdapterError extends Error implements CaddieVerificationErrorShape { readonly code; readonly requestId; readonly fieldErrors?: Record<string,string>; constructor(error:CaddieVerificationErrorShape){super(error.message);this.name="CaddieVerificationAdapterError";this.code=error.code;this.requestId=error.requestId;if(error.fieldErrors)this.fieldErrors=error.fieldErrors;} }
+type ProfileRow={user_id:string;verification_status:CaddieVerificationStatus;years_experience:number|null;onboarding_completed_at:string|null;created_at:string};
+async function summaries(filter:VerificationStatusFilter){let query=supabase.from("caddie_profiles").select("user_id,verification_status,years_experience,onboarding_completed_at,created_at").order("created_at",{ascending:false});if(filter!=="all")query=query.eq("verification_status",filter);const{data,error}=await query;if(error)throw error;const rows=(data??[]) as ProfileRow[],ids=rows.map(r=>r.user_id);if(!ids.length)return[];const[{data:names},{data:assignments}]=await Promise.all([supabase.from("profiles").select("id,display_name").in("id",ids),supabase.from("caddie_club_assignments").select("caddie_id,club_id").in("caddie_id",ids)]);return rows.map(row=>({caddieId:row.user_id,courseId:(assignments??[]).find(a=>a.caddie_id===row.user_id)?.club_id??"",displayName:(names??[]).find(n=>n.id===row.user_id)?.display_name??"NoBogey Caddie",tier:"Registered",submittedAt:row.onboarding_completed_at??row.created_at,status:row.verification_status} satisfies CaddieVerificationSummary));}
+export async function listCaddiesForVerification(filter:VerificationStatusFilter="all"){return summaries(filter);}
+export async function getCaddieVerificationDetail(caddieId:string):Promise<CaddieVerificationDetail>{const list=await summaries("all"),summary=list.find(i=>i.caddieId===caddieId);if(!summary)throw new CaddieVerificationAdapterError({code:"NOT_FOUND",message:"Caddie submission not found.",requestId:crypto.randomUUID()});const[{data:profile},{data:assignment},{data:documents},{data:history}]=await Promise.all([supabase.from("caddie_profiles").select("years_experience").eq("user_id",caddieId).single(),supabase.from("caddie_club_assignments").select("club_id,golf_clubs(name)").eq("caddie_id",caddieId).limit(1).maybeSingle(),supabase.from("verification_documents").select("id,document_type,storage_object_name,created_at").eq("caddie_id",caddieId),supabase.from("caddie_verification_reviews").select("id,status,reviewer_note,created_at").eq("caddie_id",caddieId).order("created_at")]);return{...summary,clubName:(assignment?.golf_clubs as unknown as {name?:string})?.name??"No club assigned",yearsExperience:profile?.years_experience??0,languages:["English","Filipino"],documents:(documents??[]).map(d=>({id:d.id,kind:(d.document_type as CaddieVerificationDocumentKind),label:d.document_type.replaceAll("_"," "),fileName:d.storage_object_name.split("/").pop()??d.storage_object_name,reference:d.storage_object_name,submittedAt:d.created_at})),history:(history??[]).map(h=>({id:h.id,status:h.status as CaddieVerificationStatus,occurredAt:h.created_at,...(h.reviewer_note?{reviewerNote:h.reviewer_note}:{})}))};}
+async function decide(caddieId:string,status:CaddieVerificationStatus,note?:string){const{data:auth}=await supabase.auth.getUser();if(!auth.user)throw new Error("AUTH_REQUIRED");const{error}=await supabase.from("caddie_profiles").update({verification_status:status,...(status==="verified"?{onboarding_completed_at:new Date().toISOString()}:{})}).eq("user_id",caddieId);if(error)throw error;await Promise.all([supabase.from("caddie_club_assignments").update({verification_status:status}).eq("caddie_id",caddieId),supabase.from("caddie_verification_reviews").insert({caddie_id:caddieId,reviewer_id:auth.user.id,status,reviewer_note:note?.trim()||null})]);return getCaddieVerificationDetail(caddieId);}
+export const approveCaddieVerification=(id:string,note?:string)=>decide(id,"verified",note);export const rejectCaddieVerification=(id:string,reason:string)=>decide(id,"rejected",reason);export const requestMoreInfo=(id:string,message:string)=>decide(id,"changes_requested",message);export function resetCaddieVerificationMock(){}

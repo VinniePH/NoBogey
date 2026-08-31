@@ -31,7 +31,7 @@ export async function signUp(input: SignUpInput): Promise<SignUpResult> {
     password: input.password,
     options: {
       emailRedirectTo: `${appUrl.replace(/\/$/, '')}/auth/callback`,
-      data: { display_name: input.displayName.trim(), username: input.username?.trim() || undefined, intended_role: input.role },
+      data: { display_name: input.displayName.trim(), username: input.username?.trim() || undefined, intended_role: input.role, terms_version: '2026-08-14', privacy_version: '2026-08-14', legal_accepted_at: new Date().toISOString() },
     },
   });
   if (error) throw error;

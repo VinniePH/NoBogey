@@ -21,16 +21,11 @@ function mapBooking(row: Record<string, unknown>): Booking {
 /** Fetch available tee times. Will query `tee_times` by course, date, and open status. */
 export async function getAvailableTeeTimes(courseId: string, date: string): Promise<TeeTime[]> {
   const client = getSupabaseClient();
-  const { data: course, error: courseError } = await client.from('courses').select('club_id').eq('id', courseId).single();
-  if (courseError) throw courseError;
   const dayStart = new Date(`${date}T00:00:00+08:00`);
-  const dayEnd = new Date(`${date}T23:59:59+08:00`);
-  const { data, error } = await client.from('caddie_availability').select('id,caddie_id,starts_at,ends_at,updated_at').eq('club_id', course.club_id).eq('is_available', true).lte('starts_at', dayEnd.toISOString()).gte('ends_at', dayStart.toISOString());
+  const dayEnd = new Date(`${date}T23:59:59.999+08:00`);
+  const { data, error } = await client.from('tee_times').select('id,course_id,starts_at,player_capacity,status,updated_at').eq('course_id', courseId).gte('starts_at', dayStart.toISOString()).lte('starts_at', dayEnd.toISOString()).in('status', ['open', 'held']).order('starts_at');
   if (error) throw error;
-  return (data ?? []).flatMap((availability) => [7, 9, 11, 13].map((hour) => {
-    const startsAt = new Date(`${date}T${String(hour).padStart(2, '0')}:00:00+08:00`);
-    return { id: `${availability.id}:${startsAt.toISOString()}`, courseId, startsAt: startsAt.toISOString(), remainingPlayerCapacity: 4, remainingCaddieCapacity: 1, status: 'open' as const, sourceUpdatedAt: availability.updated_at };
-  }));
+  return (data ?? []).map((slot) => ({ id: slot.id, courseId: slot.course_id, startsAt: slot.starts_at, remainingPlayerCapacity: slot.player_capacity, remainingCaddieCapacity: 1, status: slot.status === 'open' ? 'open' as const : 'held' as const, sourceUpdatedAt: slot.updated_at }));
 }
 
 /** Create a booking with a required caddie. Will call an atomic `create_booking` RPC. */

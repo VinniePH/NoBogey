@@ -3,7 +3,7 @@
  *
  * Expected inputs/outputs: profile records and editable profile fields.
  * Supabase target (future): profiles, golfer_profiles, and caddie_profiles tables.
- * Status: PLACEHOLDER — not wired to Supabase yet.
+ * Status: Supabase-backed.
  */
 export type UserRole = 'golfer' | 'caddie';
 

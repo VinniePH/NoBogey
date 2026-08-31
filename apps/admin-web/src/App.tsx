@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { colors } from "@nobogey/ui";
 import { CaddieVerificationQueue } from "./features/caddie-verification/CaddieVerificationQueue";
+import { hasAdminRole, supabase } from "./lib/supabase";
 import {
   addCaddie,
   addTeeTime,
@@ -23,10 +24,6 @@ import {
 const tierLabels: Record<Tier, string> = { TRAINER: "Trainer", "CLASS B": "Class B", "CLASS A": "Class A" };
 const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 const weekdays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-const AUTH_KEY = "nobogey.admin.club-owner-session";
-const DEMO_CLUB_ID = "MGCC-ADMIN";
-const DEMO_PASSWORD = "nobogey-demo";
-
 function todayKey() { return formatDate(new Date()); }
 function dateFromKey(key: string) { return new Date(`${key}T12:00:00`); }
 function isoFor(year: number, month: number, day: number) { return formatDate(new Date(year, month, day, 12)); }
@@ -34,20 +31,23 @@ function isoFor(year: number, month: number, day: number) { return formatDate(ne
 export function App() {
   useFleet();
   const [path, setPath] = useState(() => window.location.pathname);
-  const [signedIn, setSignedIn] = useState(() => localStorage.getItem(AUTH_KEY) === "true");
-  useEffect(() => { if (window.location.pathname === "/") { history.replaceState({}, "", signedIn ? "/admin" : "/login"); setPath(signedIn ? "/admin" : "/login"); } }, [signedIn]);
+  const [signedIn, setSignedIn] = useState(false);
+  const [hydrated, setHydrated] = useState(false);
+  useEffect(() => { void supabase.auth.getSession().then(async ({ data }) => { const allowed = data.session ? await hasAdminRole(data.session.user.id).catch(() => false) : false; if (data.session && !allowed) await supabase.auth.signOut(); setSignedIn(allowed); setHydrated(true); }); }, []);
+  useEffect(() => { if (!hydrated) return; if (window.location.pathname === "/" || window.location.pathname === "/auth/callback") { history.replaceState({}, "", signedIn ? "/admin" : "/login"); setPath(signedIn ? "/admin" : "/login"); } }, [hydrated, signedIn]);
   const navigate = (next: string) => { history.pushState({}, "", next); setPath(next); };
   useEffect(() => { const onPop = () => setPath(window.location.pathname); addEventListener("popstate", onPop); return () => removeEventListener("popstate", onPop); }, []);
-  useEffect(() => { if (!signedIn && path !== "/login") navigate("/login"); }, [path, signedIn]);
-  const signIn = () => { localStorage.setItem(AUTH_KEY, "true"); setSignedIn(true); navigate("/admin"); };
-  const signOut = () => { localStorage.removeItem(AUTH_KEY); setSignedIn(false); navigate("/login"); };
+  useEffect(() => { if (hydrated && !signedIn && path !== "/login") navigate("/login"); }, [hydrated, path, signedIn]);
+  const signIn = () => { setSignedIn(true); navigate("/admin"); };
+  const signOut = async () => { await supabase.auth.signOut(); setSignedIn(false); navigate("/login"); };
+  if (!hydrated) return <main className="login-page"><section className="login-card"><div className="login-brand">NoBogey</div><p>Checking administrator session…</p></section></main>;
   const page = !signedIn || path === "/login" ? <Login onSuccess={signIn} /> : path === "/admin/tee-times" ? <TeeTimes onHome={() => navigate("/admin")} /> : path === "/admin/caddies" ? <Caddies onHome={() => navigate("/admin")} /> : path === "/admin/verifications" ? <CaddieVerificationQueue /> : <Dashboard onNavigate={navigate} />;
   return <><style>{`:root{--ink:${colors.ink};--muted:${colors.muted};--cream:${colors.canvas};--surface:${colors.surface};--fairway:${colors.fairway};--fairway-dark:${colors.fairwayDark};--sand:${colors.sand};--line:${colors.line};--gold:${colors.sand};--danger:${colors.flag}}`}</style>{signedIn && path !== "/login" && <Header path={path} navigate={navigate} onSignOut={signOut} />}{page}{signedIn && path !== "/login" && <Footer navigate={navigate} />}</>;
 }
 
 function Header({ path, navigate, onSignOut }: { path: string; navigate: (to: string) => void; onSignOut: () => void }) { return <header className="topbar"><button className="wordmark" onClick={() => navigate("/admin")}>NoBogey</button><nav aria-label="Administrator navigation"><button className={path === "/admin" ? "active" : ""} onClick={() => navigate("/admin")}>Dashboard</button><button className={path === "/admin/tee-times" ? "active" : ""} onClick={() => navigate("/admin/tee-times")}>Edit Tee Times</button><button className={path === "/admin/caddies" ? "active" : ""} onClick={() => navigate("/admin/caddies")}>Edit Caddies</button><button className={path === "/admin/verifications" ? "active" : ""} onClick={() => navigate("/admin/verifications")}>Verifications</button></nav><span className="admin-label">Golf Course Administrator</span><button className="sign-out" onClick={onSignOut}>Sign out</button></header>; }
 
-function Login({ onSuccess }: { onSuccess: () => void }) { const [clubId, setClubId] = useState(""); const [password, setPassword] = useState(""); const [error, setError] = useState(""); const submit = (event: FormEvent) => { event.preventDefault(); if (clubId.trim().toUpperCase() === DEMO_CLUB_ID && password === DEMO_PASSWORD) onSuccess(); else setError("That club ID or password is not recognized. Try the demo credentials below."); }; return <main className="login-page"><section className="login-card"><div className="login-brand">NoBogey</div><p className="eyebrow">Club owner portal</p><h1>Sign in to your course</h1><p className="lede">Manage tee times, your caddie fleet, and course operations.</p><form onSubmit={submit}><label>Club ID<input autoComplete="username" name="club_id" placeholder="e.g. MGCC-ADMIN" value={clubId} onChange={event => setClubId(event.target.value)} /></label><label>Password<input autoComplete="current-password" name="password" type="password" value={password} onChange={event => setPassword(event.target.value)} /></label>{error && <p className="login-error" role="alert">{error}</p>}<button className="primary login-submit" type="submit">Sign in</button></form><aside><b>Demo credentials</b><span><code>{DEMO_CLUB_ID}</code> · <code>{DEMO_PASSWORD}</code></span></aside></section></main>; }
+function Login({ onSuccess }: { onSuccess: () => void }) { const [email, setEmail] = useState(""); const [password, setPassword] = useState(""); const [error, setError] = useState(""); const [submitting, setSubmitting] = useState(false); const submit = async (event: FormEvent) => { event.preventDefault(); setSubmitting(true); setError(""); try { const { data, error: authError } = await supabase.auth.signInWithPassword({ email: email.trim().toLowerCase(), password }); if (authError) throw authError; if (!await hasAdminRole(data.user.id)) { await supabase.auth.signOut(); throw new Error("This account does not have administrator access."); } onSuccess(); } catch (reason) { setError(reason instanceof Error ? reason.message : "Unable to sign in."); } finally { setSubmitting(false); } }; return <main className="login-page"><section className="login-card"><div className="login-brand">NoBogey</div><p className="eyebrow">Administrator portal</p><h1>Sign in to NoBogey</h1><p className="lede">Use an authorized Supabase administrator account.</p><form onSubmit={(event) => void submit(event)}><label>Email address<input autoComplete="username" name="email" placeholder="admin@example.com" type="email" value={email} onChange={event => setEmail(event.target.value)} /></label><label>Password<input autoComplete="current-password" name="password" type="password" value={password} onChange={event => setPassword(event.target.value)} /></label>{error && <p className="login-error" role="alert">{error}</p>}<button className="primary login-submit" disabled={submitting} type="submit">{submitting ? "Signing in…" : "Sign in"}</button></form></section></main>; }
 
 function Footer({ navigate }: { navigate: (to: string) => void }) { return <footer><div><strong>NOBOGEY</strong><p>Modernizing the heritage of the game.<br />Professionalizing caddie services through technology and transparency.</p></div><div><b>Administration</b><button onClick={() => navigate("/admin")}>Fleet Dashboard</button><button onClick={() => navigate("/admin/tee-times")}>Edit Tee Times</button><button onClick={() => navigate("/admin/caddies")}>Edit Caddies</button><button onClick={() => navigate("/admin/verifications")}>Caddie Verifications</button></div><div><b>Company</b><span>Our Vision</span><span>Contact Support</span><span>Terms of Play</span></div></footer>; }
 
