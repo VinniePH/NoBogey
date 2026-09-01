@@ -9,12 +9,14 @@ type LegalSection = {
 };
 
 type LegalPageProps = {
+  effectiveDate: string;
   intro: string;
   sections: LegalSection[];
   title: string;
+  version: string;
 };
 
-export function LegalPage({ intro, sections, title }: LegalPageProps) {
+export function LegalPage({ effectiveDate, intro, sections, title, version }: LegalPageProps) {
   return (
     <div className="min-h-screen bg-ivory text-ink">
       <header className="border-b border-line bg-warm-white">
@@ -27,10 +29,12 @@ export function LegalPage({ intro, sections, title }: LegalPageProps) {
         <article className="mx-auto max-w-3xl">
           <p className="eyebrow">Legal</p>
           <h1 className="mt-5 text-4xl font-semibold tracking-[-0.055em] text-forest sm:text-6xl">{title}</h1>
+          <p className="mt-5 text-sm font-medium text-muted">Effective date: {effectiveDate} · Last updated: {effectiveDate} · Version: {version}</p>
           <p className="mt-7 text-lg leading-8 text-muted">{intro}</p>
-          <div className="mt-12 rounded-2xl border border-[#d8b66a]/50 bg-[#fff8e5] p-5 text-sm leading-6 text-[#594719]">
-            <strong>Draft for review.</strong> This page is a general product draft and must be approved by NoBogey’s legal/business owner before it is presented as the effective policy or submitted to Google Play.
-          </div>
+          <section aria-label="Contact NoBogey" className="mt-10 rounded-2xl border border-line bg-warm-white p-6">
+            <p className="text-sm font-semibold uppercase tracking-[0.12em] text-muted">Contact NoBogey</p>
+            <p className="mt-3 text-base leading-7 text-[#4d4c47]">For questions, privacy inquiries, support, or account-deletion requests, email <a className="font-semibold text-forest underline underline-offset-4" href="mailto:nobogeyofficial@gmail.com">nobogeyofficial@gmail.com</a>.</p>
+          </section>
           <div className="mt-14 space-y-12">
             {sections.map((section) => (
               <section key={section.title}>

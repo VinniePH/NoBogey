@@ -337,7 +337,7 @@ export function App() {
             <div className="grid grid-cols-2 gap-10 sm:grid-cols-3">
               {[
                 ["Product", [["How It Works", "#how-it-works"], ["Courses", "#courses"], ["Caddies", "#caddies"], ["Features", "#features"]]],
-                ["Company", [["About", "#top"], ["Contact", "mailto:hello@nobogey.app"]]],
+                ["Company", [["About", "#top"], ["Contact", "/contact/"]]],
                 ["Legal", [["Privacy Policy", "/privacy/"], ["Terms & Conditions", "/terms/"]]]
               ].map(([heading, items]) => (
                 <div key={String(heading)}><p className="text-xs font-semibold uppercase tracking-[0.15em] text-white/40">{String(heading)}</p><div className="mt-5 flex flex-col gap-3">{(items as string[][]).map(([label, href]) => <a className="w-fit text-sm text-white/70 transition-colors hover:text-white" href={href} key={label}>{label}</a>)}</div></div>
