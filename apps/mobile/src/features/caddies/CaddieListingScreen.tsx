@@ -15,7 +15,7 @@ export function CaddieListingScreen() {
   const { caddies, courses } = useMobileData();
   const { caddieId, courseId, date, teeTimeId, time } = useLocalSearchParams<{ caddieId?: string; courseId?: string; date?: string; teeTimeId?: string; time?: string }>();
   const [selectedId, setSelectedId] = useState<string | undefined>(caddieId);
-  const availableCaddies = useMemo(() => caddies.filter((caddie) => !courseId || caddie.homeCourseId === courseId), [courseId]);
+  const availableCaddies = useMemo(() => caddies.filter((caddie) => !courseId || caddie.homeCourseId === courseId), [caddies, courseId]);
   const isGlobalDirectory = !courseId || !teeTimeId;
 
   useEffect(() => {
