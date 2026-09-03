@@ -1,6 +1,7 @@
 import type { Booking, Caddie, GolfCourse, TeeTimeSlot } from "@nobogey/contracts";
 import { useEffect, useState } from "react";
 import { mobileDataService } from "../../../backend/mock.service";
+import { getSupabaseClient } from "../../../backend/client";
 
 type MobileData = {
   bookings: Booking[];
@@ -18,16 +19,20 @@ export function useMobileData() {
 
   useEffect(() => {
     let active = true;
-    void Promise.all([
+    void Promise.allSettled([
       mobileDataService.listBookings(),
       mobileDataService.listCaddies(),
       mobileDataService.listCourses(),
     ]).then(([bookings, caddies, courses]) => {
-      if (active) setData({ bookings, caddies, courses, teeTimes: [] });
-    }).catch(() => {
-      if (active) setData(emptyData);
+      if (active) setData({
+        bookings: bookings.status === "fulfilled" ? bookings.value : [],
+        caddies: caddies.status === "fulfilled" ? caddies.value : [],
+        courses: courses.status === "fulfilled" ? courses.value : [],
+        teeTimes: []
+      });
     });
-    return () => { active = false; };
+    const { data: listener } = getSupabaseClient().auth.onAuthStateChange((event) => { if (event === "SIGNED_IN" || event === "SIGNED_OUT" || event === "USER_UPDATED") setReloadToken(value => value + 1); });
+    return () => { active = false; listener.subscription.unsubscribe(); };
   }, [reloadToken]);
 
   return { ...data, refresh: () => setReloadToken((value) => value + 1) };

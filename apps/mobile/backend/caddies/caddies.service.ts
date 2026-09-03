@@ -12,8 +12,9 @@ import { mobileDataService } from '../mock.service';
 /** List available caddies. Will query availability for a course and tee-time window. */
 export async function getAvailableCaddies(courseId: string, startsAt: string): Promise<CaddieCandidate[]> {
   const caddies = await mobileDataService.listCaddies(courseId);
+  const endsAt = new Date(new Date(startsAt).getTime() + 4 * 60 * 60 * 1000).toISOString();
   const availability = await Promise.all(caddies.map(async (caddie) => ({ caddie, slots: await mobileDataService.listAvailability(caddie.id) })));
-  return availability.filter(({ slots }) => slots.some((slot) => slot.status === 'open' && slot.startsAt <= startsAt && slot.endsAt > startsAt)).map(({ caddie }) => ({ id: caddie.id, displayName: caddie.displayName, specialties: caddie.specialties, verificationStatus: caddie.verificationStatus }));
+  return availability.filter(({ slots }) => slots.some((slot) => slot.status === 'open' && slot.startsAt <= startsAt && slot.endsAt >= endsAt)).map(({ caddie }) => ({ id: caddie.id, displayName: caddie.displayName, specialties: caddie.specialties, verificationStatus: caddie.verificationStatus }));
 }
 
 /** Read caddie availability. Will select `caddie_availability` by caddie and time. */
