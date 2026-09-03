@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - "apps/landing-page/**"
+      - "apps/admin-web/**"
       - "pnpm-lock.yaml"
       - ".github/workflows/landing-pages.yml"
   workflow_dispatch:
@@ -33,6 +34,12 @@ jobs:
           cache: pnpm
       - run: pnpm install --no-frozen-lockfile
       - run: pnpm --filter @nobogey/landing-page build
+      - run: pnpm --filter @nobogey/admin-web build
+      - name: Add the admin portal to the site artifact
+        shell: bash
+        run: |
+          mkdir -p apps/landing-page/dist/admin-assets
+          cp -R apps/admin-web/dist/. apps/landing-page/dist/admin-assets/
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

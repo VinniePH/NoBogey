@@ -10,13 +10,22 @@ import { CaddieDetailSheet } from "./components/CaddieDetailSheet";
 import { ResponsiveContent } from "../../ui/ResponsiveContent";
 import { MobileBottomNavigation } from "../../ui/MobileBottomNavigation";
 import { useMobileData } from "../data/useMobileData";
+import { getAvailableCaddies } from "../../../backend/caddies/caddies.service";
 
 export function CaddieListingScreen() {
   const { caddies, courses } = useMobileData();
   const { caddieId, courseId, date, teeTimeId, time } = useLocalSearchParams<{ caddieId?: string; courseId?: string; date?: string; teeTimeId?: string; time?: string }>();
   const [selectedId, setSelectedId] = useState<string | undefined>(caddieId);
-  const availableCaddies = useMemo(() => caddies.filter((caddie) => !courseId || caddie.homeCourseId === courseId), [caddies, courseId]);
+  const [bookableIds, setBookableIds] = useState<Set<string> | null>(null);
   const isGlobalDirectory = !courseId || !teeTimeId;
+  const availableCaddies = useMemo(() => caddies.filter((caddie) => (!courseId || caddie.homeCourseId === courseId) && (isGlobalDirectory || bookableIds?.has(caddie.id))), [bookableIds, caddies, courseId, isGlobalDirectory]);
+
+  useEffect(() => {
+    let active = true;
+    if (isGlobalDirectory || !courseId || !time) { setBookableIds(null); return; }
+    void getAvailableCaddies(courseId, time).then(items => { if (active) setBookableIds(new Set(items.map(item => item.id))); }).catch(() => { if (active) setBookableIds(new Set()); });
+    return () => { active = false; };
+  }, [courseId, isGlobalDirectory, time]);
 
   useEffect(() => {
     setSelectedId(availableCaddies.some((caddie) => caddie.id === caddieId) ? caddieId : undefined);
@@ -26,7 +35,7 @@ export function CaddieListingScreen() {
     <ScrollView contentContainerStyle={styles.content} contentInsetAdjustmentBehavior="automatic" showsVerticalScrollIndicator={false}><ResponsiveContent style={styles.frame}>
       {!isGlobalDirectory ? <BookingStepper step={3} /> : null}
       <View style={styles.heading}><Text accessibilityRole="header" style={styles.title}>{isGlobalDirectory ? "Find a caddie." : "Request a caddie."}</Text><Text style={styles.subtitle}>{isGlobalDirectory ? "Browse every verified caddie on NoBogey. Their home course is shown in each profile." : "Choose a preferred caddie for your selected tee time. The course confirms the final assignment."}</Text></View>
-      {availableCaddies.length ? <View style={styles.grid}>{availableCaddies.map((caddie) => <CaddieCard caddie={caddie} key={caddie.id} onPress={() => setSelectedId(caddie.id)} />)}</View> : <View style={styles.empty}><EmptyState description="Caddies will appear after the directory service is connected." icon="account-group-outline" minHeight={620} title="No caddies available" /></View>}
+      {availableCaddies.length ? <View style={styles.grid}>{availableCaddies.map((caddie) => <CaddieCard caddie={caddie} key={caddie.id} onPress={() => setSelectedId(caddie.id)} />)}</View> : <View style={styles.empty}><EmptyState description={isGlobalDirectory ? "No verified caddies are currently listed." : "No verified caddie is available for the full selected round."} icon="account-group-outline" minHeight={620} title="No caddies available" /></View>}
     </ResponsiveContent></ScrollView>
     <CaddieDetailSheet caddie={caddies.find((caddie) => caddie.id === selectedId) ?? null} course={courses.find((course) => course.id === (courseId ?? caddies.find((caddie) => caddie.id === selectedId)?.homeCourseId))} onBook={() => isGlobalDirectory ? router.push({ pathname: "/golfer/courses", params: { caddieId: selectedId, courseId: caddies.find((caddie) => caddie.id === selectedId)?.homeCourseId } }) : router.push({ pathname: "/golfer/bookings/new", params: { caddieId: selectedId, courseId, date, teeTimeId, time } })} onClose={() => setSelectedId(undefined)} visible={Boolean(selectedId)} />
     {isGlobalDirectory ? <MobileBottomNavigation active="caddies" /> : null}
