@@ -52,7 +52,7 @@ export const mobileDataService = {
   },
   async listTeeTimes(courseId: string, date: string): Promise<TeeTimeSlot[]> { return getAvailableTeeTimes(courseId, date); },
   async getTeeTime(_slotId: string): Promise<TeeTimeSlot | null> { return null; },
-  async listBookings(): Promise<Booking[]> { const { data, error } = await getSupabaseClient().from('bookings').select('*').order('starts_at'); if (error) throw error; return (data ?? []).map(mapBooking); },
+  async listBookings(): Promise<Booking[]> { const client = getSupabaseClient(); const { data: session } = await client.auth.getSession(); if (!session.session) return []; const { data, error } = await client.from('bookings').select('*').order('starts_at'); if (error) throw error; return (data ?? []).map(mapBooking); },
   async getBooking(bookingId: string): Promise<Booking | null> { const { data, error } = await getSupabaseClient().from('bookings').select('*').eq('id', bookingId).maybeSingle(); if (error) throw error; return data ? mapBooking(data) : null; },
   async listAvailability(caddieId: string): Promise<AvailabilitySlot[]> { const { data, error } = await getSupabaseClient().from('caddie_availability').select('*').eq('caddie_id', caddieId); if (error) throw error; return ((data ?? []) as AvailabilityRow[]).map((row) => ({ id: row.id, caddieId: row.caddie_id, courseId: row.club_id, startsAt: row.starts_at, endsAt: row.ends_at, status: row.is_available ? 'open' : 'blocked' })); },
   listWeekDates(): readonly string[] { return Array.from({ length: 7 }, (_, offset) => { const date = new Date(); date.setDate(date.getDate() + offset + 1); return date.toLocaleDateString('en-CA', { timeZone: 'Asia/Manila' }); }); }
