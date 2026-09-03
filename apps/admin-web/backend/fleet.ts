@@ -18,10 +18,30 @@ let state: FleetState = seed;
 const listeners = new Set<() => void>();
 
 async function hydrate() {
-  const { data, error } = await supabase.from("admin_portal_state").select("state").eq("id", "primary").maybeSingle();
+  const [{ data, error }, { data: assignments }, { data: profiles }, { data: names }] = await Promise.all([
+    supabase.from("admin_portal_state").select("state").eq("id", "primary").maybeSingle(),
+    supabase.from("caddie_club_assignments").select("caddie_id,verification_status").eq("verification_status", "verified"),
+    supabase.from("caddie_profiles").select("user_id,tagline,years_experience,rate_amount_in_centavos,verification_status").eq("verification_status", "verified"),
+    supabase.from("profiles").select("id,display_name,is_active")
+  ]);
   if (error) return;
-  if (data?.state) state = data.state as FleetState;
-  else await persist(state);
+  const stored = data?.state ? data.state as FleetState : seed;
+  const assignedIds = new Set((assignments ?? []).map(item => item.caddie_id));
+  const caddies = (profiles ?? []).filter(profile => assignedIds.has(profile.user_id)).map(profile => {
+    const previous = stored.caddies.find(item => item.id === profile.user_id);
+    return {
+      id: profile.user_id,
+      name: (names ?? []).find(item => item.id === profile.user_id)?.display_name ?? "NoBogey Caddie",
+      tier: normalizeTier(profile.tagline ?? previous?.tier ?? "CLASS A"),
+      rate: Math.round(Number(profile.rate_amount_in_centavos) / 100),
+      years: profile.years_experience ?? 0,
+      active: (names ?? []).find(item => item.id === profile.user_id)?.is_active ?? previous?.active ?? true,
+      strikes: previous?.strikes ?? 0,
+      custom: true
+    } satisfies Caddie;
+  });
+  state = { ...stored, caddies };
+  if (!data?.state) await persist(state);
   listeners.forEach(listener => listener());
 }
 async function persist(next: FleetState) {
@@ -50,8 +70,19 @@ function sorted(times: string[]) { return [...new Set(times)].sort((a, b) => min
 function dayTimes(date: string) { return state.dayTimes[date] ?? state.defaultTimes; }
 
 export function setBookingWindow(value: number) { const bookingWindow = Math.min(60, Math.max(1, Math.round(value) || 3)); update({ ...state, bookingWindow }); }
-export function addCaddie(name: string, tier: Tier, rate: number, years: number) { const caddie: Caddie = { id: crypto.randomUUID(), name: name.trim(), tier: normalizeTier(tier), rate, years, active: true, strikes: 0, custom: true }; update({ ...state, caddies: [...state.caddies, caddie] }); }
-export function toggleCaddie(id: string) { const caddie = state.caddies.find(c => c.id === id); if (!caddie) return; update({ ...state, caddies: state.caddies.map(c => c.id === id ? { ...c, active: !c.active } : c) }); }
+export async function addCaddie(email: string, name: string, tier: Tier, rate: number, years: number): Promise<void>;
+/** @deprecated Caddie enrollment now requires the account email. */
+export async function addCaddie(name: string, tier: Tier, rate: number, years: number): Promise<void>;
+export async function addCaddie(email: string, name: string, tier: Tier | number, rate: number, years?: number) {
+  if (years === undefined || typeof tier === "number") throw new Error("A registered caddie account email is required.");
+  const { error } = await supabase.rpc("admin_enroll_existing_caddie", {
+    p_email: email.trim().toLowerCase(), p_display_name: name.trim(), p_tier: normalizeTier(tier),
+    p_rate_amount_in_centavos: Math.round(rate * 100), p_years_experience: Math.round(years), p_club_id: null
+  });
+  if (error) throw error;
+  await hydrate();
+}
+export async function toggleCaddie(id: string) { const caddie = state.caddies.find(c => c.id === id); if (!caddie) return; const active = !caddie.active; const { error } = await supabase.from("profiles").update({ is_active: active }).eq("id", id); if (error) throw error; update({ ...state, caddies: state.caddies.map(c => c.id === id ? { ...c, active } : c) }); }
 export function removeCaddie(id: string) { const caddie = state.caddies.find(c => c.id === id); if (!caddie?.custom) return; const assignments = Object.fromEntries(Object.entries(state.assignments).map(([assignmentKey, ids]) => [assignmentKey, ids.filter(caddieId => caddieId !== id)])); update({ ...state, caddies: state.caddies.filter(c => c.id !== id), assignments }); }
 export function reportCaddie(id: string, _reason: string) { const caddie = state.caddies.find(c => c.id === id); if (!caddie || caddie.strikes >= MAX_STRIKES) return; update({ ...state, caddies: state.caddies.map(c => c.id === id ? { ...c, strikes: c.strikes + 1 } : c) }); }
 export function removeStrike(id: string) { const caddie = state.caddies.find(c => c.id === id); if (!caddie || !caddie.strikes) return; update({ ...state, caddies: state.caddies.map(c => c.id === id ? { ...c, strikes: c.strikes - 1 } : c) }); }
