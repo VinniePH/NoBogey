@@ -5,6 +5,7 @@ const ADMIN_ASSET_BASE = `${REPOSITORY_BASE}/admin-assets`;
 function isAdminRoute(pathname) {
   return pathname === "/login"
     || pathname === "/auth/callback"
+    || pathname === "/reset-password"
     || pathname === "/admin"
     || pathname.startsWith("/admin/");
 }
@@ -22,6 +23,8 @@ export default {
       target.pathname = `${ADMIN_ASSET_BASE}/index.html`;
     } else if (incoming.pathname === "/landing" || incoming.pathname === "/landing/") {
       target.pathname = `${REPOSITORY_BASE}/`;
+    } else if (incoming.pathname === "/support" || incoming.pathname === "/support/") {
+      target.pathname = `${REPOSITORY_BASE}/contact/`;
     } else if (incoming.pathname.startsWith("/admin-assets/")) {
       target.pathname = REPOSITORY_BASE + incoming.pathname;
     } else if (!incoming.pathname.startsWith(`${REPOSITORY_BASE}/`)) {
