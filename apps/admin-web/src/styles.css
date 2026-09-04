@@ -1,5 +1,7 @@
+@font-face { font-family: "Inter"; font-display: swap; font-style: normal; font-weight: 100 900; src: url("../../mobile/assets/fonts/Inter-Variable.ttf") format("truetype"); }
+
 * { box-sizing: border-box; }
-body { margin: 0; background: var(--cream); color: var(--ink); font-family: Inter, ui-sans-serif, system-ui, sans-serif; }
+body { margin: 0; overflow: hidden; background: var(--cream); color: var(--ink); font-family: Inter, ui-sans-serif, system-ui, sans-serif; }
 button, input, select, textarea { font: inherit; }
 button { cursor: pointer; }
 button:disabled { cursor: not-allowed; opacity: .5; }
@@ -17,8 +19,6 @@ main { min-height: 900px; }
 .course-banner { align-items: end; background: linear-gradient(90deg, color-mix(in srgb, var(--ink) 76%, transparent), color-mix(in srgb, var(--ink) 32%, transparent)), url("https://images.unsplash.com/photo-1587174486073-ae5e5cff23aa?auto=format&fit=crop&w=1800&q=80") center / cover; display: flex; min-height: 238px; }
 .course-banner > div, .content { margin: auto; width: min(100% - 40px, 980px); }
 .course-banner > div { color: var(--surface); padding-bottom: 28px; }
-.fleet-pill { background: var(--fairway); border-radius: 999px; display: inline-block; font-size: 12px; font-weight: 900; padding: 8px 14px; }
-.fleet-pill i { font-size: 9px; font-style: normal; letter-spacing: 1px; text-transform: uppercase; }
 .course-banner h1 { font-size: clamp(27px, 4vw, 34px); line-height: 1.1; margin: 12px 0 4px; }
 .course-banner p { font-size: 10px; letter-spacing: 3px; margin: 0; text-transform: uppercase; }
 .content { padding: 28px 0 56px; }
@@ -79,7 +79,7 @@ main { min-height: 900px; }
 .roster .filters { border-top: 1px solid var(--line); margin: 12px 0 0; padding: 13px 16px; }.roster-row { align-items: center; border-top: 1px solid var(--line); display: grid; gap: 8px; grid-template-columns: minmax(0, 1fr) auto auto auto; min-height: 69px; padding: 8px 16px; }.small { background: var(--surface); border: 1px solid var(--line); border-radius: 999px; font-size: 10px; font-weight: 800; min-width: 94px; padding: 7px 9px; }.roster-row .status-action { color: var(--ink); min-width: 61px; }.roster-row .status-action.primary { color: var(--surface); }.legend { align-items: center; border-top: 1px solid var(--line); display: flex; gap: 7px; font-size: 10px; padding: 12px 16px; }.legend .compliance-dot { margin-left: 5px; }
 .modal-backdrop { align-items: center; background: color-mix(in srgb, var(--ink) 56%, transparent); display: flex; inset: 0; justify-content: center; padding: 20px; position: fixed; z-index: 10; }.modal { background: var(--surface); border-radius: 16px; box-shadow: 0 16px 32px color-mix(in srgb, var(--ink) 20%, transparent); max-width: 610px; padding: 24px; position: relative; width: 100%; }.compact-modal { max-width: 400px; }.close { background: transparent; border: 0; color: var(--muted); font-size: 26px; position: absolute; right: 13px; top: 8px; }.modal h2 { margin: 0; }.modal > p { color: var(--muted); font-size: 12px; }.modal-list { display: grid; gap: 8px; max-height: 350px; overflow: auto; }.modal-list > button { align-items: center; background: var(--cream); border: 0; border-radius: 10px; display: flex; gap: 8px; padding: 0; text-align: left; }.modal-list .caddie-chip { flex: 1; }.modal-list > button > span { color: var(--fairway); font-size: 11px; font-weight: 800; padding-right: 12px; }.error, .login-error { background: color-mix(in srgb, var(--danger) 10%, var(--surface)); border-radius: 8px; color: var(--danger); font-size: 12px; margin: 0; padding: 10px; }.window-field { display: block; font-size: 12px; font-weight: 800; margin: 18px 0; }.window-field input { border: 1px solid var(--line); border-radius: 8px; display: block; margin-top: 6px; padding: 9px; width: 100%; }.report-modal { max-width: 440px; }.report-modal .avatar { height: 42px; margin-bottom: 8px; width: 42px; }.report-modal textarea { height: 100px; padding: 9px; }.report-modal .filled { margin-top: 14px; }
 
-.login-page { align-items: center; background: linear-gradient(135deg, color-mix(in srgb, var(--ink) 88%, transparent), color-mix(in srgb, var(--fairway) 65%, transparent)), url("https://images.unsplash.com/photo-1587174486073-ae5e5cff23aa?auto=format&fit=crop&w=1800&q=80") center / cover; display: flex; justify-content: center; min-height: 100vh; padding: 24px; }.login-card { background: var(--surface); border: 1px solid color-mix(in srgb, var(--surface) 60%, transparent); border-radius: 20px; box-shadow: 0 20px 50px color-mix(in srgb, var(--ink) 40%, transparent); max-width: 430px; padding: 34px; width: 100%; }.login-brand { color: var(--fairway); font-size: 25px; font-style: italic; font-weight: 900; margin-bottom: 30px; }.login-card .eyebrow { color: var(--fairway); margin: 0; }.login-card h1 { font-size: 32px; line-height: 1.05; margin: 8px 0; }.login-card form { display: grid; gap: 16px; margin-top: 26px; }.login-card form label { display: grid; font-family: ui-monospace, monospace; font-size: 11px; font-weight: 800; gap: 7px; letter-spacing: .5px; text-transform: uppercase; }.login-card input { border: 1px solid var(--line); border-radius: 9px; font-family: Inter, ui-sans-serif, sans-serif; font-size: 14px; padding: 12px; }.login-card input:focus { border-color: var(--fairway); outline: 2px solid color-mix(in srgb, var(--fairway) 20%, transparent); }.login-submit { margin-top: 3px; width: 100%; }.login-card aside { background: var(--cream); border-radius: 10px; display: grid; gap: 5px; margin-top: 22px; padding: 12px; }.login-card aside b { font-family: ui-monospace, monospace; font-size: 10px; letter-spacing: 1px; text-transform: uppercase; }.login-card aside span { color: var(--muted); font-size: 11px; }.login-card code { color: var(--ink); font-family: ui-monospace, monospace; }
+.login-page { align-items: center; background: linear-gradient(135deg, color-mix(in srgb, var(--ink) 88%, transparent), color-mix(in srgb, var(--fairway) 65%, transparent)), url("https://images.unsplash.com/photo-1587174486073-ae5e5cff23aa?auto=format&fit=crop&w=1800&q=80") center / cover; display: flex; justify-content: center; min-height: 100vh; padding: 24px; }.login-card { background: var(--surface); border: 1px solid color-mix(in srgb, var(--surface) 60%, transparent); border-radius: 20px; box-shadow: 0 20px 50px color-mix(in srgb, var(--ink) 40%, transparent); max-width: 430px; padding: 34px; width: 100%; }.login-brand { color: var(--fairway); font-family: Inter, ui-sans-serif, system-ui, sans-serif; font-size: 25px; font-style: italic; font-weight: 900; margin-bottom: 30px; }.login-card .eyebrow { color: var(--fairway); margin: 0; }.login-card h1 { font-size: 32px; line-height: 1.05; margin: 8px 0; }.login-card form { display: grid; gap: 16px; margin-top: 26px; }.login-card form label { display: grid; font-family: ui-monospace, monospace; font-size: 11px; font-weight: 800; gap: 7px; letter-spacing: .5px; text-transform: uppercase; }.login-card input { border: 1px solid var(--line); border-radius: 9px; font-family: Inter, ui-sans-serif, sans-serif; font-size: 14px; padding: 12px; }.login-card input:focus { border-color: var(--fairway); outline: 2px solid color-mix(in srgb, var(--fairway) 20%, transparent); }.login-submit { margin-top: 3px; width: 100%; }.login-card aside { background: var(--cream); border-radius: 10px; display: grid; gap: 5px; margin-top: 22px; padding: 12px; }.login-card aside b { font-family: ui-monospace, monospace; font-size: 10px; letter-spacing: 1px; text-transform: uppercase; }.login-card aside span { color: var(--muted); font-size: 11px; }.login-card code { color: var(--ink); font-family: ui-monospace, monospace; }
 
 @media (max-width: 680px) { .topbar { gap: 8px; padding-inline: 12px; }.topbar nav { flex: 1; overflow-x: auto; }.topbar nav button { font-size: 10px !important; white-space: nowrap; }.admin-label { display: none; }.sign-out { margin-left: auto; }.section-heading { align-items: flex-start; flex-direction: column; }.booking-window { align-items: flex-start; flex-direction: column; }.booking-window .outline-button { width: 100%; }.fleet-grid, .add-caddie, .range-fields { grid-template-columns: 1fr; }.add-caddie small, .add-caddie button { grid-column: auto; }.slot { grid-template-columns: 58px 1fr auto auto; }.roster-row { grid-template-columns: 1fr auto auto; }.roster-row .small:last-child { grid-column: 2 / 4; }.filters input { min-width: 100%; }.modal-backdrop { align-items: end; padding: 0; }.modal { border-radius: 18px 18px 0 0; max-height: 88vh; overflow: auto; }.calendar-popover { right: 0; } }
 
@@ -108,9 +108,8 @@ main { min-height: 900px; }
 .course-banner { background-image: linear-gradient(90deg, color-mix(in srgb, var(--ink) 82%, transparent), color-mix(in srgb, var(--ink) 32%, transparent)), url("https://images.unsplash.com/photo-1592919505780-303950717480?auto=format&fit=crop&w=2000&q=85"); min-height: 259px; }
 .course-banner > div, .content { width: min(100% - 80px, 980px); }
 .course-banner > div { padding-bottom: 27px; }
-.fleet-pill { font-size: 11px; padding: 8px 13px; }
 .course-banner h1 { font-size: clamp(30px, 3vw, 38px); letter-spacing: -1.7px; margin: 10px 0 6px; }
-.course-banner p { font-family: ui-monospace, monospace; font-size: 9px; letter-spacing: 3px; }
+.course-banner p { font-family: ui-monospace, monospace; font-size: 14px; font-weight: 400; letter-spacing: 2px; }
 .content { padding-top: 31px; }
 .section-heading h2, .slots h3, .card h2 { font-size: 18px; letter-spacing: -.55px; }
 .section-heading p, .lede { font-size: 12px; }
@@ -210,6 +209,7 @@ main { min-height: 900px; }
 .fleet-page .fleet { margin-top: 0; }
 .fleet-page .fleet h1 { font-size: clamp(28px, 3vw, 38px); letter-spacing: -1.4px; line-height: 1.05; margin: 3px 0 6px; }
 .fleet-page .fleet-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.fleet-tiers { display: grid; gap: 28px; margin-top: 24px; }.fleet-tier { border-top: 1px solid var(--line); padding-top: 18px; }.fleet-tier h2 { color: var(--fairway-dark); font-size: 16px; margin: 0 0 12px; }.fleet-empty { color: var(--muted); font-size: 13px; margin: 0; }.frontend-notice { background: color-mix(in srgb, var(--fairway) 12%, var(--surface)); border-radius: 8px; color: var(--fairway-dark); font-size: 12px; margin: 14px 20px 0; padding: 10px; }
 .assignments-page { margin: auto; max-width: 1120px; min-height: 100vh; padding: 52px 36px 72px; }
 .assignments-page h1 { font-size: clamp(28px, 3vw, 38px); letter-spacing: -1.4px; line-height: 1.05; margin: 3px 0 6px; }
 .assignment-date { color: var(--muted); display: grid; font-size: 11px; font-weight: 850; gap: 6px; letter-spacing: .7px; text-transform: uppercase; }
@@ -217,17 +217,46 @@ main { min-height: 900px; }
 .assignments-page .slots { margin-top: 24px; }
 .booking-window-action { display: flex; justify-content: end; margin-top: 16px; }
 
+/* Shared page-title treatment. */
+.editor h1, .fleet-page .fleet h1, .assignments-page h1, .verification-hero h1 { font-size: clamp(36px, 5vw, 44px); font-weight: 900; letter-spacing: -2.2px; line-height: .98; margin: 8px 0; }
+
+/* Caddie pages: larger working text without page scrolling. */
+.editor, .fleet-page, .assignments-page, .verification-page { box-sizing: border-box; height: 100dvh; max-height: 100dvh; min-height: 0; overflow: hidden; }
+.fleet-tiers { gap: 20px; }
+.fleet-tier { padding-top: 16px; }
+.fleet-tier h2 { font-size: 20px; margin-bottom: 14px; }
+.fleet-empty { font-size: 15px; }
+.caddie-chip { min-height: 72px; padding: 12px 14px; }
+.caddie-chip b { font-size: 15px; }
+.caddie-chip small { font-size: 10px; line-height: 1.35; }
+.avatar { height: 44px; min-width: 44px; width: 44px; }
+.avatar svg { height: 27px; width: 27px; }
+.add-caddie > small { font-size: 12px; }
+.add-caddie label { font-size: 13px; }
+.add-caddie input, .add-caddie select { font-size: 14px; min-height: 44px; }
+.add-caddie button { font-size: 14px; min-height: 38px; }
+.roster h2 { font-size: 22px; }
+.roster > small { font-size: 12px; }
+.roster-row { min-height: 72px; }
+.status-toggle, .roster-row .small { font-size: 12px; min-height: 34px; }
+
+/* Navigation grouping and recognizable destructive controls. */
+.topbar nav p { border-bottom: 1px solid var(--line); padding-bottom: 8px; }
+button.danger:not(.filled) { background: color-mix(in srgb, var(--danger) 9%, var(--surface)); border: 1px solid color-mix(in srgb, var(--danger) 72%, var(--line)); border-radius: 999px; box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--danger) 10%, transparent); min-height: 32px; padding: 7px 12px; }
+button.danger:not(.filled):hover { background: color-mix(in srgb, var(--danger) 16%, var(--surface)); }
+
 @media (max-width: 800px) { .admin-shell { display: block; }.topbar { border-bottom: 1px solid var(--line); border-right: 0; min-height: auto; padding: 14px; position: static; }.wordmark { margin-bottom: 10px; }.wordmark img { width: 130px; }.admin-label { display: block; font-size: 9px; margin: 15px 4px 8px; }.topbar nav { display: flex; flex-wrap: wrap; gap: 5px; }.topbar nav p { flex-basis: 100%; font-size: 10px; margin: 10px 4px 2px; }.topbar nav button, .topbar button:not(.wordmark) { font-size: 12px; padding: 8px 9px; width: auto; }.sign-out { margin: 0 !important; width: auto !important; }.course-banner > div, .content { width: min(100% - 32px, 1120px); }.slot { grid-template-columns: 58px minmax(0, 1fr) auto auto auto; }.availability { font-size: 9px; padding: 5px 7px; }.fleet-page, .assignments-page { min-height: auto; padding: 32px 16px 48px; }.fleet-page .fleet-grid { grid-template-columns: 1fr; }.assignments-page .section-heading { align-items: flex-start; }.assignment-date { width: 100%; }.assignment-date input { width: 100%; } }
 
 /* Scheduler states and fixed CRM navigation. */
+.admin-shell, .admin-main, .admin-main > main { height: 100dvh; max-height: 100dvh; overflow: hidden; }
 .admin-shell { min-height: 100dvh; }
-.admin-main { min-height: 100dvh; overflow-x: hidden; }
+.admin-main { min-height: 100dvh; overflow: hidden; }
 .topbar { height: 100dvh; min-height: 0; overflow: hidden; }
 .wordmark { align-items: center; align-self: center; display: flex; flex-direction: column; gap: 8px; justify-content: center; margin: 0 0 26px; }
-.wordmark img { height: 58px; max-width: none; object-fit: contain; width: 58px; }
-.wordmark span { color: var(--fairway-dark); font-family: Georgia, "Times New Roman", serif; font-size: 24px; font-style: italic; font-weight: 900; letter-spacing: -1.4px; }
+.wordmark img { height: 174px; max-width: none; object-fit: contain; width: 174px; }
+.wordmark span { color: var(--fairway-dark); font-family: Inter, ui-sans-serif, system-ui, sans-serif; font-size: 24px; font-style: italic; font-weight: 900; letter-spacing: -1.4px; }
 .topbar nav { flex: 0 0 auto; }
-.admin-label { flex: 0 0 auto; margin-top: auto; }
+.admin-label { align-self: center; flex: 0 0 auto; margin: auto 0 10px; text-align: center; }
 .sign-out { flex: 0 0 auto; }
 .weekdays span { font-size: 12px; letter-spacing: .4px; }
 .calendar-day { position: relative; }
@@ -242,4 +271,12 @@ main { min-height: 900px; }
 .assignment-remove-button:disabled { background: var(--cream); color: var(--muted); }
 .availability.is-filled { background: color-mix(in srgb, var(--gold) 62%, var(--surface)); color: #775413; }
 
-@media (max-width: 800px) { .topbar { height: auto; overflow: visible; }.wordmark { align-self: center; flex-direction: row; margin-bottom: 14px; }.wordmark img { height: 34px; width: 34px; }.wordmark span { font-size: 21px; }.admin-label { margin-top: 15px; } }
+/* Tee-time editing stays within the desktop app frame; the tee list scrolls independently. */
+.tee-times-editor { box-sizing: border-box; display: grid; gap: 20px; grid-template-rows: auto auto minmax(0, 1fr); height: 100dvh; min-height: 0; overflow: hidden; padding-bottom: 26px; }.tee-time-columns { display: grid; gap: 20px; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }.tee-times-editor .scope-card, .tee-times-editor .time-card, .tee-times-editor .tee-list { margin-top: 0; }.tee-times-editor .tee-list { align-content: start; display: grid; gap: 10px; grid-template-columns: repeat(3, minmax(0, 1fr)); min-height: 0; overflow-y: auto; padding: 16px; }.tee-times-editor .tee-list h2, .tee-times-editor .tee-list > small { grid-column: 1 / -1; padding: 0; }.tee-times-editor .tee-list > div { background: var(--cream); border: 1px solid var(--line); border-radius: 10px; min-height: 58px; padding: 10px 12px; }.tee-times-editor .tee-list > div b { font-size: 14px; }.tee-times-editor .tee-list .danger { font-size: 10px; }
+
+@media (max-width: 800px) { .topbar { height: auto; overflow: visible; }.wordmark { align-self: center; flex-direction: row; margin-bottom: 14px; }.wordmark img { height: 34px; width: 34px; }.wordmark span { font-size: 21px; }.admin-label { margin-top: 15px; }.tee-times-editor { display: block; height: auto; overflow: visible; }.tee-time-columns { grid-template-columns: 1fr; }.tee-times-editor .scope-card, .tee-times-editor .time-card, .tee-times-editor .tee-list { margin-top: 20px; }.tee-times-editor .tee-list { grid-template-columns: repeat(2, minmax(0, 1fr)); overflow: visible; } }
+
+@media (min-width: 801px) { .wordmark { gap: 2px; left: 50%; margin: 0; position: absolute; top: 10px; transform: translateX(-50%); }.wordmark span { margin-top: -22px; }.topbar nav { padding-top: 224px; } }
+
+/* Reduce the hero image height while keeping the existing title/subtitle spacing. */
+.course-banner { min-height: 190px; }

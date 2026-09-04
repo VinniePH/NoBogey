@@ -77,8 +77,7 @@ export function CaddieVerificationQueue() {
   return <main className="verification-page">
     <section className="verification-hero">
       <p className="eyebrow">Club operations</p>
-      <h1>Caddie verification</h1>
-      <p className="lede">Review submitted materials and record one verification decision at a time.</p>
+      <h1>Caddie Verification</h1>
     </section>
     <section className="verification-card" aria-labelledby="verification-queue-title">
       <div className="section-heading verification-heading">
