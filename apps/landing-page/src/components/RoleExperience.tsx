@@ -3,6 +3,7 @@ import {
   Bell,
   CalendarCheck2,
   Check,
+  ChevronLeft,
   ChevronRight,
   Clock3,
   CreditCard,
@@ -16,7 +17,7 @@ import {
 } from "lucide-react";
 import { useState, type ReactNode } from "react";
 
-type Role = "golfer" | "caddie" | "admin";
+export type Role = "golfer" | "caddie" | "admin";
 
 type RoleFlow = {
   eyebrow: string;
@@ -65,18 +66,31 @@ const roleFlows: Record<Role, RoleFlow> = {
 };
 
 function FlowSteps({ steps, activeStep, onSelect }: { steps: string[]; activeStep: number; onSelect: (index: number) => void }) {
+  const previousStep = () => onSelect(Math.max(0, activeStep - 1));
+  const nextStep = () => onSelect(Math.min(steps.length - 1, activeStep + 1));
+
   return (
-    <ol className="role-flow-list">
-      {steps.map((step, index) => (
-        <li className={index === activeStep ? "active" : ""} key={step}>
-          <button type="button" onClick={() => onSelect(index)} aria-label={`Show step ${index + 1}: ${step}`}>
-            <span>{String(index + 1).padStart(2, "0")}</span>
-            <p>{step}</p>
-          </button>
-          {index < steps.length - 1 ? <i /> : null}
-        </li>
-      ))}
-    </ol>
+    <div className="role-flow">
+      <ol className="role-flow-list" aria-label="Role journey steps">
+        {steps.map((step, index) => (
+          <li className={index === activeStep ? "active" : ""} key={step}>
+            <button type="button" onClick={() => onSelect(index)} aria-label={`Show step ${index + 1}: ${step}`}>
+              <span>{String(index + 1).padStart(2, "0")}</span>
+              <p>{step}</p>
+            </button>
+            {index < steps.length - 1 ? <i /> : null}
+          </li>
+        ))}
+      </ol>
+      <div className="role-flow-carousel" aria-live="polite">
+        <p className="role-flow-count">Step {activeStep + 1} of {steps.length}</p>
+        <p className="role-flow-current" key={`${activeStep}-${steps[activeStep]}`}>{steps[activeStep]}</p>
+        <div className="role-flow-controls">
+          <button aria-label="Show previous step" disabled={activeStep === 0} onClick={previousStep} type="button"><ChevronLeft size={16} /> Previous</button>
+          <button aria-label="Show next step" disabled={activeStep === steps.length - 1} onClick={nextStep} type="button">Next <ChevronRight size={16} /></button>
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -172,8 +186,7 @@ function AdminMock({ step }: { step: number }) {
   );
 }
 
-export function RoleExperienceTabs() {
-  const [role, setRole] = useState<Role>("golfer");
+export function RoleExperienceTabs({ role, onRoleChange }: { role: Role; onRoleChange: (role: Role) => void }) {
   const [activeStep, setActiveStep] = useState(0);
   const [teeTime, setTeeTime] = useState("7:20 AM");
   const [caddie, setCaddie] = useState("Miguel Santos");
@@ -183,7 +196,7 @@ export function RoleExperienceTabs() {
   const [editingProfile, setEditingProfile] = useState(false);
   const [requestStatus, setRequestStatus] = useState("Pending");
   const active = roleFlows[role];
-  const selectRole = (nextRole: Role) => { setRole(nextRole); setActiveStep(0); };
+  const selectRole = (nextRole: Role) => { onRoleChange(nextRole); setActiveStep(0); };
   const visual = role === "golfer" ? <GolferMock caddie={caddie} onCaddie={setCaddie} onPayment={setPayment} onReceipt={() => setReceipt(true)} onTeeTime={setTeeTime} payment={payment} receipt={receipt} step={activeStep} teeTime={teeTime} /> : role === "caddie" ? <CaddieMock availability={availability} editing={editingProfile} onAvailability={() => setAvailability((value) => !value)} onEditProfile={() => setEditingProfile((value) => !value)} onRequest={setRequestStatus} requestStatus={requestStatus} step={activeStep} /> : <AdminMock step={activeStep} />;
 
   return (

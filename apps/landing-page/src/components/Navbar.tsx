@@ -4,11 +4,10 @@ import { useEffect, useState } from "react";
 import { Logo } from "./Logo";
 
 const links = [
-  ["How It Works", "#how-it-works"],
   ["Courses", "#courses"],
   ["Caddies", "#caddies"],
   ["Features", "#features"],
-  ["FAQ", "#faq"]
+  ["FAQ", "/contact/#faq"]
 ] as const;
 
 export function Navbar() {
@@ -36,7 +35,7 @@ export function Navbar() {
   }, [open]);
 
   return (
-    <header className={`fixed inset-x-0 top-0 z-50 transition-all duration-300 ${scrolled ? "border-b border-line/70 bg-ivory/90 shadow-[0_8px_40px_rgba(20,43,35,0.05)] backdrop-blur-xl" : "bg-transparent"}`}>
+    <header className={`fixed inset-x-0 top-0 z-50 border-b border-line/70 bg-ivory/90 backdrop-blur-xl transition-all duration-300 ${scrolled ? "shadow-[0_8px_40px_rgba(20,43,35,0.05)]" : ""}`}>
       <nav className="page-container flex h-[74px] items-center justify-between" aria-label="Primary navigation">
         <Logo />
         <div className="hidden items-center gap-7 lg:flex">
@@ -44,7 +43,6 @@ export function Navbar() {
             <a key={href} className="nav-link" href={href}>{label}</a>
           ))}
         </div>
-        <a className="button-primary hidden min-w-32 md:inline-flex" href="/get-started/">Are you ready?</a>
         <button
           className="grid size-10 place-items-center rounded-full border border-line bg-warm-white text-forest md:hidden"
           type="button"
@@ -68,7 +66,6 @@ export function Navbar() {
               <a key={href} className="border-b border-line py-5 text-2xl font-medium tracking-[-0.04em]" href={href} onClick={() => setOpen(false)}>{label}</a>
             ))}
           </div>
-          <a className="button-primary mt-auto" href="/get-started/" onClick={() => setOpen(false)}>Are you ready?</a>
         </div>
       </div>
     </header>

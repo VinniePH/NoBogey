@@ -13,6 +13,7 @@ import { QRCodeSVG } from "qrcode.react";
 import type { ReactNode } from "react";
 
 import { Logo } from "../components/Logo";
+import { CaddieProfileScreen, CourseDetailScreen, DiscoveryScreen, PhoneShell } from "../components/PhoneMockup";
 import { adminWebUrl, clubContactEmail, installLinks } from "../config/links";
 
 type StoreLinkProps = {
@@ -98,6 +99,13 @@ export function GetStartedPage() {
               </p>
             </div>
 
+            <div className="get-started-phone-showcase relative mx-auto mt-12 h-[440px] w-full max-w-[760px] sm:mt-16 sm:h-[560px]" aria-label="NoBogey mobile app previews">
+              <div className="phone-orbit" aria-hidden="true" />
+              <PhoneShell className="hero-phone hero-phone-left" screenLabel="NoBogey course details app screen"><CourseDetailScreen /></PhoneShell>
+              <PhoneShell className="hero-phone hero-phone-main" screenLabel="NoBogey course discovery app screen"><DiscoveryScreen /></PhoneShell>
+              <PhoneShell className="hero-phone hero-phone-right" screenLabel="NoBogey caddie profile app screen"><CaddieProfileScreen compact /></PhoneShell>
+            </div>
+
             <div className="mt-14 grid gap-5 lg:grid-cols-2">
               <MobileRoleCard
                 role="golfer"
@@ -112,7 +120,7 @@ export function GetStartedPage() {
             <section className="club-access-card">
               <div className="max-w-xl">
                 <span className="install-icon install-icon-dark"><Building2 size={21} strokeWidth={1.6} /></span>
-                <p className="mt-7 text-xs font-bold uppercase tracking-[0.16em] text-[#d8b66a]">For clubs and administrators</p>
+                <p className="mt-7 text-xs font-bold uppercase tracking-[0.16em] text-[#d8b66a]">For club teams</p>
                 <h2 className="mt-3 text-[clamp(2.2rem,4vw,4rem)] font-medium leading-[1] tracking-[-0.055em] text-white">Manage your club with NoBogey.</h2>
                 <p className="mt-5 text-base leading-7 text-white/65">Verify registered caddies, manage tee-time availability, and coordinate your club’s roster from the admin portal.</p>
               </div>
