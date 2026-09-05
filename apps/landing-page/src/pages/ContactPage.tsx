@@ -3,6 +3,7 @@ import { useState } from "react";
 import type { FormEvent } from "react";
 
 import { Logo } from "../components/Logo";
+import { FaqAccordion } from "../components/Faq";
 
 const contactEmail = "nobogeyofficial@gmail.com";
 
@@ -65,6 +66,16 @@ export function ContactPage() {
             <p className="mt-3 text-sm leading-6 text-muted">Send opens your email app with your message addressed to NoBogey.</p>
             <button className="button-primary mt-6" disabled={!message.trim()} type="submit">Send message <Send size={16} /></button>
           </form>
+        </section>
+        <section className="mx-auto mt-20 max-w-5xl scroll-mt-12" id="faq">
+          <div className="grid gap-10 lg:grid-cols-[0.82fr_1.18fr] lg:gap-16">
+            <div>
+              <p className="eyebrow">FAQ</p>
+              <h2 className="mt-5 text-4xl font-semibold tracking-[-0.055em] text-forest sm:text-5xl">A few things you might be wondering.</h2>
+              <p className="mt-6 max-w-md text-lg leading-8 text-muted">If your question is not answered here, use the enquiry box above and we will receive it at the NoBogey email address.</p>
+            </div>
+            <FaqAccordion />
+          </div>
         </section>
       </main>
       <footer className="border-t border-line bg-warm-white py-8">

@@ -12,19 +12,16 @@ import {
   UsersRound,
   type LucideIcon
 } from "lucide-react";
-import type { ReactNode } from "react";
+import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 
-import { FaqAccordion } from "./components/Faq";
 import { Logo } from "./components/Logo";
 import { Navbar } from "./components/Navbar";
 import {
   CaddieProfileScreen,
-  CourseDetailScreen,
-  DiscoveryScreen,
   PhoneShell
 } from "./components/PhoneMockup";
 import { Reveal } from "./components/Reveal";
-import { RoleExperienceTabs } from "./components/RoleExperience";
+import { RoleExperienceTabs, type Role } from "./components/RoleExperience";
 
 function Eyebrow({ children }: { children: ReactNode }) {
   return <p className="eyebrow">{children}</p>;
@@ -58,6 +55,12 @@ const courses = [
     meta: "36 holes · Heritage",
     image: "/images/course-wackwack.jpg"
   }
+];
+
+const caddies = [
+  { name: "Miguel Santos", experience: "8 years", specialties: "Course strategy · Green reading", image: "/images/golf-lifestyle.jpg" },
+  { name: "Paolo Reyes", experience: "6 years", specialties: "Club selection · Local knowledge", image: "/images/course-southwoods.jpg" },
+  { name: "Rafael Cruz", experience: "10 years", specialties: "Pace of play · Course management", image: "/images/course-valley.jpg" }
 ];
 
 type IconItem = readonly [LucideIcon, string, string?];
@@ -103,15 +106,55 @@ const povFeatures = [
   }
 ] as const;
 
+function MobileLoopCarousel<T extends { name: string }>({ items, label, children }: { items: T[]; label: string; children: (item: T) => ReactNode }) {
+  const [index, setIndex] = useState(0);
+  const item = items[index];
+
+  useEffect(() => {
+    const timer = window.setInterval(() => setIndex((value) => (value + 1) % items.length), 4500);
+    return () => window.clearInterval(timer);
+  }, [items.length]);
+
+  return (
+    <div className="mobile-loop-carousel" aria-label={label}>
+      <div className="mobile-loop-viewport">{item ? <div className="mobile-loop-card" key={item.name}>{children(item)}</div> : null}</div>
+    </div>
+  );
+}
+
 export function App() {
+  const [activeRole, setActiveRole] = useState<Role>("golfer");
+  const [mobileSlide, setMobileSlide] = useState(0);
+  const mobileSlideCount = 5;
+  const [activeSlideHeight, setActiveSlideHeight] = useState<number>();
+  const slideRefs = useRef<(HTMLElement | null)[]>([]);
+
+  useEffect(() => {
+    const slide = slideRefs.current[mobileSlide];
+    if (!slide) return;
+
+    const updateHeight = () => setActiveSlideHeight(slide.scrollHeight);
+    updateHeight();
+    const observer = new ResizeObserver(updateHeight);
+    observer.observe(slide);
+    window.addEventListener("resize", updateHeight);
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("resize", updateHeight);
+    };
+  }, [mobileSlide]);
+
   return (
     <div id="top" className="overflow-clip bg-ivory text-ink">
       <Navbar />
 
-      <main>
-        <section className="relative min-h-[940px] overflow-hidden pb-20 pt-32 lg:flex lg:min-h-[850px] lg:items-center lg:pb-24 lg:pt-28">
+      <div className="landing-carousel-shell">
+      <main className="landing-main" style={{ "--mobile-slide-offset": `-${mobileSlide * 100}vw`, height: activeSlideHeight ? `${activeSlideHeight}px` : undefined } as CSSProperties}>
+        <section className="landing-slide landing-hero relative min-h-[620px] overflow-hidden pb-16 pt-32 lg:flex lg:items-center lg:pb-12 lg:pt-28" ref={(node) => { slideRefs.current[0] = node; }}>
+          <img className="absolute inset-0 size-full object-cover object-center" src="/images/hero-golf.jpg" alt="Golf course fairway with a putting green" />
+          <div className="absolute inset-0 bg-gradient-to-r from-ivory via-ivory/92 to-ivory/20" />
           <div className="hero-glow" />
-          <div className="page-container relative grid items-center gap-14 lg:grid-cols-[0.9fr_1.1fr] lg:gap-8">
+          <div className="page-container relative">
             <div className="relative z-10 max-w-2xl">
               <Reveal>
                 <Eyebrow>Golf, made easier.</Eyebrow>
@@ -126,8 +169,8 @@ export function App() {
                   Discover golf courses, find the right caddie, and arrange your next round in one simple experience.
                 </p>
                 <div className="mt-9 flex flex-col gap-3 sm:flex-row">
-                  <a className="button-primary" href="/get-started/">Are you ready? <ArrowRight size={16} /></a>
-                  <a className="button-secondary" href="#how-it-works">See How It Works</a>
+                  <a className="button-primary" href="/get-started/">Get started <ArrowRight size={16} /></a>
+                  <a className="button-secondary" href="#product" onClick={(event) => { event.preventDefault(); setMobileSlide(1); }}>Explore the platform</a>
                 </div>
                 <p className="mt-6 flex items-center gap-3 text-sm text-muted">
                   <span className="h-px w-8 bg-forest/35" /> Courses. Caddies. Bookings. All in one place.
@@ -135,26 +178,10 @@ export function App() {
               </Reveal>
             </div>
 
-            <Reveal className="relative h-[520px] sm:h-[620px] lg:h-[690px]" delay={130}>
-              <div className="phone-orbit" aria-hidden="true" />
-              <PhoneShell className="hero-phone hero-phone-left" screenLabel="NoBogey course details app screen">
-                <CourseDetailScreen />
-              </PhoneShell>
-              <PhoneShell className="hero-phone hero-phone-main" screenLabel="NoBogey course discovery app screen">
-                <DiscoveryScreen />
-              </PhoneShell>
-              <PhoneShell className="hero-phone hero-phone-right" screenLabel="NoBogey caddie profile app screen">
-                <CaddieProfileScreen compact />
-              </PhoneShell>
-              <div className="absolute bottom-8 left-1/2 hidden -translate-x-1/2 items-center gap-3 rounded-2xl border border-white/80 bg-white/90 px-4 py-3 shadow-[0_18px_50px_rgba(23,63,53,0.14)] backdrop-blur sm:flex">
-                <span className="grid size-9 place-items-center rounded-xl bg-forest text-white"><Check size={15} /></span>
-                <span><span className="block text-xs font-semibold">Round confirmed</span><span className="block text-[10px] text-muted">Sunday · 7:20 AM</span></span>
-              </div>
-            </Reveal>
           </div>
         </section>
 
-        <section className="border-y border-line bg-warm-white py-11">
+        <section className="mobile-hidden border-y border-line bg-warm-white py-11">
           <div className="page-container">
             <p className="text-center text-sm font-medium tracking-[-0.01em] text-muted">Everything you need for your next round.</p>
             <div className="mx-auto mt-8 grid max-w-4xl grid-cols-2 gap-x-6 gap-y-7 md:grid-cols-4">
@@ -168,7 +195,7 @@ export function App() {
           </div>
         </section>
 
-        <section id="how-it-works" className="section-space scroll-mt-20">
+        <section id="how-it-works" className="hidden">
           <div className="page-container">
             <Reveal className="max-w-3xl">
               <Eyebrow>How it works</Eyebrow>
@@ -237,7 +264,7 @@ export function App() {
           </div>
         </section>
 
-        <section id="courses" className="section-space scroll-mt-16 bg-[#eeece4]">
+        <section id="courses" className="landing-slide landing-courses section-space scroll-mt-16 bg-[#eeece4]" ref={(node) => { slideRefs.current[2] = node; }}>
           <div className="page-container">
             <Reveal className="flex flex-col justify-between gap-6 md:flex-row md:items-end">
               <div className="max-w-2xl"><Eyebrow>Discover courses</Eyebrow><h2 className="section-title mt-5">Find somewhere worth playing.</h2><p className="section-copy mt-5">Explore golf courses and get the details you need before choosing your next round.</p></div>
@@ -251,10 +278,13 @@ export function App() {
                 </Reveal>
               ))}
             </div>
+            <MobileLoopCarousel items={courses} label="courses">
+              {(course) => <><img className="aspect-[4/3] w-full object-cover" src={course.image} alt={`${course.name} course landscape`} /><div className="p-5"><p className="text-lg font-semibold tracking-[-0.035em]">{course.name}</p><p className="mt-2 flex items-center gap-1.5 text-sm text-muted"><MapPin size={13} /> {course.location}</p><p className="mt-3 text-[11px] uppercase tracking-[0.12em] text-muted">{course.meta}</p></div></>}
+            </MobileLoopCarousel>
           </div>
         </section>
 
-        <section id="caddies" className="section-space scroll-mt-16">
+        <section id="caddies" className="landing-slide landing-caddies section-space scroll-mt-16" ref={(node) => { slideRefs.current[3] = node; }}>
           <div className="page-container grid items-center gap-16 lg:grid-cols-2 lg:gap-24">
             <Reveal className="relative mx-auto h-[660px] w-full max-w-[530px]">
               <div className="absolute inset-10 rounded-[50%] bg-[#dfe8df] blur-3xl" />
@@ -271,17 +301,20 @@ export function App() {
                 ))}
               </div>
               <a className="button-primary mt-10" href="#features">View Caddies <ArrowRight size={16} /></a>
+              <MobileLoopCarousel items={caddies} label="caddies">
+                {(caddie) => <><img className="aspect-[4/3] w-full object-cover" src={caddie.image} alt={`${caddie.name} caddie profile`} /><div className="p-5"><div className="flex items-start justify-between gap-3"><div><p className="text-lg font-semibold tracking-[-0.035em]">{caddie.name}</p><p className="mt-1 flex items-center gap-1 text-sm text-muted"><Star size={13} fill="#c79b43" color="#c79b43" /> 4.9 · {caddie.experience}</p></div><span className="rounded-full bg-[#e2eee6] px-3 py-1.5 text-xs font-semibold text-forest">Available</span></div><p className="mt-4 text-sm leading-6 text-muted">{caddie.specialties}</p></div></>}
+              </MobileLoopCarousel>
             </Reveal>
           </div>
         </section>
 
-        <section id="product" className="dark-section section-space bg-forest text-white">
+        <section id="product" className="landing-slide landing-product dark-section section-space bg-forest text-white" ref={(node) => { slideRefs.current[1] = node; }}>
           <div className="page-container">
-            <Reveal className="max-w-3xl"><Eyebrow>Explore NoBogey</Eyebrow><h2 className="section-title mt-5 text-white">One platform.<br />Three points of view.</h2><p className="mt-6 max-w-2xl text-lg leading-8 text-white/65">Move through the exact flow for golfers, caddies, and club administrators.</p></Reveal>
-            <Reveal className="mt-14 lg:mt-20" delay={80}><RoleExperienceTabs /></Reveal>
+            <Reveal className="max-w-3xl"><Eyebrow>Explore NoBogey</Eyebrow><h2 className="section-title mt-5 text-white">One platform.<br />Three points of view.</h2><p className="mt-6 max-w-2xl text-lg leading-8 text-white/65">Move through the exact flow for golfers, caddies, and club teams.</p></Reveal>
+            <Reveal className="mt-14 lg:mt-20" delay={80}><RoleExperienceTabs role={activeRole} onRoleChange={setActiveRole} /></Reveal>
             <div className="mt-6 grid gap-4 lg:grid-cols-3">
               {povFeatures.map((feature, index) => (
-                <Reveal className="rounded-[1.75rem] border border-white/12 bg-white/[0.06] p-6 transition-colors duration-300 hover:border-white/25 hover:bg-white/[0.1]" delay={140 + index * 70} key={feature.role}>
+                <Reveal className={`pov-card rounded-[1.75rem] border border-white/12 bg-white/[0.06] p-6 transition-colors duration-300 ${activeRole === feature.role.toLowerCase() ? "pov-card-active" : ""}`} delay={140 + index * 70} key={feature.role}>
                   <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#c9d8ca]">{feature.role} view</p>
                   <h3 className="mt-8 text-2xl font-medium tracking-[-0.045em]">{feature.title}</h3>
                   <p className="mt-3 text-sm leading-6 text-white/62">{feature.copy}</p>
@@ -294,7 +327,7 @@ export function App() {
           </div>
         </section>
 
-        <section id="features" className="section-space scroll-mt-16">
+        <section id="features" className="mobile-hidden section-space scroll-mt-16">
           <div className="page-container">
             <Reveal className="max-w-3xl"><Eyebrow>Built for the round</Eyebrow><h2 className="section-title mt-5">Everything important.<br />Nothing in the way.</h2></Reveal>
             <div className="mt-14 grid gap-5 md:grid-cols-2">
@@ -305,7 +338,7 @@ export function App() {
           </div>
         </section>
 
-        <section className="relative min-h-[620px] overflow-hidden md:min-h-[720px]">
+        <section className="landing-slide landing-lifestyle relative min-h-[620px] overflow-hidden md:min-h-[720px]" ref={(node) => { slideRefs.current[4] = node; }}>
           <img className="absolute inset-0 size-full object-cover" src="/images/golf-lifestyle.jpg" alt="Golfer and caddie walking together down a fairway at golden hour" />
           <div className="absolute inset-0 bg-gradient-to-r from-[#0e2a22]/75 via-[#0e2a22]/20 to-transparent" />
           <div className="page-container relative flex min-h-[620px] items-end pb-14 md:min-h-[720px] md:pb-20">
@@ -313,30 +346,32 @@ export function App() {
           </div>
         </section>
 
-        <section id="faq" className="section-space scroll-mt-16">
-          <div className="page-container grid gap-12 lg:grid-cols-[0.8fr_1.2fr] lg:gap-24">
-            <Reveal><Eyebrow>FAQ</Eyebrow><h2 className="section-title mt-5">A few things you might be wondering.</h2></Reveal>
-            <Reveal delay={80}><FaqAccordion /></Reveal>
-          </div>
-        </section>
-
-        <section className="pb-5 sm:pb-8">
+        <section className="hidden">
           <div className="page-container">
             <Reveal className="final-cta">
-              <div className="relative z-10 max-w-2xl"><Eyebrow>Your next round</Eyebrow><h2 className="mt-5 text-[clamp(3.2rem,6vw,6.3rem)] font-medium leading-[0.91] tracking-[-0.065em] text-ivory">Your next round<br />starts here.</h2><p className="mt-7 max-w-xl text-lg leading-8 text-white/65">Spend less time arranging the details and more time enjoying the game.</p><div className="mt-9 flex flex-col items-start gap-5 sm:flex-row sm:items-center"><a className="button-light" href="/get-started/">Are you ready? <ArrowRight size={16} /></a><a className="group inline-flex items-center gap-2 text-sm font-semibold text-white" href="#product">Explore NoBogey <ArrowRight className="transition-transform group-hover:translate-x-1" size={15} /></a></div></div>
+              <div className="relative z-10 max-w-2xl"><Eyebrow>Your next round</Eyebrow><h2 className="mt-5 text-[clamp(3.2rem,6vw,6.3rem)] font-medium leading-[0.91] tracking-[-0.065em] text-ivory">Your next round<br />starts here.</h2><p className="mt-7 max-w-xl text-lg leading-8 text-white/65">Spend less time arranging the details and more time enjoying the game.</p><div className="mt-9 flex flex-col items-start gap-5 sm:flex-row sm:items-center"><a className="button-light" href="/get-started/">Get started <ArrowRight size={16} /></a><a className="group inline-flex items-center gap-2 text-sm font-semibold text-white" href="#product">Explore NoBogey <ArrowRight className="transition-transform group-hover:translate-x-1" size={15} /></a></div></div>
               <div className="cta-visual" aria-hidden="true"><span className="golf-ball" /><span className="flag-stick"><i /></span><span className="green-line" /></div>
             </Reveal>
           </div>
         </section>
-      </main>
 
-      <footer className="bg-[#0d2922] pb-8 pt-16 text-white sm:pt-20">
+        <nav className="mobile-page-controls" aria-label="Landing page slides" style={{ "--page-control-left": `${mobileSlide * 100 + 50}vw` } as CSSProperties}>
+          <div className="page-progress" aria-label="Current landing page section">
+            {Array.from({ length: mobileSlideCount }, (_, index) => (
+              <button aria-current={mobileSlide === index ? "step" : undefined} aria-label={`Show section ${index + 1}`} className={`page-dot ${mobileSlide === index ? "page-dot-active" : ""}`} key={index} onClick={() => setMobileSlide(index)} type="button"><span /></button>
+            ))}
+          </div>
+        </nav>
+        </main>
+      </div>
+
+      <footer className="bg-[#0d2922] pb-6 pt-10 text-white sm:pt-12">
         <div className="page-container">
-          <div className="grid gap-14 border-b border-white/10 pb-14 md:grid-cols-[1.5fr_2fr]">
+          <div className="grid gap-10 border-b border-white/10 pb-10 md:grid-cols-[1.5fr_2fr]">
             <div><Logo inverse /><p className="mt-5 max-w-xs text-base leading-7 text-white/55">The perfect walk, arranged on-demand.</p></div>
             <div className="grid grid-cols-2 gap-10 sm:grid-cols-3">
               {[
-                ["Product", [["How It Works", "#how-it-works"], ["Courses", "#courses"], ["Caddies", "#caddies"], ["Features", "#features"]]],
+                ["Product", [["Courses", "#courses"], ["Caddies", "#caddies"], ["Features", "#features"]]],
                 ["Company", [["About", "#top"], ["Contact", "/contact/"]]],
                 ["Legal", [["Privacy Policy", "/privacy/"], ["Terms & Conditions", "/terms/"]]]
               ].map(([heading, items]) => (
@@ -344,7 +379,7 @@ export function App() {
               ))}
             </div>
           </div>
-          <div className="flex flex-col gap-3 pt-7 text-xs text-white/40 sm:flex-row sm:items-center sm:justify-between"><p>© NoBogey. All rights reserved.</p><p>Play well. Walk easy.</p></div>
+          <div className="flex flex-col gap-3 pt-5 text-xs text-white/40 sm:flex-row sm:items-center sm:justify-between"><p>© NoBogey. All rights reserved.</p><p>Play well. Walk easy.</p></div>
         </div>
       </footer>
     </div>
