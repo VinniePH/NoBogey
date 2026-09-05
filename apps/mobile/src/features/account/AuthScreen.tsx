@@ -5,6 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors, spacing } from '@nobogey/ui';
 
 import { signIn, signUp } from '../../../backend/auth/auth.service';
+import { completeMobileCaptcha } from '../../../backend/auth/captcha';
 import { Button } from '../../ui/primitives';
 import { TermsAcceptanceModal } from '../legal/TermsAcceptanceModal';
 import { useAppSession, type AppRole } from '../session/AppSession';
@@ -35,6 +36,9 @@ export function AuthScreen() {
     setSubmitting(true);
     setMessage(undefined);
     try {
+      setMessage('Complete the security check in your browser, then return to NoBogey.');
+      await completeMobileCaptcha();
+      setMessage(undefined);
       if (mode === 'register') {
         const username = displayName.replace(/[^A-Za-z0-9_]/g, '').slice(0, 32);
         const result = await signUp({ email, password, displayName, role, ...(username.length >= 3 ? { username } : {}) });
