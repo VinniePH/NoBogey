@@ -283,3 +283,4 @@ button.danger:not(.filled):hover { background: color-mix(in srgb, var(--danger) 
 
 .login-link { background: transparent; border: 0; color: var(--fairway); font-size: 13px; font-weight: 800; padding: 2px; text-align: center; }
 .login-support { color: var(--muted); font-size: 12px; font-weight: 700; text-align: center; }
+.turnstile-container { display: flex; justify-content: center; min-height: 65px; }

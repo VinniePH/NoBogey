@@ -24,5 +24,19 @@ export async function saveCaddieOnboardingDraft(draft: unknown, submitted = fals
   const { error } = await getSupabaseClient().from("caddie_onboarding_drafts").upsert({ user_id: auth.user.id, draft: safeDraft, updated_at: new Date().toISOString(), ...(submitted ? { submitted_at: new Date().toISOString() } : {}) });
   if (error) throw error;
 }
+export async function submitCaddieOnboarding(draft: unknown): Promise<void> {
+  const safeDraft = draft && typeof draft === "object" ? Object.fromEntries(Object.entries(draft).filter(([key]) => key !== "password")) : draft;
+  const { error } = await getSupabaseClient().rpc("submit_caddie_onboarding", { p_draft: safeDraft });
+  if (error) throw error;
+}
+export async function loadCaddieVerificationStatus(): Promise<{ status: string; note?: string; reviewedAt?: string } | null> {
+  const client = getSupabaseClient(); const { data: auth } = await client.auth.getUser(); if (!auth.user) return null;
+  const [{ data: profile, error }, { data: review }] = await Promise.all([
+    client.from("caddie_profiles").select("verification_status").eq("user_id", auth.user.id).maybeSingle(),
+    client.from("caddie_verification_reviews").select("reviewer_note,created_at").eq("caddie_id", auth.user.id).order("created_at", { ascending: false }).limit(1).maybeSingle()
+  ]);
+  if (error) throw error; if (!profile) return null;
+  return { status: profile.verification_status, ...(review?.reviewer_note ? { note: review.reviewer_note } : {}), ...(review?.created_at ? { reviewedAt: review.created_at } : {}) };
+}
 export async function loadPreferences<T>(): Promise<T | null> { const { data: auth } = await getSupabaseClient().auth.getUser(); if (!auth.user) return null; const { data, error } = await getSupabaseClient().from("user_preferences").select("preferences").eq("user_id", auth.user.id).maybeSingle(); if (error) throw error; return (data?.preferences as T | undefined) ?? null; }
 export async function savePreferences(preferences: Record<string, unknown>): Promise<void> { const client=getSupabaseClient(); const { data: auth } = await client.auth.getUser(); if (!auth.user) throw new Error("AUTH_REQUIRED"); const {data:existing}=await client.from("user_preferences").select("preferences").eq("user_id",auth.user.id).maybeSingle(); const merged={...((existing?.preferences as Record<string,unknown>|undefined)??{}),...preferences}; const { error } = await client.from("user_preferences").upsert({ user_id: auth.user.id, preferences:merged, updated_at: new Date().toISOString() }); if (error) throw error; }

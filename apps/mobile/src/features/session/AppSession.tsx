@@ -2,7 +2,7 @@ import type { PropsWithChildren } from "react";
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { createCaddieOnboardingDraft, type CaddieOnboardingDraft, type CaddieVerificationStatus, type OnboardingStep } from "../caddie-onboarding/model";
 import { getSession, signOut as signOutFromSupabase } from '../../../backend/auth/auth.service';
-import { loadCaddieOnboardingDraft, loadPreferences, saveCaddieOnboardingDraft, savePreferences } from '../../../backend/users/users.service';
+import { loadCaddieOnboardingDraft, loadPreferences, saveCaddieOnboardingDraft, savePreferences, submitCaddieOnboarding as submitRemoteCaddieOnboarding } from '../../../backend/users/users.service';
 
 export type AppRole = "golfer" | "caddie";
 export type CaddieVerificationState = CaddieVerificationStatus;
@@ -20,7 +20,7 @@ type Session = {
   switchRole: (role: AppRole) => void;
   updateCaddieOnboarding: (update: Partial<CaddieOnboardingDraft>) => void;
   setCaddieOnboardingStep: (step: OnboardingStep) => void;
-  submitCaddieOnboarding: () => void;
+  submitCaddieOnboarding: () => Promise<void>;
 };
 
 const SessionContext = createContext<Session | null>(null);
@@ -82,12 +82,10 @@ export function AppSessionProvider({ children }: PropsWithChildren) {
         return next;
       });
     },
-    submitCaddieOnboarding: () => {
-      setCaddieOnboarding((current) => {
-        const next = { ...current, step: 5 as OnboardingStep };
-        void saveCaddieOnboardingDraft(next, true).catch(() => undefined);
-        return next;
-      });
+    submitCaddieOnboarding: async () => {
+      const next = { ...caddieOnboarding, step: 5 as OnboardingStep, verificationStatus: "pending" as const, submittedAt: new Date().toISOString() };
+      await submitRemoteCaddieOnboarding(next);
+      setCaddieOnboarding(next);
     }
   }), [activeRole, caddieOnboarding, golferSignedIn, initialRole, isHydrated]);
 

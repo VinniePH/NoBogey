@@ -18,11 +18,12 @@ let state: FleetState = seed;
 const listeners = new Set<() => void>();
 
 async function hydrate() {
-  const [{ data, error }, { data: assignments }, { data: profiles }, { data: names }] = await Promise.all([
+  const [{ data, error }, { data: assignments }, { data: profiles }, { data: names }, { data: compliance }] = await Promise.all([
     supabase.from("admin_portal_state").select("state").eq("id", "primary").maybeSingle(),
     supabase.from("caddie_club_assignments").select("caddie_id,verification_status").eq("verification_status", "verified"),
     supabase.from("caddie_profiles").select("user_id,tagline,years_experience,rate_amount_in_centavos,verification_status").eq("verification_status", "verified"),
-    supabase.from("profiles").select("id,display_name,is_active")
+    supabase.from("profiles").select("id,display_name,is_active"),
+    supabase.from("caddie_compliance_events").select("caddie_id").is("resolved_at", null)
   ]);
   if (error) return;
   const stored = data?.state ? data.state as FleetState : seed;
@@ -36,7 +37,7 @@ async function hydrate() {
       rate: Math.round(Number(profile.rate_amount_in_centavos) / 100),
       years: profile.years_experience ?? 0,
       active: (names ?? []).find(item => item.id === profile.user_id)?.is_active ?? previous?.active ?? true,
-      strikes: previous?.strikes ?? 0,
+      strikes: (compliance ?? []).filter(item => item.caddie_id === profile.user_id).length,
       custom: true
     } satisfies Caddie;
   });
@@ -82,10 +83,10 @@ export async function addCaddie(email: string, name: string, tier: Tier | number
   if (error) throw error;
   await hydrate();
 }
-export async function toggleCaddie(id: string) { const caddie = state.caddies.find(c => c.id === id); if (!caddie) return; const active = !caddie.active; const { error } = await supabase.from("profiles").update({ is_active: active }).eq("id", id); if (error) throw error; update({ ...state, caddies: state.caddies.map(c => c.id === id ? { ...c, active } : c) }); }
-export function removeCaddie(id: string) { const caddie = state.caddies.find(c => c.id === id); if (!caddie?.custom) return; const assignments = Object.fromEntries(Object.entries(state.assignments).map(([assignmentKey, ids]) => [assignmentKey, ids.filter(caddieId => caddieId !== id)])); update({ ...state, caddies: state.caddies.filter(c => c.id !== id), assignments }); }
-export function reportCaddie(id: string, _reason: string) { const caddie = state.caddies.find(c => c.id === id); if (!caddie || caddie.strikes >= MAX_STRIKES) return; update({ ...state, caddies: state.caddies.map(c => c.id === id ? { ...c, strikes: c.strikes + 1 } : c) }); }
-export function removeStrike(id: string) { const caddie = state.caddies.find(c => c.id === id); if (!caddie || !caddie.strikes) return; update({ ...state, caddies: state.caddies.map(c => c.id === id ? { ...c, strikes: c.strikes - 1 } : c) }); }
+export async function toggleCaddie(id: string) { const caddie = state.caddies.find(c => c.id === id); if (!caddie) return; const { error } = await supabase.rpc("admin_set_caddie_active", { p_caddie_id: id, p_active: !caddie.active }); if (error) throw error; await hydrate(); }
+export async function removeCaddie(id: string) { const { error } = await supabase.rpc("admin_set_caddie_active", { p_caddie_id: id, p_active: false }); if (error) throw error; await hydrate(); }
+export async function reportCaddie(id: string, reason: string) { const { error } = await supabase.rpc("admin_report_caddie", { p_caddie_id: id, p_reason: reason }); if (error) throw error; await hydrate(); }
+export async function removeStrike(id: string) { const { error } = await supabase.rpc("admin_resolve_caddie_report", { p_caddie_id: id }); if (error) throw error; await hydrate(); }
 
 export function addTeeTime(date: string, time: string, allTime = false) {
   if (allTime) { const nextDayTimes = Object.fromEntries(Object.entries(state.dayTimes).map(([day, times]) => [day, day >= date ? sorted([...times, time]) : times])); update({ ...state, defaultTimes: sorted([...state.defaultTimes, time]), dayTimes: nextDayTimes }); return; }
