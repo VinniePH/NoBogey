@@ -11,8 +11,29 @@ function isAdminRoute(pathname) {
 }
 
 export default {
-  async fetch(request) {
+  async fetch(request, env) {
     const incoming = new URL(request.url);
+
+    if (incoming.pathname === "/api/turnstile/verify") {
+      if (request.method !== "POST") {
+        return Response.json({ success: false, error: "Method not allowed." }, { status: 405 });
+      }
+      const body = await request.json().catch(() => ({}));
+      if (!body.token || typeof body.token !== "string") {
+        return Response.json({ success: false, error: "Complete the security check." }, { status: 400 });
+      }
+      const form = new FormData();
+      form.set("secret", env.TURNSTILE_SECRET_KEY);
+      form.set("response", body.token);
+      form.set("remoteip", request.headers.get("CF-Connecting-IP") || "");
+      const verification = await fetch("https://challenges.cloudflare.com/turnstile/v0/siteverify", { method: "POST", body: form });
+      const result = await verification.json();
+      return Response.json({ success: result.success === true }, {
+        status: result.success === true ? 200 : 400,
+        headers: { "Cache-Control": "no-store" }
+      });
+    }
+
     const target = new URL(request.url);
     const adminRoute = isAdminRoute(incoming.pathname);
 

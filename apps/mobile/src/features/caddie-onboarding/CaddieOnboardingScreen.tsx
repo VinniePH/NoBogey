@@ -42,9 +42,10 @@ export function CaddieOnboardingScreen() {
     }
     advance(next);
   };
-  const finishSubmission = () => {
-    submitCaddieOnboarding();
-    router.replace("/caddie/verification");
+  const finishSubmission = async () => {
+    setErrors({});
+    try { await submitCaddieOnboarding(); router.replace("/caddie/verification"); }
+    catch (error) { setErrors({ submission: typeof error === "object" && error && "message" in error ? String(error.message) : "Unable to submit onboarding." }); }
   };
   const submit = () => {
     const nextErrors = canSubmitOnboarding(draft);
@@ -55,10 +56,10 @@ export function CaddieOnboardingScreen() {
       setTermsVisible(true);
       return;
     }
-    finishSubmission();
+    void finishSubmission();
   };
 
-  return <SafeAreaView edges={["top", "bottom"]} style={styles.safe}><ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled"><ResponsiveContent style={styles.content}><View style={styles.head}><Text accessibilityRole="header" style={styles.title}>{readOnly ? "Submitted profile" : "Build your caddie profile"}</Text><Text style={styles.subtitle}>{readOnly ? "This is the profile version currently with your home club." : "Create your account, then submit your profile to your home club."}</Text></View><Steps current={step} />{step === 1 ? <Account draft={draft} errors={errors} update={updateCaddieOnboarding} /> : null}{step === 2 ? <Club draft={draft} errors={errors} update={updateCaddieOnboarding} /> : null}{step === 3 ? <Skills draft={draft} update={updateCaddieOnboarding} /> : null}{step === 4 ? <Portfolio draft={draft} errors={errors} update={updateCaddieOnboarding} /> : null}{step === 5 ? <Review draft={draft} edit={readOnly ? () => {} : go} /> : null}{readOnly ? <Button accessibilityLabel="Back to verification status" onPress={() => backToPreviousPage("/caddie/verification")} variant="secondary">Back to verification status</Button> : step === 5 ? <Button accessibilityLabel="Submit for verification" onPress={submit}>Submit for Verification</Button> : <View style={styles.actions}>{step > 1 ? <Button accessibilityLabel="Previous onboarding step" onPress={() => go((step - 1) as OnboardingStep)} variant="secondary">Back</Button> : null}<View style={styles.fill}><Button accessibilityLabel="Continue" onPress={() => go((step + 1) as OnboardingStep)}>Continue</Button></View></View>}</ResponsiveContent></ScrollView><TermsAcceptanceModal onAccept={() => { setTermsVisible(false); updateCaddieOnboarding({ termsAcceptedAt: new Date().toISOString(), termsVersion }); if (termsContinuation === "submit") finishSubmission(); else advance(2); }} onDecline={() => setTermsVisible(false)} visible={termsVisible} /></SafeAreaView>;
+  return <SafeAreaView edges={["top", "bottom"]} style={styles.safe}><ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled"><ResponsiveContent style={styles.content}><View style={styles.head}><Text accessibilityRole="header" style={styles.title}>{readOnly ? "Submitted profile" : "Build your caddie profile"}</Text><Text style={styles.subtitle}>{readOnly ? "This is the profile version currently with your home club." : "Create your account, then submit your profile to your home club."}</Text></View><Steps current={step} />{errors.submission ? <Error text={errors.submission} /> : null}{step === 1 ? <Account draft={draft} errors={errors} update={updateCaddieOnboarding} /> : null}{step === 2 ? <Club draft={draft} errors={errors} update={updateCaddieOnboarding} /> : null}{step === 3 ? <Skills draft={draft} update={updateCaddieOnboarding} /> : null}{step === 4 ? <Portfolio draft={draft} errors={errors} update={updateCaddieOnboarding} /> : null}{step === 5 ? <Review draft={draft} edit={readOnly ? () => {} : go} /> : null}{readOnly ? <Button accessibilityLabel="Back to verification status" onPress={() => backToPreviousPage("/caddie/verification")} variant="secondary">Back to verification status</Button> : step === 5 ? <Button accessibilityLabel="Submit for verification" onPress={submit}>Submit for Verification</Button> : <View style={styles.actions}>{step > 1 ? <Button accessibilityLabel="Previous onboarding step" onPress={() => go((step - 1) as OnboardingStep)} variant="secondary">Back</Button> : null}<View style={styles.fill}><Button accessibilityLabel="Continue" onPress={() => go((step + 1) as OnboardingStep)}>Continue</Button></View></View>}</ResponsiveContent></ScrollView><TermsAcceptanceModal onAccept={() => { setTermsVisible(false); updateCaddieOnboarding({ termsAcceptedAt: new Date().toISOString(), termsVersion }); if (termsContinuation === "submit") void finishSubmission(); else advance(2); }} onDecline={() => setTermsVisible(false)} visible={termsVisible} /></SafeAreaView>;
 }
 
 function Steps({ current }: { current: OnboardingStep }) { return <View style={styles.steps}>{stepLabels.map((label, index) => <View key={label} style={styles.step}><View style={[styles.dot, index + 1 <= current && styles.dotActive]}><Text style={[styles.dotText, index + 1 <= current && styles.dotTextActive]}>{index + 1}</Text></View><Text style={styles.stepText}>{label}</Text></View>)}</View>; }
