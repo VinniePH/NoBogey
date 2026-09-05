@@ -18,7 +18,7 @@ export function CaddieListingScreen() {
   const [selectedId, setSelectedId] = useState<string | undefined>(caddieId);
   const [bookableIds, setBookableIds] = useState<Set<string> | null>(null);
   const isGlobalDirectory = !courseId || !teeTimeId;
-  const availableCaddies = useMemo(() => caddies.filter((caddie) => (!courseId || caddie.homeCourseId === courseId) && (isGlobalDirectory || bookableIds?.has(caddie.id))), [bookableIds, caddies, courseId, isGlobalDirectory]);
+  const availableCaddies = useMemo(() => caddies.filter((caddie) => isGlobalDirectory ? (!courseId || caddie.homeCourseId === courseId) : bookableIds?.has(caddie.id)), [bookableIds, caddies, courseId, isGlobalDirectory]);
 
   useEffect(() => {
     let active = true;

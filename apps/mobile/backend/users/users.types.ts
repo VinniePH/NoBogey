@@ -12,10 +12,24 @@ export interface UserProfile {
   role: UserRole;
   displayName: string;
   phoneNumber?: string;
+  username?: string;
+  email?: string;
+  bio?: string;
+  handicap?: number;
+  tagline?: string;
+  yearsExperience?: number;
+  rateAmountInCentavos?: number;
+  verificationStatus?: string;
+  completedRounds: number;
+  averageRating?: number;
+  memberSince: string;
 }
 
 export interface UpdateUserProfileInput {
   displayName?: string;
   phoneNumber?: string;
+  bio?: string;
+  handicap?: number;
+  tagline?: string;
 }
 

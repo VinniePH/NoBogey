@@ -1,5 +1,6 @@
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { router } from "expo-router";
+import { useEffect, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { colors, spacing } from "@nobogey/ui";
@@ -8,31 +9,44 @@ import { EmptyState } from "../../ui/EmptyState";
 import { backToPreviousPage } from "../../ui/navigation";
 import { useAppSession } from "../session/AppSession";
 import { MobileBottomNavigation } from "../../ui/MobileBottomNavigation";
+import { getCurrentUserProfile } from "../../../backend/users/users.service";
+import type { UserProfile } from "../../../backend/users/users.types";
 
 type ProfileRole = "golfer" | "caddie";
 
 export function RoleProfileScreen({ role }: { role: ProfileRole }) {
+  const [profile, setProfile] = useState<UserProfile | null>();
+  const [error, setError] = useState<string>();
+  useEffect(() => {
+    let active = true;
+    setProfile(undefined);
+    setError(undefined);
+    void getCurrentUserProfile(role).then((value) => { if (active) setProfile(value); }).catch(() => { if (active) setError("Unable to load your profile."); });
+    return () => { active = false; };
+  }, [role]);
   return (
     <SafeAreaView edges={["top", "bottom"]} style={styles.safeArea}>
       <ScrollView contentContainerStyle={styles.content} contentInsetAdjustmentBehavior="automatic" showsVerticalScrollIndicator={false}>
         <ResponsiveContent style={styles.frame}>
           <ProfileHeader role={role} />
-          {role === "golfer" ? <GolferProfilePlaceholder /> : <CaddieProfilePlaceholder />}
+          {error ? <EmptyState description={error} icon="alert-circle-outline" minHeight={220} title="Profile unavailable" /> : profile === undefined ? <EmptyState description="Loading your Supabase profile." icon="account-clock-outline" minHeight={220} title="Loading profile" /> : profile === null ? <EmptyState description="Complete registration to create your profile." icon="account-plus-outline" minHeight={220} title="No profile found" /> : role === "golfer" ? <GolferProfile profile={profile} /> : <CaddieProfile profile={profile} />}
         </ResponsiveContent>
       </ScrollView>
       {role === "golfer" ? <MobileBottomNavigation active="profile" /> : null}
     </SafeAreaView>
   );
 }
-function GolferProfilePlaceholder() {
-  return <><View style={styles.golferCard}><View style={styles.initialAvatar}><MaterialCommunityIcons color={colors.surface} name="account-outline" size={28} /></View><View style={styles.golferCopy}><Text style={styles.eyebrow}>GOLFER</Text><Text accessibilityRole="header" style={styles.golferName}>Profile unavailable</Text><Text style={styles.golferCourse}>Profile service not connected</Text><Text style={styles.golferBio}>Your golfer details will appear here when they are available.</Text></View></View><View style={styles.statsGrid}><StatCard label="Rounds" /><StatCard label="Average score" /><StatCard label="Favorite caddie" wide /></View><HistoryPlaceholder title="Round History" /><AccountRoleCard role="golfer" /></>;
+function GolferProfile({ profile }: { profile: UserProfile }) {
+  return <><View style={styles.golferCard}><View style={styles.initialAvatar}><Text style={styles.initial}>{initials(profile.displayName)}</Text></View><View style={styles.golferCopy}><Text style={styles.eyebrow}>GOLFER</Text><Text accessibilityRole="header" style={styles.golferName}>{profile.displayName}</Text><Text style={styles.golferCourse}>{profile.username ? `@${profile.username}` : profile.email}</Text><Text style={styles.golferBio}>{profile.bio || "No biography added yet."}</Text></View></View><View style={styles.statsGrid}><StatCard label="Completed rounds" value={String(profile.completedRounds)} /><StatCard label="Handicap" value={profile.handicap === undefined ? "—" : String(profile.handicap)} /><StatCard label="Average rating" value={profile.averageRating === undefined ? "—" : profile.averageRating.toFixed(1)} wide /></View><ProfileDetails profile={profile} /><AccountRoleCard role="golfer" /></>;
 }
-function CaddieProfilePlaceholder() {
-  return <><View style={styles.caddieCard}><View style={styles.caddieAvatar}><MaterialCommunityIcons color={colors.surface} name="account-outline" size={30} /></View><View style={styles.caddieCopy}><Text style={styles.eyebrow}>CADDIE</Text><Text accessibilityRole="header" style={styles.caddieName}>Profile unavailable</Text><Text style={styles.caddieMeta}>Profile service not connected</Text><Text style={styles.caddieBio}>Your caddie details will appear here when they are available.</Text></View></View><AccountRoleCard role="caddie" /><View style={styles.caddieStats}><CaddieStat label="Rounds caddied" /><CaddieStat label="Average rating" /></View><View style={styles.recentGolfer}><View style={styles.recentAvatar}><MaterialCommunityIcons color={colors.fairwayDark} name="account-outline" size={18} /></View><View><Text style={styles.recentLabel}>Recent golfer</Text><Text style={styles.recentName}>No assignment data</Text><Text style={styles.recentMeta}>Details will appear when bookings are connected.</Text></View></View><HistoryPlaceholder title="Match History" /></>;
+function CaddieProfile({ profile }: { profile: UserProfile }) {
+  return <><View style={styles.caddieCard}><View style={styles.caddieAvatar}><Text style={styles.caddieInitials}>{initials(profile.displayName)}</Text></View><View style={styles.caddieCopy}><Text style={styles.eyebrow}>CADDIE · {profile.verificationStatus?.toUpperCase() || "PENDING"}</Text><Text accessibilityRole="header" style={styles.caddieName}>{profile.displayName}</Text><Text style={styles.caddieMeta}>{profile.tagline || (profile.username ? `@${profile.username}` : profile.email)}</Text><Text style={styles.caddieBio}>{profile.bio || "No biography added yet."}</Text></View></View><View style={styles.caddieStats}><CaddieStat label="Rounds caddied" value={String(profile.completedRounds)} /><CaddieStat label="Average rating" value={profile.averageRating === undefined ? "—" : profile.averageRating.toFixed(1)} /></View><ProfileDetails profile={profile} /><AccountRoleCard role="caddie" /></>;
 }
-function HistoryPlaceholder({ title }: { title: string }) { return <View style={styles.history}><Text accessibilityRole="header" style={styles.historyTitle}>{title}</Text><View style={styles.historyCard}><EmptyState description="History will appear after the booking service is connected." icon="history" minHeight={220} title="No history data" /></View></View>; }
-function StatCard({ label, wide = false }: { label: string; wide?: boolean }) { return <View style={[styles.statCard, wide && styles.statWide]}><Text style={styles.statLabel}>{label}</Text><Text accessibilityLabel={`${label} unavailable`} style={styles.statValue}>—</Text></View>; }
-function CaddieStat({ label }: { label: string }) { return <View style={styles.caddieStat}><Text style={styles.recentLabel}>{label}</Text><Text accessibilityLabel={`${label} unavailable`} style={styles.caddieStatValue}>—</Text></View>; }
+function ProfileDetails({ profile }: { profile: UserProfile }) { return <View style={styles.details}><Text style={styles.sectionTitle}>Account details</Text><Detail label="Email" value={profile.email || "Not set"} /><Detail label="Phone" value={profile.phoneNumber || "Not set"} />{profile.role === "caddie" ? <><Detail label="Experience" value={`${profile.yearsExperience ?? 0} years`} /><Detail label="Rate" value={`₱${((profile.rateAmountInCentavos ?? 0) / 100).toFixed(2)}`} /></> : null}<Detail label="Member since" value={new Date(profile.memberSince).toLocaleDateString()} /></View>; }
+function Detail({ label, value }: { label: string; value: string }) { return <View style={styles.detail}><Text style={styles.detailLabel}>{label}</Text><Text style={styles.detailValue}>{value}</Text></View>; }
+function StatCard({ label, value, wide = false }: { label: string; value: string; wide?: boolean }) { return <View style={[styles.statCard, wide && styles.statWide]}><Text style={styles.statLabel}>{label}</Text><Text style={styles.statValue}>{value}</Text></View>; }
+function CaddieStat({ label, value }: { label: string; value: string }) { return <View style={styles.caddieStat}><Text style={styles.recentLabel}>{label}</Text><Text style={styles.caddieStatValue}>{value}</Text></View>; }
+function initials(name: string) { return name.split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0]?.toUpperCase()).join("") || "NB"; }
 export function ProfileHeader({ role }: { role: ProfileRole }) {
   return (
     <View style={styles.header}>

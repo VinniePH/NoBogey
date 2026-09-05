@@ -1,11 +1,25 @@
 import { getSupabaseClient } from "../client";
 import type { UpdateUserProfileInput, UserProfile } from "./users.types";
 
-export async function getCurrentUserProfile(): Promise<UserProfile | null> {
+export async function getCurrentUserProfile(requestedRole?: 'golfer' | 'caddie'): Promise<UserProfile | null> {
   const client = getSupabaseClient(); const { data: auth } = await client.auth.getUser(); if (!auth.user) return null;
-  const [{ data: profile, error }, { data: roles }] = await Promise.all([client.from("profiles").select("id,display_name,phone_e164").eq("id", auth.user.id).maybeSingle(), client.from("user_roles").select("role").eq("user_id", auth.user.id)]);
-  if (error) throw error; if (!profile) return null; const role = roles?.some((item) => item.role === "caddie") ? "caddie" : "golfer";
-  return { id: profile.id, role, displayName: profile.display_name, ...(profile.phone_e164 ? { phoneNumber: profile.phone_e164 } : {}) };
+  const [{ data: profile, error }, { data: roles }] = await Promise.all([client.from("profiles").select("id,display_name,phone_e164,username,created_at").eq("id", auth.user.id).maybeSingle(), client.from("user_roles").select("role").eq("user_id", auth.user.id)]);
+  if (error) throw error; if (!profile) return null;
+  const available = new Set((roles ?? []).map((item) => item.role)); const role = requestedRole && available.has(requestedRole) ? requestedRole : available.has('caddie') ? 'caddie' : 'golfer';
+  const [{ data: details, error: detailsError }, { count: completedRounds }, { data: ratings, error: ratingsError }] = await Promise.all([
+    role === 'caddie' ? client.from('caddie_profiles').select('tagline,bio,years_experience,rate_amount_in_centavos,verification_status').eq('user_id',auth.user.id).maybeSingle() : client.from('golfer_profiles').select('handicap,bio').eq('user_id',auth.user.id).maybeSingle(),
+    client.from('bookings').select('id',{count:'exact',head:true}).eq(role === 'caddie' ? 'caddie_id' : 'golfer_id',auth.user.id).eq('status','completed'),
+    client.from('ratings').select('score').eq('ratee_id',auth.user.id)
+  ]);
+  if (detailsError) throw detailsError; if (ratingsError) throw ratingsError;
+  const scores=(ratings??[]).map(item=>Number(item.score)); const averageRating=scores.length?scores.reduce((sum,value)=>sum+value,0)/scores.length:undefined;
+  const base: UserProfile = { id:profile.id,role,displayName:profile.display_name,completedRounds:completedRounds??0,memberSince:profile.created_at,...(profile.phone_e164?{phoneNumber:profile.phone_e164}:{}),...(profile.username?{username:profile.username}:{}),...(auth.user.email?{email:auth.user.email}:{}),...(details?.bio?{bio:details.bio}:{}),...(averageRating!==undefined?{averageRating}:{}) };
+  if (role === 'golfer') {
+    const golfer = details as { handicap?: number | null } | null;
+    return { ...base, ...(golfer?.handicap !== null && golfer?.handicap !== undefined ? { handicap: Number(golfer.handicap) } : {}) };
+  }
+  const caddie = details as { tagline?: string | null; years_experience?: number | null; rate_amount_in_centavos?: number | null; verification_status?: string } | null;
+  return { ...base, ...(caddie?.tagline ? { tagline: caddie.tagline } : {}), yearsExperience:caddie?.years_experience??0, rateAmountInCentavos:Number(caddie?.rate_amount_in_centavos??0), ...(caddie?.verification_status ? { verificationStatus:caddie.verification_status } : {}) };
 }
 export async function updateCurrentUserProfile(input: UpdateUserProfileInput): Promise<UserProfile> {
   const client = getSupabaseClient(); const { data: auth } = await client.auth.getUser(); if (!auth.user) throw new Error("AUTH_REQUIRED");

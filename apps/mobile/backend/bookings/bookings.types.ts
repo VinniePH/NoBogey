@@ -11,6 +11,7 @@ export type Booking = ContractBooking;
 export interface CreateBookingInput {
   caddieId: string;
   courseId: string;
+  teeTimeId: string;
   startsAt: string;
   endsAt: string;
   partySize: number;
