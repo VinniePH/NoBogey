@@ -1,7 +1,7 @@
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { useEffect, useState } from "react";
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { KeyboardAvoidingView, Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { colors, spacing } from "@nobogey/ui";
 import { ResponsiveContent } from "../../ui/ResponsiveContent";
@@ -17,6 +17,7 @@ type ProfileRole = "golfer" | "caddie";
 export function RoleProfileScreen({ role }: { role: ProfileRole }) {
   const [profile, setProfile] = useState<UserProfile | null>();
   const [error, setError] = useState<string>();
+  const [editorVisible, setEditorVisible] = useState(false);
   useEffect(() => {
     let active = true;
     setProfile(undefined);
@@ -29,19 +30,53 @@ export function RoleProfileScreen({ role }: { role: ProfileRole }) {
       <ScrollView contentContainerStyle={styles.content} contentInsetAdjustmentBehavior="automatic" showsVerticalScrollIndicator={false}>
         <ResponsiveContent style={styles.frame}>
           <ProfileHeader role={role} />
-          {error ? <EmptyState description={error} icon="alert-circle-outline" minHeight={220} title="Profile unavailable" /> : profile === undefined ? <EmptyState description="Loading your Supabase profile." icon="account-clock-outline" minHeight={220} title="Loading profile" /> : profile === null ? <EmptyState description="Complete registration to create your profile." icon="account-plus-outline" minHeight={220} title="No profile found" /> : role === "golfer" ? <GolferProfile profile={profile} /> : <CaddieProfile profile={profile} />}
+          {error ? <EmptyState description={error} icon="alert-circle-outline" minHeight={220} title="Profile unavailable" /> : profile === undefined ? <EmptyState description="Loading your Supabase profile." icon="account-clock-outline" minHeight={220} title="Loading profile" /> : profile === null ? <EmptyState description="Complete registration to create your profile." icon="account-plus-outline" minHeight={220} title="No profile found" /> : role === "golfer" ? <GolferProfile onEdit={() => setEditorVisible(true)} profile={profile} /> : <CaddieProfile onEdit={() => setEditorVisible(true)} profile={profile} />}
         </ResponsiveContent>
       </ScrollView>
       {role === "golfer" ? <MobileBottomNavigation active="profile" /> : null}
+      {profile ? <ProfileEditorModal onClose={() => setEditorVisible(false)} onSave={(updatedProfile) => { setProfile(updatedProfile); setEditorVisible(false); }} profile={profile} visible={editorVisible} /> : null}
     </SafeAreaView>
   );
 }
-function GolferProfile({ profile }: { profile: UserProfile }) {
-  return <><View style={styles.golferCard}><View style={styles.initialAvatar}><Text style={styles.initial}>{initials(profile.displayName)}</Text></View><View style={styles.golferCopy}><Text style={styles.eyebrow}>GOLFER</Text><Text accessibilityRole="header" style={styles.golferName}>{profile.displayName}</Text><Text style={styles.golferCourse}>{profile.username ? `@${profile.username}` : profile.email}</Text><Text style={styles.golferBio}>{profile.bio || "No biography added yet."}</Text></View></View><View style={styles.statsGrid}><StatCard label="Completed rounds" value={String(profile.completedRounds)} /><StatCard label="Handicap" value={profile.handicap === undefined ? "—" : String(profile.handicap)} /><StatCard label="Average rating" value={profile.averageRating === undefined ? "—" : profile.averageRating.toFixed(1)} wide /></View><ProfileDetails profile={profile} /><AccountRoleCard role="golfer" /></>;
+function GolferProfile({ onEdit, profile }: { onEdit: () => void; profile: UserProfile }) {
+  return <><View style={styles.golferCard}><View style={styles.initialAvatar}><Text style={styles.initial}>{initials(profile.displayName)}</Text></View><View style={styles.golferCopy}><Text style={styles.eyebrow}>GOLFER</Text><Text accessibilityRole="header" style={styles.golferName}>{profile.displayName}</Text><Text style={styles.golferCourse}>{profile.username ? `@${profile.username}` : profile.email}</Text><Text style={styles.golferBio}>{profile.bio || "No biography added yet."}</Text></View><EditProfileButton onPress={onEdit} /></View><View style={styles.statsGrid}><StatCard label="Completed rounds" value={String(profile.completedRounds)} /><StatCard label="Handicap" value={profile.handicap === undefined ? "—" : String(profile.handicap)} /><StatCard label="Average rating" value={profile.averageRating === undefined ? "—" : profile.averageRating.toFixed(1)} wide /></View><ProfileDetails profile={profile} /><AccountRoleCard role="golfer" /></>;
 }
-function CaddieProfile({ profile }: { profile: UserProfile }) {
-  return <><View style={styles.caddieCard}><View style={styles.caddieAvatar}><Text style={styles.caddieInitials}>{initials(profile.displayName)}</Text></View><View style={styles.caddieCopy}><Text style={styles.eyebrow}>CADDIE · {profile.verificationStatus?.toUpperCase() || "PENDING"}</Text><Text accessibilityRole="header" style={styles.caddieName}>{profile.displayName}</Text><Text style={styles.caddieMeta}>{profile.tagline || (profile.username ? `@${profile.username}` : profile.email)}</Text><Text style={styles.caddieBio}>{profile.bio || "No biography added yet."}</Text></View></View><View style={styles.caddieStats}><CaddieStat label="Rounds caddied" value={String(profile.completedRounds)} /><CaddieStat label="Average rating" value={profile.averageRating === undefined ? "—" : profile.averageRating.toFixed(1)} /></View><ProfileDetails profile={profile} /><AccountRoleCard role="caddie" /></>;
+function CaddieProfile({ onEdit, profile }: { onEdit: () => void; profile: UserProfile }) {
+  return <><View style={styles.caddieCard}><View style={styles.caddieAvatar}><Text style={styles.caddieInitials}>{initials(profile.displayName)}</Text></View><View style={styles.caddieCopy}><Text style={styles.eyebrow}>CADDIE · {profile.verificationStatus?.toUpperCase() || "PENDING"}</Text><Text accessibilityRole="header" style={styles.caddieName}>{profile.displayName}</Text><Text style={styles.caddieMeta}>{profile.tagline || (profile.username ? `@${profile.username}` : profile.email)}</Text><Text style={styles.caddieBio}>{profile.bio || "No biography added yet."}</Text></View><EditProfileButton onPress={onEdit} /></View><View style={styles.caddieStats}><CaddieStat label="Rounds caddied" value={String(profile.completedRounds)} /><CaddieStat label="Average rating" value={profile.averageRating === undefined ? "—" : profile.averageRating.toFixed(1)} /></View><ProfileDetails profile={profile} /><AccountRoleCard role="caddie" /></>;
 }
+function EditProfileButton({ onPress }: { onPress: () => void }) { return <Pressable accessibilityLabel="Edit profile" accessibilityRole="button" hitSlop={8} onPress={onPress} style={styles.editButton}><MaterialCommunityIcons color={colors.fairwayDark} name="pencil-outline" size={20} /></Pressable>; }
+function ProfileEditorModal({ onClose, onSave, profile, visible }: { onClose: () => void; onSave: (profile: UserProfile) => void; profile: UserProfile; visible: boolean }) {
+  const [displayName, setDisplayName] = useState(profile.displayName);
+  const [email, setEmail] = useState(profile.email ?? "");
+  const [phoneNumber, setPhoneNumber] = useState(profile.phoneNumber ?? "");
+  const [bio, setBio] = useState(profile.bio ?? "");
+  const [handicap, setHandicap] = useState(profile.handicap === undefined ? "" : String(profile.handicap));
+  const [tagline, setTagline] = useState(profile.tagline ?? "");
+  const [yearsExperience, setYearsExperience] = useState(profile.yearsExperience === undefined ? "" : String(profile.yearsExperience));
+
+  useEffect(() => {
+    if (!visible) return;
+    setDisplayName(profile.displayName); setEmail(profile.email ?? ""); setPhoneNumber(profile.phoneNumber ?? ""); setBio(profile.bio ?? ""); setHandicap(profile.handicap === undefined ? "" : String(profile.handicap)); setTagline(profile.tagline ?? ""); setYearsExperience(profile.yearsExperience === undefined ? "" : String(profile.yearsExperience));
+  }, [profile, visible]);
+
+  const save = () => {
+    const nextHandicap = Number(handicap);
+    const nextYearsExperience = Number(yearsExperience);
+    onSave({
+      ...profile,
+      bio: bio.trim(),
+      displayName: displayName.trim() || profile.displayName,
+      email: email.trim(),
+      phoneNumber: phoneNumber.trim(),
+      ...(profile.role === "golfer" && handicap.trim() && Number.isFinite(nextHandicap) ? { handicap: nextHandicap } : {}),
+      ...(profile.role === "caddie" ? { tagline: tagline.trim() } : {}),
+      ...(profile.role === "caddie" && yearsExperience.trim() && Number.isFinite(nextYearsExperience) ? { yearsExperience: nextYearsExperience } : {})
+    });
+  };
+
+  return <Modal animationType="slide" onRequestClose={onClose} transparent visible={visible}><KeyboardAvoidingView behavior="padding" style={styles.editorOverlay}><View style={styles.editorSheet}><View style={styles.editorHeader}><View><Text accessibilityRole="header" style={styles.editorTitle}>Edit profile</Text><Text style={styles.editorNote}>Preview only — changes are not saved to your account yet.</Text></View><Pressable accessibilityLabel="Close profile editor" accessibilityRole="button" hitSlop={8} onPress={onClose} style={styles.editorClose}><MaterialCommunityIcons color={colors.textMuted} name="close" size={24} /></Pressable></View><ScrollView contentContainerStyle={styles.editorContent} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}><Field label="Full name" onChangeText={setDisplayName} value={displayName} /><Field autoCapitalize="none" keyboardType="email-address" label="Email" onChangeText={setEmail} value={email} /><Field keyboardType="phone-pad" label="Phone" onChangeText={setPhoneNumber} value={phoneNumber} /><Field label="Biography" multiline onChangeText={setBio} value={bio} />{profile.role === "golfer" ? <Field keyboardType="decimal-pad" label="Handicap" onChangeText={setHandicap} value={handicap} /> : <><Field label="Profile headline" onChangeText={setTagline} value={tagline} /><Field keyboardType="number-pad" label="Years of experience" onChangeText={setYearsExperience} value={yearsExperience} /></>}<View style={styles.editorActions}><Pressable accessibilityLabel="Discard profile changes" accessibilityRole="button" onPress={onClose} style={styles.cancelEdit}><Text style={styles.cancelEditText}>Cancel</Text></Pressable><Pressable accessibilityLabel="Save profile changes locally" accessibilityRole="button" onPress={save} style={styles.saveEdit}><Text style={styles.saveEditText}>Save changes</Text></Pressable></View></ScrollView></View></KeyboardAvoidingView></Modal>;
+}
+function Field({ autoCapitalize, keyboardType, label, multiline = false, onChangeText, value }: { autoCapitalize?: "none" | "sentences"; keyboardType?: "decimal-pad" | "email-address" | "number-pad" | "phone-pad"; label: string; multiline?: boolean; onChangeText: (value: string) => void; value: string }) { return <View style={styles.field}><Text style={styles.fieldLabel}>{label}</Text><TextInput autoCapitalize={autoCapitalize} keyboardType={keyboardType} multiline={multiline} onChangeText={onChangeText} placeholder={label} placeholderTextColor={colors.textMuted} style={[styles.fieldInput, multiline && styles.fieldInputMultiline]} value={value} /></View>; }
 function ProfileDetails({ profile }: { profile: UserProfile }) { return <View style={styles.details}><Text style={styles.sectionTitle}>Account details</Text><Detail label="Email" value={profile.email || "Not set"} /><Detail label="Phone" value={profile.phoneNumber || "Not set"} />{profile.role === "caddie" ? <><Detail label="Experience" value={`${profile.yearsExperience ?? 0} years`} /><Detail label="Rate" value={`₱${((profile.rateAmountInCentavos ?? 0) / 100).toFixed(2)}`} /></> : null}<Detail label="Member since" value={new Date(profile.memberSince).toLocaleDateString()} /></View>; }
 function Detail({ label, value }: { label: string; value: string }) { return <View style={styles.detail}><Text style={styles.detailLabel}>{label}</Text><Text style={styles.detailValue}>{value}</Text></View>; }
 function StatCard({ label, value, wide = false }: { label: string; value: string; wide?: boolean }) { return <View style={[styles.statCard, wide && styles.statWide]}><Text style={styles.statLabel}>{label}</Text><Text style={styles.statValue}>{value}</Text></View>; }
@@ -108,7 +143,19 @@ const styles = StyleSheet.create({
   detailLabel: { color: colors.textMuted, fontSize: 13 },
   detailValue: { color: colors.fairwayDark, fontSize: 14, fontWeight: "800", maxWidth: "58%", textAlign: "right" },
   details: { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: 16, borderWidth: 1, gap: spacing.sm, padding: spacing.lg },
+  editorActions: { flexDirection: "row", gap: spacing.sm, paddingTop: spacing.sm },
+  editorClose: { alignItems: "center", justifyContent: "center", minHeight: 40, minWidth: 40 },
+  editorContent: { gap: spacing.md, padding: spacing.lg, paddingBottom: spacing.xl },
+  editorHeader: { alignItems: "flex-start", borderBottomColor: colors.border, borderBottomWidth: 1, flexDirection: "row", justifyContent: "space-between", padding: spacing.lg },
+  editorNote: { color: colors.textMuted, fontSize: 12, lineHeight: 17, marginTop: 3, maxWidth: 270 },
+  editorOverlay: { backgroundColor: "rgba(23, 32, 27, 0.32)", flex: 1, justifyContent: "flex-end" },
+  editorSheet: { backgroundColor: colors.canvas, borderTopLeftRadius: 24, borderTopRightRadius: 24, maxHeight: "90%" },
+  editorTitle: { color: colors.text, fontSize: 21, fontWeight: "900" },
   editButton: { alignItems: "center", justifyContent: "center", minHeight: 32, minWidth: 32, position: "absolute", right: spacing.sm, top: spacing.sm },
+  field: { gap: 6 },
+  fieldInput: { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: 10, borderWidth: 1, color: colors.text, fontSize: 16, minHeight: 48, paddingHorizontal: spacing.md, paddingVertical: spacing.sm },
+  fieldInputMultiline: { minHeight: 88, textAlignVertical: "top" },
+  fieldLabel: { color: colors.textMuted, fontSize: 12, fontWeight: "800", letterSpacing: 0.5, textTransform: "uppercase" },
   frame: { gap: spacing.lg },
   header: { alignItems: "center", flexDirection: "row", justifyContent: "space-between", minHeight: 44 },
   headerButton: { alignItems: "center", justifyContent: "center", minHeight: 44, minWidth: 44 },
@@ -143,6 +190,10 @@ const styles = StyleSheet.create({
   recentMeta: { color: colors.textMuted, fontSize: 10, marginTop: 2 },
   recentName: { color: colors.ink, fontSize: 16, fontWeight: "900" },
   safeArea: { backgroundColor: colors.canvas, flex: 1 },
+  cancelEdit: { alignItems: "center", borderColor: colors.border, borderRadius: 10, borderWidth: 1, flex: 1, justifyContent: "center", minHeight: 48 },
+  cancelEditText: { color: colors.fairwayDark, fontSize: 14, fontWeight: "800" },
+  saveEdit: { alignItems: "center", backgroundColor: colors.fairwayDark, borderRadius: 10, flex: 1, justifyContent: "center", minHeight: 48 },
+  saveEditText: { color: colors.surface, fontSize: 14, fontWeight: "800" },
   sectionTitle: { color: colors.fairwayDark, fontSize: 16, fontWeight: "800" },
   score: { alignItems: "flex-end" }, scoreLabel: { color: colors.textMuted, fontSize: 7, fontWeight: "800", letterSpacing: 0.6, textTransform: "uppercase" }, scoreValue: { color: colors.fairwayDark, fontSize: 15, fontWeight: "900" },
   statCard: { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: 12, borderWidth: 1, flex: 1, gap: 3, minHeight: 56, padding: spacing.md },

@@ -1,6 +1,6 @@
 import { router, useLocalSearchParams } from "expo-router";
-import { useState } from "react";
-import { Image, Pressable, ScrollView, StyleSheet, Text, TextInput, useWindowDimensions, View } from "react-native";
+import { useEffect, useState } from "react";
+import { Image, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { colors, spacing } from "@nobogey/ui";
 import NoBogeyLogo from "../../../../../assets/logo/NoBogey-Logo.png";
@@ -9,30 +9,31 @@ import { backToPreviousPage } from "../../ui/navigation";
 import { TermsAcceptanceModal } from "../legal/TermsAcceptanceModal";
 import { useAppSession, type AppRole } from "../session/AppSession";
 import { ResponsiveContent } from "../../ui/ResponsiveContent";
-import { getSplashLayoutMetrics } from "./splash-layout";
 
 type Mode = "login" | "register";
 
 export function SplashScreen() {
-  const { height, width } = useWindowDimensions();
-  const layout = getSplashLayoutMetrics({ height, width });
   const [logoFailed, setLogoFailed] = useState(false);
+  const [activeBall, setActiveBall] = useState(0);
   const { initialRole, isHydrated } = useAppSession();
-  const start = () => {
+  useEffect(() => {
+    const interval = setInterval(() => setActiveBall((current) => (current + 1) % 4), 280);
+    return () => clearInterval(interval);
+  }, []);
+  useEffect(() => {
     if (!isHydrated) return;
-    if (initialRole === "golfer") {
-      router.replace("/golfer/home");
-      return;
-    }
-    if (initialRole === "caddie") {
-      router.replace("/caddie/onboarding");
-      return;
-    }
-    router.replace("/onboarding");
-  };
+    const timeout = setTimeout(() => {
+      if (initialRole === "golfer") { router.replace("/golfer/home"); return; }
+      if (initialRole === "caddie") { router.replace("/caddie/onboarding"); return; }
+      router.replace("/onboarding");
+    }, 1400);
+    return () => clearTimeout(timeout);
+  }, [initialRole, isHydrated]);
 
-  return <SafeAreaView edges={["top", "bottom"]} style={styles.splash}><ScrollView contentContainerStyle={styles.splashScroll} contentInsetAdjustmentBehavior="automatic" showsVerticalScrollIndicator={false}><ResponsiveContent style={[styles.splashContent, { gap: layout.contentGap, minHeight: Math.max(height - 48, 520), padding: layout.contentPadding, paddingBottom: layout.paddingBottom }]}><View style={[styles.logoFrame, { height: layout.logoSize, marginTop: layout.logoTopSpacing, width: layout.logoSize }]}>{logoFailed ? <Text accessibilityRole="image" style={styles.logoFallback}>NoBogey</Text> : <Image accessibilityLabel="NoBogey logo" onError={() => setLogoFailed(true)} resizeMode="contain" source={NoBogeyLogo} style={styles.logo} />}</View><View style={[styles.splashCopy, { gap: layout.copyGap }]}><Text accessibilityRole="header" style={[styles.splashTitle, { fontSize: layout.titleFontSize, lineHeight: layout.titleLineHeight }]}>Your best round starts with the right caddie.</Text><Text style={styles.splashText}>Tee times and trusted local caddies, in one place.</Text></View><Button accessibilityLabel="Get started" disabled={!isHydrated} onPress={start}>Get Started</Button></ResponsiveContent></ScrollView></SafeAreaView>;
+  return <SafeAreaView edges={["top", "bottom"]} style={styles.splash}><ResponsiveContent style={styles.splashContent}><View style={styles.splashBrand}><View style={styles.logoFrame}>{logoFailed ? <Text accessibilityRole="image" style={styles.logoFallback}>NB</Text> : <Image accessibilityLabel="NoBogey logo" onError={() => setLogoFailed(true)} resizeMode="contain" source={NoBogeyLogo} style={styles.logo} />}</View><Text accessibilityRole="header" style={styles.splashWordmark}>NoBogey</Text></View><GolfLoadingIndicator activeBall={activeBall} /></ResponsiveContent></SafeAreaView>;
 }
+
+function GolfLoadingIndicator({ activeBall }: { activeBall: number }) { return <View accessibilityLabel="Golf loading" accessibilityRole="progressbar" style={styles.loading}><Text style={styles.loadingLabel}>GOLF</Text><View style={styles.loadingTrack}>{[0, 1, 2, 3].map((ball) => <View key={ball} style={[styles.loadingBall, ball === activeBall && styles.loadingBallActive]}><View style={styles.loadingBallDimple} /></View>)}</View><Text style={styles.loadingLabel}>LOADING</Text></View>; }
 
 export function OnboardingScreen() {
   const { selectInitialRole } = useAppSession();
@@ -49,7 +50,7 @@ export function OnboardingScreen() {
     router.replace("/caddie/onboarding");
   };
   const roleName = selectedRole === "caddie" ? "caddie" : "golfer";
-  return <SafeAreaView edges={["top", "bottom"]} style={styles.authSafe}><ScrollView contentContainerStyle={[styles.authContent, styles.onboardingContent]} contentInsetAdjustmentBehavior="automatic"><Image accessibilityLabel="NoBogey logo" resizeMode="contain" source={NoBogeyLogo} style={styles.authLogo} />{selectedRole ? <><View style={styles.authHeader}><Text accessibilityRole="header" style={styles.authTitle}>Continue as a {roleName}?</Text><Text style={styles.authSubtitle}>Are you new to NoBogey, or do you already have an account?</Text></View><Button accessibilityLabel={`I’m new to NoBogey as a ${roleName}`} onPress={startRegistration}>I’m new here</Button><Pressable accessibilityLabel={`I already have a ${roleName} account`} accessibilityRole="button" onPress={() => router.replace({ pathname: "/sign-in", params: { role: selectedRole } })} style={styles.existingAccountButton}><Text style={styles.existingAccountText}>I already have an account</Text></Pressable><Pressable accessibilityLabel="Choose a different role" accessibilityRole="button" onPress={() => setSelectedRole(null)}><Text style={styles.secondaryLink}>Choose a different role</Text></Pressable></> : <><View style={styles.authHeader}><Text accessibilityRole="header" style={styles.authTitle}>How do you play?</Text><Text style={styles.authSubtitle}>Choose the role you use most. It stays selected on this phone.</Text></View><RoleChoice description="Browse tee times and caddies before creating an account." icon="⛳" label="I’m a golfer" onPress={() => choose("golfer")} /><RoleChoice description="Create a professional profile for verification by your home club." icon="🏌️" label="I’m a caddie" onPress={() => choose("caddie")} /></>}<Text style={styles.placeholderNote}>Golfers can add a caddie identity later from Profile.</Text></ScrollView></SafeAreaView>;
+  return <SafeAreaView edges={["top", "bottom"]} style={styles.authSafe}><ScrollView contentContainerStyle={[styles.authContent, styles.onboardingContent]} contentInsetAdjustmentBehavior="automatic"><Image accessibilityLabel="NoBogey logo" resizeMode="contain" source={NoBogeyLogo} style={[styles.authLogo, styles.onboardingLogo]} />{selectedRole ? <><View style={styles.authHeader}><Text accessibilityRole="header" style={styles.authTitle}>Continue as a {roleName}?</Text><Text style={styles.authSubtitle}>Are you new to NoBogey, or do you already have an account?</Text></View><Button accessibilityLabel={`I’m new to NoBogey as a ${roleName}`} onPress={startRegistration}>I’m new here</Button><Pressable accessibilityLabel={`I already have a ${roleName} account`} accessibilityRole="button" onPress={() => router.replace({ pathname: "/sign-in", params: { role: selectedRole } })} style={styles.existingAccountButton}><Text style={styles.existingAccountText}>I already have an account</Text></Pressable><Pressable accessibilityLabel="Choose a different role" accessibilityRole="button" onPress={() => setSelectedRole(null)}><Text style={styles.secondaryLink}>Choose a different role</Text></Pressable></> : <><View style={styles.authHeader}><Text accessibilityRole="header" style={styles.authTitle}>How do you play?</Text><Text style={styles.authSubtitle}>Choose the role you use most. It stays selected on this phone.</Text></View><RoleChoice description="Browse tee times and caddies before creating an account." icon="⛳" label="I’m a golfer" onPress={() => choose("golfer")} /><RoleChoice description="Create a professional profile for verification by your home club." icon="🏌️" label="I’m a caddie" onPress={() => choose("caddie")} /></>}<Text style={styles.placeholderNote}>Golfers can add a caddie identity later from Profile.</Text></ScrollView></SafeAreaView>;
 }
 
 function _LegacyAuthScreen() {
@@ -92,7 +93,8 @@ const styles = StyleSheet.create({
   existingAccountButton: { alignItems: "center", borderColor: colors.primary, borderCurve: "continuous", borderRadius: 12, borderWidth: 1, justifyContent: "center", minHeight: 52, paddingHorizontal: 18 },
   existingAccountText: { color: colors.primary, fontSize: 16, fontWeight: "800" },
   onboardingContent: { flexGrow: 1, justifyContent: "center" },
-  arrow: { color: colors.primary, fontSize: 30 }, authContent: { gap: spacing.xl, padding: spacing.xl, paddingTop: 48 }, authHeader: { gap: spacing.sm }, authLogo: { height: 48, width: 48 }, authSafe: { backgroundColor: "#FAF9F6", flex: 1 }, authSubtitle: { color: "#617067", fontSize: 16, lineHeight: 23 }, authTitle: { color: "#143B2A", fontSize: 34, fontWeight: "900", letterSpacing: -1 }, field: { gap: 7 }, fieldLabel: { color: "#416052", fontSize: 13, fontWeight: "800" }, form: { gap: spacing.lg }, input: { backgroundColor: "#FFFFFF", borderColor: "#CBD4CC", borderCurve: "continuous", borderRadius: 12, borderWidth: 1, color: "#16231C", fontSize: 16, minHeight: 52, paddingHorizontal: 14 }, logo: { height: "100%", width: "100%" }, logoFallback: { color: colors.surface, fontSize: 24, fontStyle: "italic", fontWeight: "900" }, logoFrame: { alignItems: "center", alignSelf: "center", justifyContent: "center", marginBottom: "auto" }, modeTab: { alignItems: "center", borderRadius: 10, flex: 1, justifyContent: "center", minHeight: 44 }, modeTabActive: { backgroundColor: "#FFFFFF" }, modeTabText: { color: "#68756C", fontSize: 15, fontWeight: "700" }, modeTabTextActive: { color: "#174B32" }, modeTabs: { backgroundColor: "#E4EAE4", borderRadius: 12, flexDirection: "row", padding: 4 }, placeholderNote: { color: "#6A706B", fontSize: 12, lineHeight: 18, textAlign: "center" }, roleCopy: { flex: 1, gap: 3 }, roleDescription: { color: "#647067", fontSize: 13, lineHeight: 18 }, roleGroup: { gap: spacing.sm }, roleIcon: { fontSize: 25 }, roleTab: { alignItems: "center", backgroundColor: "#FFFFFF", borderColor: "#CBD4CC", borderCurve: "continuous", borderRadius: 14, borderWidth: 1, flexDirection: "row", gap: 12, padding: 16 }, roleTitle: { color: "#173D2C", fontSize: 17, fontWeight: "800" }, secondaryLink: { color: "#1C5E3E", fontSize: 15, fontWeight: "800", textAlign: "center" }, splash: { backgroundColor: "#174B32", flex: 1 }, splashContent: { flex: 1, gap: 30, justifyContent: "flex-end" }, splashCopy: { gap: 12 }, splashScroll: { flexGrow: 1 }, splashText: { color: "#DCE9DD", fontSize: 16, lineHeight: 23 }, splashTitle: { color: "#FFFFFF", fontSize: 39, fontWeight: "900", letterSpacing: -1.4, lineHeight: 44 }
+  onboardingLogo: { height: 100, width: 100 },
+  arrow: { color: colors.primary, fontSize: 30 }, authContent: { gap: spacing.xl, padding: spacing.xl, paddingTop: 48 }, authHeader: { gap: spacing.sm }, authLogo: { height: 48, width: 48 }, authSafe: { backgroundColor: "#FAF9F6", flex: 1 }, authSubtitle: { color: "#617067", fontSize: 16, lineHeight: 23 }, authTitle: { color: "#143B2A", fontSize: 34, fontWeight: "900", letterSpacing: -1 }, field: { gap: 7 }, fieldLabel: { color: "#416052", fontSize: 13, fontWeight: "800" }, form: { gap: spacing.lg }, input: { backgroundColor: "#FFFFFF", borderColor: "#CBD4CC", borderCurve: "continuous", borderRadius: 12, borderWidth: 1, color: "#16231C", fontSize: 16, minHeight: 52, paddingHorizontal: 14 }, loading: { alignItems: "center", gap: 12 }, loadingBall: { alignItems: "center", backgroundColor: "#174B32", borderColor: "#F6E9C9", borderRadius: 18, borderWidth: 2, height: 36, justifyContent: "center", width: 36 }, loadingBallActive: { backgroundColor: "#F6E9C9", transform: [{ scale: 1.12 }] }, loadingBallDimple: { borderColor: "#F6E9C9", borderRadius: 6, borderWidth: 1, height: 11, width: 11 }, loadingLabel: { color: "#F6E9C9", fontSize: 12, fontWeight: "900", letterSpacing: 2.4 }, loadingTrack: { alignItems: "center", borderColor: "#F6E9C9", borderCurve: "continuous", borderRadius: 28, borderWidth: 2, flexDirection: "row", gap: 12, justifyContent: "center", minHeight: 64, paddingHorizontal: 16 }, logo: { height: "100%", width: "100%" }, logoFallback: { color: "#F6E9C9", fontSize: 28, fontWeight: "900" }, logoFrame: { alignItems: "center", height: 112, justifyContent: "center", width: 112 }, modeTab: { alignItems: "center", borderRadius: 10, flex: 1, justifyContent: "center", minHeight: 44 }, modeTabActive: { backgroundColor: "#FFFFFF" }, modeTabText: { color: "#68756C", fontSize: 15, fontWeight: "700" }, modeTabTextActive: { color: "#174B32" }, modeTabs: { backgroundColor: "#E4EAE4", borderRadius: 12, flexDirection: "row", padding: 4 }, placeholderNote: { color: "#6A706B", fontSize: 12, lineHeight: 18, textAlign: "center" }, roleCopy: { flex: 1, gap: 3 }, roleDescription: { color: "#647067", fontSize: 13, lineHeight: 18 }, roleGroup: { gap: spacing.sm }, roleIcon: { fontSize: 25 }, roleTab: { alignItems: "center", backgroundColor: "#FFFFFF", borderColor: "#CBD4CC", borderCurve: "continuous", borderRadius: 14, borderWidth: 1, flexDirection: "row", gap: 12, padding: 16 }, roleTitle: { color: "#173D2C", fontSize: 17, fontWeight: "800" }, secondaryLink: { color: "#1C5E3E", fontSize: 15, fontWeight: "800", textAlign: "center" }, splash: { backgroundColor: "#174B32", flex: 1 }, splashBrand: { alignItems: "center", gap: 10, paddingTop: 52 }, splashContent: { flex: 1, justifyContent: "space-between", padding: spacing.xl, paddingBottom: spacing.lg }, splashWordmark: { color: "#F6E9C9", fontSize: 25, fontWeight: "900", letterSpacing: -0.6 }
 });
 
 export { AuthScreen } from './AuthScreen';

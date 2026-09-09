@@ -1,17 +1,18 @@
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import { StyleSheet, Text, View } from "react-native";
+import { StyleSheet, Text, View, type StyleProp, type ViewStyle } from "react-native";
 import { colors, radius, spacing, typography } from "@nobogey/ui";
 
 type EmptyStateProps = {
   description: string;
   icon?: React.ComponentProps<typeof MaterialCommunityIcons>["name"];
   minHeight?: number;
+  style?: StyleProp<ViewStyle>;
   title: string;
 };
 
-export function EmptyState({ description, icon = "database-off-outline", minHeight, title }: EmptyStateProps) {
+export function EmptyState({ description, icon = "database-off-outline", minHeight, style, title }: EmptyStateProps) {
   return (
-    <View style={[styles.container, minHeight ? { minHeight } : undefined]}>
+    <View style={[styles.container, minHeight ? { minHeight } : undefined, style]}>
       <MaterialCommunityIcons color={colors.fairwayDark} name={icon} size={30} />
       <Text accessibilityRole="header" style={styles.title}>{title}</Text>
       <Text style={styles.description}>{description}</Text>
