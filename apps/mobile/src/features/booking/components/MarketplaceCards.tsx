@@ -35,7 +35,7 @@ export function CaddieCard({ caddie, compact = false, onPress, selected }: { cad
     <View style={[styles.caddieCard, compact && styles.caddieCardCompact, selected && styles.selectedCard]}>
       <CaddiePortrait compact={compact} name={caddie.displayName} />
       <View style={styles.caddieTitleRow}>
-        <View><Text style={[styles.caddieName, compact && styles.caddieNameCompact]}>{caddie.displayName}</Text><Text style={[styles.caddieDetail, compact && styles.caddieDetailCompact]}>{caddie.yearsExperience} Years Pro · {caddie.languages.join(", ")}</Text></View>
+        <View style={styles.caddieTitleCopy}><Text adjustsFontSizeToFit minimumFontScale={0.7} numberOfLines={1} style={[styles.caddieName, compact && styles.caddieNameCompact]}>{caddie.displayName}</Text><Text numberOfLines={1} style={[styles.caddieDetail, compact && styles.caddieDetailCompact]}>{caddie.yearsExperience} Years Pro · {caddie.languages.join(", ")}</Text></View>
         <View style={styles.caddieMeta}><View style={styles.rating}><Text style={[styles.ratingNumber, compact && styles.ratingNumberCompact]}>{caddie.ratingAverage.toFixed(1)}</Text><Text style={[styles.stars, compact && styles.starsCompact]}>★★★★★</Text></View></View>
       </View>
       <View style={styles.skillRow}>
@@ -63,19 +63,20 @@ const styles = StyleSheet.create({
   bookLabelSelected: { backgroundColor: colors.fairwayDark },
   bookLabelText: { color: colors.surface, fontSize: 20, fontWeight: "800" },
   bookLabelTextCompact: { fontSize: 14 },
-  caddieAvatar: { alignItems: "center", backgroundColor: "#E7EEE9", borderCurve: "continuous", borderRadius: 16, gap: spacing.xs, height: 370, justifyContent: "center", width: "100%" },
+  caddieAvatar: { alignItems: "center", backgroundColor: "#E7EEE9", borderCurve: "continuous", borderRadius: 16, gap: spacing.xs, height: 285, justifyContent: "center", width: "100%" },
   caddieAvatarCompact: { height: 210 },
   caddieAvatarInitials: { color: colors.fairwayDark, fontSize: 40, fontWeight: "800", letterSpacing: -1 },
   caddieAvatarLabel: { color: colors.muted, fontSize: typography.small, fontWeight: "700" },
   caddieCard: { backgroundColor: colors.surface, borderColor: "#6D6E67", borderCurve: "continuous", borderRadius: 24, borderWidth: StyleSheet.hairlineWidth, boxShadow: "0 1px 2px rgba(23, 32, 27, 0.04)", gap: 24, overflow: "hidden", padding: 28, width: "100%" },
   caddieCardCompact: { gap: 15, padding: 18, width: 300 },
-  caddieDetail: { color: "#61736A", fontSize: 18, lineHeight: 24 },
+  caddieDetail: { color: "#61736A", fontSize: 14, lineHeight: 18 },
   caddieDetailCompact: { fontSize: 12, lineHeight: 16 },
   caddieFooter: { alignItems: "center", flexDirection: "row", justifyContent: "space-between", marginTop: 10 },
-  caddieName: { color: "#060806", fontSize: 31, fontWeight: "800", letterSpacing: -0.8, lineHeight: 36 },
-  caddieNameCompact: { fontSize: 20, letterSpacing: -0.45, lineHeight: 24 },
+  caddieName: { color: "#060806", fontSize: 26, fontWeight: "800", letterSpacing: -0.6, lineHeight: 31 },
+  caddieNameCompact: { fontSize: 15, letterSpacing: -0.3, lineHeight: 19 },
   caddieMeta: { alignItems: "flex-end" },
   caddiePressable: { maxWidth: 520, width: "100%" },
+  caddieTitleCopy: { flex: 1, minWidth: 0 },
   caddieTitleRow: { alignItems: "flex-start", flexDirection: "row", gap: spacing.sm, justifyContent: "space-between" },
   courseCard: { backgroundColor: colors.surface, borderColor: "#6D6E67", borderCurve: "continuous", borderRadius: 24, borderWidth: StyleSheet.hairlineWidth, boxShadow: "0 1px 2px rgba(23, 32, 27, 0.04)", overflow: "hidden" },
   courseCardCompact: { width: 310 },
@@ -94,18 +95,18 @@ const styles = StyleSheet.create({
   radioDot: { backgroundColor: colors.fairwayDark, borderRadius: 999, height: 14, width: 14 },
   radioSelected: { borderColor: colors.fairwayDark },
   rating: { alignItems: "flex-end" },
-  ratingNumber: { color: "#17442F", fontFamily: "JetBrainsMono", fontSize: 20, fontWeight: "800" },
+  ratingNumber: { color: "#17442F", fontFamily: "JetBrainsMono", fontSize: 21, fontWeight: "800" },
   ratingNumberCompact: { fontSize: 13 },
   rounds: { color: "#61736A", fontSize: 18, lineHeight: 24 },
   roundsCompact: { fontSize: 12, lineHeight: 16 },
   selectedCard: { borderColor: colors.fairwayDark, borderWidth: 2 },
   skill: { backgroundColor: "#E7E4DD", borderCurve: "continuous", borderRadius: 14, flex: 1, gap: 4, padding: 14 },
   skillCompact: { borderRadius: 9, gap: 2, padding: 9 },
-  skillLabel: { color: "#61736A", fontSize: 12, fontWeight: "800" },
+  skillLabel: { color: "#61736A", fontSize: 13, fontWeight: "800" },
   skillLabelCompact: { fontSize: 8 },
   skillRow: { flexDirection: "row", gap: 16 },
-  skillValue: { color: "#060806", fontSize: 16, fontWeight: "700" },
+  skillValue: { color: "#060806", fontSize: 12, fontWeight: "700" },
   skillValueCompact: { fontSize: 10 },
-  stars: { color: "#17442F", fontSize: 19, letterSpacing: -1 },
+  stars: { color: "#17442F", fontSize: 18, letterSpacing: -1 },
   starsCompact: { fontSize: 12 }
 });

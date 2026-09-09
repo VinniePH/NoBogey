@@ -29,7 +29,7 @@ export function MyBookingsScreen() {
         </View>
         {upcomingBookings.length
           ? upcomingBookings.map((booking) => <BookingCard booking={booking} caddie={caddies.find((item) => item.id === booking.caddieId)} course={courses.find((item) => item.id === booking.courseId)} isAccepted={isAssignmentAccepted(booking.id)} isUnread={hasUnreadAlert("golfer", booking.id, "booking_assignment_accepted")} key={booking.id} onOpen={() => markBookingOpened(booking.id, "golfer")} />)
-          : <EmptyState description="Confirmed and requested rounds will appear after the booking service is connected." icon="calendar-blank-outline" minHeight={390} title="No upcoming bookings" />}
+          : <EmptyState description="Confirmed and requested rounds will appear after the booking service is connected." icon="calendar-blank-outline" minHeight={390} style={styles.emptyBookings} title="No upcoming bookings" />}
       </ScrollView>
       <MobileBottomNavigation active="bookings" />
     </SafeAreaView>
@@ -138,6 +138,7 @@ const styles = StyleSheet.create({
   cardTitle: { color: colors.fairwayDark, fontSize: typography.title, fontWeight: "800" },
   cardTitleRow: { alignItems: "flex-start", flexDirection: "row", gap: spacing.sm, justifyContent: "space-between" },
   detail: { gap: spacing.xs },
+  emptyBookings: { backgroundColor: "#FAF9F6", borderWidth: 0 },
   detailCard: {
     backgroundColor: colors.surface,
     borderColor: colors.border,
@@ -149,7 +150,7 @@ const styles = StyleSheet.create({
   intro: { gap: spacing.sm },
   label: { color: colors.textMuted, fontSize: typography.small, fontWeight: "800", textTransform: "uppercase" },
   page: { gap: spacing.lg, padding: spacing.xl, paddingBottom: 112 },
-  safeArea: { backgroundColor: colors.canvas, flex: 1 },
+  safeArea: { backgroundColor: "#FAF9F6", flex: 1 },
   subtitle: { color: colors.textMuted, fontSize: typography.body },
   title: { color: colors.text, fontSize: typography.heading, fontWeight: "900" },
   updateBadge: { backgroundColor: "#FFF0B8", borderRadius: 999, color: "#785E0A", fontSize: 9, fontWeight: "900", overflow: "hidden", paddingHorizontal: 7, paddingVertical: 4, textTransform: "uppercase" },

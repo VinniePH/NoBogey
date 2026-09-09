@@ -60,6 +60,15 @@ export async function signIn(input: SignInInput): Promise<AuthSession> {
   return session;
 }
 
+/** Send the account recovery email through Supabase Auth. */
+export async function requestPasswordReset(email: string): Promise<void> {
+  const { appUrl } = getBackendConfig();
+  const { error } = await getSupabaseClient().auth.resetPasswordForEmail(email.trim().toLowerCase(), {
+    redirectTo: `${appUrl.replace(/\/$/, '')}/auth/callback`,
+  });
+  if (error) throw error;
+}
+
 /** Sign out the current account. Will invalidate the local Supabase Auth session. */
 export async function signOut(): Promise<void> {
   const { error } = await getSupabaseClient().auth.signOut();
@@ -73,4 +82,3 @@ export async function getSession(): Promise<AuthSession | null> {
   if (!data.session) return null;
   return toAuthSession(data.session.user.id, data.session.user.email ?? '', data.session.access_token, data.session.expires_at ?? 0);
 }
-
