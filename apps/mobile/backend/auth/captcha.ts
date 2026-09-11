@@ -1,16 +1,28 @@
 import * as Linking from "expo-linking";
 
 const CAPTCHA_URL = "https://nobogeyofficial.com/mobile-captcha";
-const CALLBACK_URL = "nobogey://captcha";
+const ALLOWED_CALLBACKS = ["nobogey://captcha", "exp+nobogey-mobile://captcha"] as const;
+
+export function isAllowedMobileCaptchaCallback(url: string): boolean {
+  if (!url) return false;
+  return ALLOWED_CALLBACKS.some((allowed) => url.startsWith(allowed));
+}
+
+export function shouldBypassMobileCaptcha(): boolean {
+  return process.env.EXPO_PUBLIC_BYPASS_CAPTCHA === "true";
+}
 
 export async function completeMobileCaptcha(): Promise<void> {
+  if (shouldBypassMobileCaptcha()) return;
+
+  const callbackUrl = ALLOWED_CALLBACKS[0];
   const token = await new Promise<string>((resolve, reject) => {
     const timeout = setTimeout(() => {
       subscription.remove();
       reject(new Error("Security check timed out. Please try again."));
     }, 120_000);
     const subscription = Linking.addEventListener("url", ({ url }) => {
-      if (!url.startsWith(CALLBACK_URL)) return;
+      if (!isAllowedMobileCaptchaCallback(url)) return;
       clearTimeout(timeout);
       subscription.remove();
       const parsed = Linking.parse(url);
@@ -18,7 +30,7 @@ export async function completeMobileCaptcha(): Promise<void> {
       if (typeof value === "string" && value) resolve(value);
       else reject(new Error("Security check was not completed."));
     });
-    void Linking.openURL(`${CAPTCHA_URL}?return_to=${encodeURIComponent(CALLBACK_URL)}`).catch((error) => {
+    void Linking.openURL(`${CAPTCHA_URL}?return_to=${encodeURIComponent(callbackUrl)}`).catch((error) => {
       clearTimeout(timeout);
       subscription.remove();
       reject(error);
