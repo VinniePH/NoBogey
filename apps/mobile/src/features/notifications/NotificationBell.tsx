@@ -13,5 +13,5 @@ export function NotificationBell({ count, onPress }: { count: number; onPress: (
 const styles = StyleSheet.create({
   badge: { alignItems: "center", backgroundColor: colors.accent, borderColor: colors.surface, borderRadius: 10, borderWidth: 2, justifyContent: "center", minHeight: 18, minWidth: 18, paddingHorizontal: 3, position: "absolute", right: 0, top: 0 },
   badgeText: { color: colors.surface, fontSize: 9, fontVariant: ["tabular-nums"], fontWeight: "900" },
-  button: { alignItems: "center", justifyContent: "center", minHeight: 44, minWidth: 44, position: "relative" }
+  button: { alignItems: "center", backgroundColor: colors.surface, borderColor: "#D8D7D0", borderRadius: 20, borderWidth: 1, justifyContent: "center", minHeight: 40, minWidth: 40, position: "relative" }
 });
