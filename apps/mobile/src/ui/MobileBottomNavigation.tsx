@@ -1,12 +1,15 @@
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { Pressable, StyleSheet, Text, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { spacing } from "@nobogey/ui";
 
 type MobileNavigationTab = "bookings" | "caddies" | "home" | "profile";
+export const MOBILE_BOTTOM_NAVIGATION_HEIGHT = 72;
 
 export function MobileBottomNavigation({ active }: { active: MobileNavigationTab }) {
-  return <View accessibilityRole="tablist" style={styles.navigation}>
+  const insets = useSafeAreaInsets();
+  return <View accessibilityRole="tablist" style={[styles.navigation, { minHeight: MOBILE_BOTTOM_NAVIGATION_HEIGHT + insets.bottom, paddingBottom: Math.max(insets.bottom, spacing.xs) }]}>
     <NavigationTab active={active === "home"} icon="home" label="Home" onPress={() => router.replace("/golfer/home")} />
     <NavigationTab active={active === "bookings"} icon="calendar" label="Bookings" onPress={() => router.replace("/golfer/bookings")} />
     <Pressable accessibilityLabel="Find a Game" accessibilityRole="button" onPress={() => router.push("/golfer/find-game")} style={styles.primaryAction}><GolfBallIcon /></Pressable>
@@ -28,6 +31,6 @@ const styles = StyleSheet.create({
   icon: { alignItems: "center", borderRadius: 18, height: 36, justifyContent: "center", width: 36 }, iconActive: { backgroundColor: "#E6E8E5" },
   item: { alignItems: "center", flex: 1, gap: 1, justifyContent: "center", minHeight: 58 },
   label: { color: "#64645E", fontSize: 11, fontWeight: "500" }, labelActive: { color: "#17432E", fontWeight: "700" },
-  navigation: { alignItems: "center", backgroundColor: "#FFFEFB", borderTopColor: "#D8D7D0", borderTopWidth: StyleSheet.hairlineWidth, bottom: 0, flexDirection: "row", justifyContent: "space-around", left: 0, minHeight: 72, paddingHorizontal: spacing.sm, paddingTop: spacing.xs, position: "absolute", right: 0 },
+  navigation: { alignItems: "center", backgroundColor: "#FFFEFB", borderTopColor: "#D8D7D0", borderTopWidth: StyleSheet.hairlineWidth, bottom: 0, flexDirection: "row", justifyContent: "space-around", left: 0, paddingHorizontal: spacing.sm, paddingTop: spacing.xs, position: "absolute", right: 0 },
   primaryAction: { alignItems: "center", backgroundColor: "#FFFEFB", borderColor: "#17432E", borderRadius: 34, borderWidth: 3, height: 68, justifyContent: "center", marginTop: -30, width: 68 }
 });
