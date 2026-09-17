@@ -3,11 +3,11 @@ const optionalUrl = (value: string | undefined) => value?.trim() || undefined;
 export const installLinks = {
   golfer: {
     appStore: optionalUrl(import.meta.env.VITE_GOLFER_APP_STORE_URL),
-    googlePlay: optionalUrl(import.meta.env.VITE_GOLFER_GOOGLE_PLAY_URL)
+    androidApk: optionalUrl(import.meta.env.VITE_GOLFER_ANDROID_APK_URL)
   },
   caddie: {
     appStore: optionalUrl(import.meta.env.VITE_CADDIE_APP_STORE_URL),
-    googlePlay: optionalUrl(import.meta.env.VITE_CADDIE_GOOGLE_PLAY_URL)
+    androidApk: optionalUrl(import.meta.env.VITE_CADDIE_ANDROID_APK_URL)
   }
 } as const;
 

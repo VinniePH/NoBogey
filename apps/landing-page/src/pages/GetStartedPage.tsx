@@ -3,9 +3,9 @@ import {
   ArrowLeft,
   ArrowRight,
   Building2,
+  Download,
   ExternalLink,
   Mail,
-  Play,
   QrCode,
   Smartphone
 } from "lucide-react";
@@ -36,7 +36,7 @@ function StoreLink({ icon, label, url }: StoreLinkProps) {
       </div>
       <div className="min-w-0 flex-1">
         <p className="flex items-center gap-2 text-sm font-semibold">{icon}{label}</p>
-        <p className="mt-1 text-xs leading-5 text-muted">{url ? "Scan the code or open the store." : "Store link coming soon."}</p>
+        <p className="mt-1 text-xs leading-5 text-muted">{url ? "Scan the code or open the link." : "Link coming soon."}</p>
       </div>
       {url ? (
         <a className="store-action" href={url} rel="noreferrer" target="_blank" aria-label={`Open ${label}`}>
@@ -65,7 +65,7 @@ function MobileRoleCard({ description, role }: { description: string; role: "gol
       </div>
       <div className="mt-8 space-y-3">
         <StoreLink icon={<Apple size={15} />} label="Download on the App Store" url={links.appStore} />
-        <StoreLink icon={<Play size={15} />} label="Get it on Google Play" url={links.googlePlay} />
+        <StoreLink icon={<Download size={15} />} label="Download Android APK" url={links.androidApk} />
       </div>
     </article>
   );
@@ -95,7 +95,7 @@ export function GetStartedPage() {
                 <span className="text-forest">for your next round?</span>
               </h1>
               <p className="mx-auto mt-7 max-w-2xl text-lg leading-8 text-muted">
-                Choose the experience that fits your role. Mobile installation links will appear as each store release becomes available.
+                Choose the experience that fits your role. Android APK download links will appear here when the preview is ready; App Store availability will follow.
               </p>
             </div>
 

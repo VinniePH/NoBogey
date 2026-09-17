@@ -15,8 +15,8 @@
     "@radix-ui/react-accordion": "latest",
     "lucide-react": "latest",
     "qrcode.react": "4.2.0",
-    "react": "latest",
-    "react-dom": "latest"
+    "react": "19.3.0",
+    "react-dom": "19.3.0"
   },
   "devDependencies": {
     "@nobogey/config": "workspace:*",
