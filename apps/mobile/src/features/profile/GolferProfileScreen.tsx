@@ -1,5 +1,5 @@
-import { RoleProfileScreen } from "./RoleProfileScreen";
+import { ProfileComingSoonScreen } from "./ProfileComingSoonScreen";
 
 export function GolferProfileScreen() {
-  return <RoleProfileScreen role="golfer" />;
+  return <ProfileComingSoonScreen role="golfer" />;
 }

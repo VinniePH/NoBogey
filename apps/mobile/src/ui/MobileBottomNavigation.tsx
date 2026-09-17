@@ -3,6 +3,7 @@ import { router } from "expo-router";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { spacing } from "@nobogey/ui";
+import { TourTarget } from "../features/guided-tour/GuidedTour";
 
 type MobileNavigationTab = "bookings" | "caddies" | "home" | "profile";
 export const MOBILE_BOTTOM_NAVIGATION_HEIGHT = 72;
@@ -10,11 +11,11 @@ export const MOBILE_BOTTOM_NAVIGATION_HEIGHT = 72;
 export function MobileBottomNavigation({ active }: { active: MobileNavigationTab }) {
   const insets = useSafeAreaInsets();
   return <View accessibilityRole="tablist" style={[styles.navigation, { minHeight: MOBILE_BOTTOM_NAVIGATION_HEIGHT + insets.bottom, paddingBottom: Math.max(insets.bottom, spacing.xs) }]}>
-    <NavigationTab active={active === "home"} icon="home" label="Home" onPress={() => router.replace("/golfer/home")} />
-    <NavigationTab active={active === "bookings"} icon="calendar" label="Bookings" onPress={() => router.replace("/golfer/bookings")} />
-    <Pressable accessibilityLabel="Find a Game" accessibilityRole="button" onPress={() => router.push("/golfer/find-game")} style={styles.primaryAction}><GolfBallIcon /></Pressable>
-    <NavigationTab active={active === "caddies"} icon="people" label="Caddies" onPress={() => router.replace("/golfer/caddies")} />
-    <NavigationTab active={active === "profile"} icon="person-circle-outline" label="Profile" onPress={() => router.replace("/golfer/profile")} />
+    <TourTarget id="golfer-nav-home" style={styles.target}><NavigationTab active={active === "home"} icon="home" label="Home" onPress={() => router.replace("/golfer/home")} /></TourTarget>
+    <TourTarget id="golfer-nav-bookings" style={styles.target}><NavigationTab active={active === "bookings"} icon="calendar" label="Bookings" onPress={() => router.replace("/golfer/bookings")} /></TourTarget>
+    <TourTarget id="golfer-nav-find-game" style={styles.primaryTarget}><Pressable accessibilityLabel="Find a Game" accessibilityRole="button" onPress={() => router.push("/golfer/find-game")} style={styles.primaryAction}><GolfBallIcon /></Pressable></TourTarget>
+    <TourTarget id="golfer-nav-caddies" style={styles.target}><NavigationTab active={active === "caddies"} icon="people" label="Caddies" onPress={() => router.replace("/golfer/caddies")} /></TourTarget>
+    <TourTarget id="golfer-nav-profile" style={styles.target}><NavigationTab active={active === "profile"} icon="person-circle-outline" label="Profile" onPress={() => router.replace("/golfer/profile")} /></TourTarget>
   </View>;
 }
 
@@ -32,5 +33,7 @@ const styles = StyleSheet.create({
   item: { alignItems: "center", flex: 1, gap: 1, justifyContent: "center", minHeight: 58 },
   label: { color: "#64645E", fontSize: 11, fontWeight: "500" }, labelActive: { color: "#17432E", fontWeight: "700" },
   navigation: { alignItems: "center", backgroundColor: "#FFFEFB", borderTopColor: "#D8D7D0", borderTopWidth: StyleSheet.hairlineWidth, bottom: 0, flexDirection: "row", justifyContent: "space-around", left: 0, paddingHorizontal: spacing.sm, paddingTop: spacing.xs, position: "absolute", right: 0 },
-  primaryAction: { alignItems: "center", backgroundColor: "#FFFEFB", borderColor: "#17432E", borderRadius: 34, borderWidth: 3, height: 68, justifyContent: "center", marginTop: -30, width: 68 }
+  primaryAction: { alignItems: "center", backgroundColor: "#FFFEFB", borderColor: "#17432E", borderRadius: 34, borderWidth: 3, height: 68, justifyContent: "center", width: 68 },
+  primaryTarget: { marginTop: -30 },
+  target: { flex: 1 }
 });

@@ -12,8 +12,10 @@ import { MOBILE_BOTTOM_NAVIGATION_HEIGHT, MobileBottomNavigation } from "../../u
 import { InAppAlertBanner } from "../notifications/InAppAlertBanner";
 import { NotificationBell } from "../notifications/NotificationBell";
 import { useNotificationAlerts } from "../notifications/NotificationAlertProvider";
+import { TourTarget, useAutomaticGuidedTour } from "../guided-tour/GuidedTour";
 
 export function HomeScreen() {
+  useAutomaticGuidedTour("golfer");
   const insets = useSafeAreaInsets();
   const { caddies, courses } = useMobileData();
   const { dismissBanner, getUnreadCount, getVisibleAlert, markBookingOpened } = useNotificationAlerts();
@@ -23,10 +25,10 @@ export function HomeScreen() {
 
   return <SafeAreaView edges={["top"]} style={styles.safeArea}><ScrollView contentContainerStyle={[styles.content, { paddingBottom: MOBILE_BOTTOM_NAVIGATION_HEIGHT + insets.bottom + spacing.xl }]} contentInsetAdjustmentBehavior="automatic" showsVerticalScrollIndicator={false}><ResponsiveContent style={styles.page}>
     {alert ? <InAppAlertBanner actionLabel="View booking" body={alert.body} onAction={() => { markBookingOpened(alert.bookingId, "golfer"); router.push({ pathname: "/golfer/bookings/[bookingId]", params: { bookingId: alert.bookingId } }); }} onDismiss={() => dismissBanner(alert.id)} title={alert.title} /> : null}
-    <View style={styles.hero}><View style={styles.heroCopy}>
+    <TourTarget id="golfer-home"><View style={styles.hero}><View style={styles.heroCopy}>
       <View style={styles.brandRow}><Text accessibilityRole="header" style={styles.wordmark}>NoBogey</Text><NotificationBell count={getUnreadCount("golfer")} onPress={() => router.push("/golfer/bookings")} /></View>
       <Text accessibilityRole="header" style={styles.headline}>The perfect walk,{"\n"}arranged <Text style={styles.headlineAccent}>on-demand.</Text></Text><Text style={styles.heroDescription}>Professional caddies for every skill level. Book your preferred bagman at any course in the metro, instantly.</Text>
-    </View></View>
+    </View></View></TourTarget>
     <View style={styles.searchCard}><SearchDetail label="Location" value="No course selected" /><View style={styles.divider} /><SearchDetail label="Date" value="No date selected" /><Pressable accessibilityLabel="Choose a course" accessibilityRole="button" onPress={() => router.push("/golfer/courses")} style={styles.searchButton}><Text style={styles.searchButtonText}>Choose a course</Text></Pressable></View>
     <View style={styles.sectionDivider} />
     <HomeSection actionLabel="See All" onAction={() => router.push("/golfer/courses/all")} title="Courses">{courses.length ? <ScrollView horizontal contentContainerStyle={styles.horizontalList} showsHorizontalScrollIndicator={false}>{courses.map((course) => <CourseCard compact course={course} key={course.id} onPress={() => router.push({ pathname: "/golfer/courses/[courseId]", params: { courseId: course.id } })} />)}</ScrollView> : <View style={styles.emptySection}><EmptyState description="Courses will appear after the catalog service is connected." icon="golf" minHeight={390} title="No courses available" /></View>}</HomeSection>

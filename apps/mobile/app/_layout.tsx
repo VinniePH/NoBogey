@@ -7,6 +7,7 @@ import { colors } from "@nobogey/ui";
 import InterFont from "../assets/fonts/Inter-Variable.ttf";
 import JetBrainsMonoFont from "../assets/fonts/JetBrainsMono-Regular.ttf";
 import { AppSessionProvider } from "../src/features/session/AppSession";
+import { GuidedTourProvider } from "../src/features/guided-tour/GuidedTour";
 
 void SplashScreen.preventAutoHideAsync();
 
@@ -29,8 +30,9 @@ export default function RootLayout() {
   return (
     <SafeAreaProvider>
       <AppSessionProvider>
-        <StatusBar style="dark" />
-        <Stack
+        <GuidedTourProvider>
+          <StatusBar style="dark" />
+          <Stack
           screenOptions={{
             contentStyle: { backgroundColor: colors.canvas },
             headerShown: false
@@ -40,7 +42,8 @@ export default function RootLayout() {
           <Stack.Screen name="(public)" />
           <Stack.Screen name="(auth)" />
           <Stack.Screen name="(app)" />
-        </Stack>
+          </Stack>
+        </GuidedTourProvider>
       </AppSessionProvider>
     </SafeAreaProvider>
   );

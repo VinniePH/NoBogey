@@ -10,6 +10,7 @@ import { TermsAcceptanceModal } from "../legal/TermsAcceptanceModal";
 import { useAppSession } from "../session/AppSession";
 import { CaddieContactSettings } from "../contact/CaddieContactSettings";
 import { loadPreferences, savePreferences } from "../../../backend/users/users.service";
+import { useGuidedTour } from "../guided-tour/GuidedTour";
 
 type SettingsRole = "golfer" | "caddie";
 type SettingsSheet = "contact" | "deletion" | "notifications" | "payment" | "preferences" | "support";
@@ -23,12 +24,14 @@ type SettingsItem = {
 
 export function SettingsScreen({ role = "golfer" }: { role?: SettingsRole }) {
   const { signOut } = useAppSession();
+  const { startTour } = useGuidedTour();
   const [activeSheet, setActiveSheet] = useState<SettingsSheet | null>(null);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [termsVisible, setTermsVisible] = useState(false);
   const sections = getSections(role, {
     openSheet: setActiveSheet,
-    openTerms: () => setTermsVisible(true)
+    openTerms: () => setTermsVisible(true),
+    restartTour: () => startTour(role)
   });
 
   const logOut = async () => {
@@ -71,7 +74,7 @@ export function SettingsScreen({ role = "golfer" }: { role?: SettingsRole }) {
   );
 }
 
-function getSections(role: SettingsRole, actions: { openSheet: (sheet: SettingsSheet) => void; openTerms: () => void }): Array<{ title: string; items: SettingsItem[] }> {
+function getSections(role: SettingsRole, actions: { openSheet: (sheet: SettingsSheet) => void; openTerms: () => void; restartTour: () => void }): Array<{ title: string; items: SettingsItem[] }> {
   const profilePath = role === "golfer" ? "/golfer/profile" : "/caddie/profile";
   return [
     { title: "ACCOUNT", items: [
@@ -88,6 +91,7 @@ function getSections(role: SettingsRole, actions: { openSheet: (sheet: SettingsS
       { detail: "Account controls are not available in this local demo", disabled: true, icon: "lock-outline" as const, label: "Privacy & Security" }
     ] },
     { title: "SUPPORT", items: [
+      { detail: "See the main app controls again", icon: "map-marker-path" as const, label: "Replay App Tour", onPress: actions.restartTour },
       { detail: "View local support options", icon: "help-circle-outline" as const, label: "Help & Support", onPress: () => actions.openSheet("support") },
       { detail: "Terms of Service · Privacy Policy", icon: "file-document-outline" as const, label: "Terms & Conditions", onPress: actions.openTerms }
     ] }
