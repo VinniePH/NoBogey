@@ -53,7 +53,7 @@ export function TeeTimeSelectionScreen() {
       </View>
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Select a date</Text>
-        {dates.length ? <View style={styles.dateRow}>{dates.map((value) => <DateButton key={value} selected={date === value} value={value} onPress={() => setDate(value)} />)}</View> : <EmptyState description="Dates will appear when the club tee-sheet service is connected." icon="calendar-blank-outline" minHeight={112} title="No dates available" />}
+        {dates.length ? <ScrollView horizontal contentContainerStyle={styles.dateRow} showsHorizontalScrollIndicator={false}>{dates.map((value) => <DateButton key={value} selected={date === value} value={value} onPress={() => setDate(value)} />)}</ScrollView> : <EmptyState description="Dates will appear when the club tee-sheet service is connected." icon="calendar-blank-outline" minHeight={112} title="No dates available" />}
       </View>
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Club tee sheet</Text>

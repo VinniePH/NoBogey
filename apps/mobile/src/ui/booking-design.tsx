@@ -2,6 +2,7 @@ import type { PropsWithChildren } from "react";
 import { StyleSheet, View } from "react-native";
 import { AppText, Button } from "./primitives";
 import { colors, spacing, typography } from "@nobogey/ui";
+import { ResponsiveContent } from "./ResponsiveContent";
 
 export function BookingStepper({ step }: { step: 1 | 2 | 3 | 4 }) {
   return (
@@ -38,7 +39,7 @@ export function PrimaryButton({ label, onPress, disabled = false }: { label: str
 }
 
 export function StickyActionBar({ children }: PropsWithChildren) {
-  return <View style={styles.stickyAction}>{children}</View>;
+  return <View style={styles.stickyAction}><ResponsiveContent>{children}</ResponsiveContent></View>;
 }
 
 const styles = StyleSheet.create({

@@ -11,6 +11,7 @@ import { backToPreviousPage } from "../../ui/navigation";
 import { Button } from "../../ui/primitives";
 import { useMobileData } from "../data/useMobileData";
 import { MobileBottomNavigation } from "../../ui/MobileBottomNavigation";
+import { ResponsiveContent } from "../../ui/ResponsiveContent";
 import { cancelBooking } from '../../../backend/bookings/bookings.service';
 import { CaddieContactCard } from "../contact/CaddieContactCard";
 import { useNotificationAlerts } from "../notifications/NotificationAlertProvider";
@@ -23,6 +24,7 @@ export function MyBookingsScreen() {
   return (
     <SafeAreaView edges={["bottom"]} style={styles.safeArea}>
       <ScrollView contentContainerStyle={styles.page}>
+        <ResponsiveContent style={styles.frame}>
         <View style={styles.intro}>
           <Text accessibilityRole="header" style={styles.title}>My bookings</Text>
           <Text style={styles.subtitle}>Your upcoming bookings are listed here.</Text>
@@ -30,6 +32,7 @@ export function MyBookingsScreen() {
         {upcomingBookings.length
           ? upcomingBookings.map((booking) => <BookingCard booking={booking} caddie={caddies.find((item) => item.id === booking.caddieId)} course={courses.find((item) => item.id === booking.courseId)} isAccepted={isAssignmentAccepted(booking.id)} isUnread={hasUnreadAlert("golfer", booking.id, "booking_assignment_accepted")} key={booking.id} onOpen={() => markBookingOpened(booking.id, "golfer")} />)
           : <EmptyState description="Confirmed and requested rounds will appear after the booking service is connected." icon="calendar-blank-outline" minHeight={390} style={styles.emptyBookings} title="No upcoming bookings" />}
+        </ResponsiveContent>
       </ScrollView>
       <MobileBottomNavigation active="bookings" />
     </SafeAreaView>
@@ -120,6 +123,7 @@ function Detail({ label, value }: { label: string; value: string }) {
 }
 
 const styles = StyleSheet.create({
+  frame: { gap: spacing.lg },
   ratingInput: { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.md, borderWidth: 1, color: colors.text, minHeight: 130, padding: spacing.md, textAlignVertical: "top" },
   ratingRow: { flexDirection: "row", gap: spacing.sm },
   ratingStar: { color: colors.warning, fontSize: 34 },
