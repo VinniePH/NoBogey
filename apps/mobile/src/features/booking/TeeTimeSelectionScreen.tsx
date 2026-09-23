@@ -1,87 +1,79 @@
+import { MaterialCommunityIcons } from "@expo/vector-icons";
 import type { TeeTimeSlot } from "@nobogey/contracts";
 import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useMemo, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { colors, radius, spacing, typography } from "@nobogey/ui";
 import { formatTeeTime } from "@nobogey/utils";
 import { EmptyState } from "../../ui/EmptyState";
-import { BookingStepper, PrimaryButton, StickyActionBar } from "../../ui/booking-design";
+import { FindGameScreen, SectionHeading, SelectedCourseSummary, flowColors } from "./components/FindGameUI";
 import { canSelectTeeTime, clubTeeSheet } from "./clubTeeSheet";
-import { ResponsiveContent } from "../../ui/ResponsiveContent";
 import { useMobileData } from "../data/useMobileData";
-import { mobileDataService } from '../../../backend/mock.service';
+import { mobileDataService } from "../../../backend/mock.service";
 
 const partySize = 4;
 const dates: readonly string[] = mobileDataService.listWeekDates();
 
 export function TeeTimeSelectionScreen() {
-  const { courses } = useMobileData();
-  const { courseId } = useLocalSearchParams<{ courseId?: string }>();
+  const { courses, isLoading: coursesLoading } = useMobileData();
+  const { courseId, caddieId, date: initialDate } = useLocalSearchParams<{ courseId?: string; caddieId?: string; date?: string }>();
   const course = courses.find((item) => item.id === courseId);
-  const [date, setDate] = useState<string>();
+  const [date, setDate] = useState<string | undefined>(initialDate);
   const [slots, setSlots] = useState<TeeTimeSlot[]>([]);
   const [selectedSlotId, setSelectedSlotId] = useState<string>();
+  const [loading, setLoading] = useState(false);
 
+  useEffect(() => { setDate(initialDate); }, [initialDate]);
   useEffect(() => {
     let active = true;
     setSelectedSlotId(undefined);
-    if (course && date) void clubTeeSheet.getTeeTimes(course.id, date).then((result) => { if (active) setSlots(result); }).catch(() => { if (active) setSlots([]); });
+    setSlots([]);
+    if (course && date) {
+      setLoading(true);
+      void clubTeeSheet.getTeeTimes(course.id, date).then((result) => { if (active) setSlots(result); }).catch(() => { if (active) setSlots([]); }).finally(() => { if (active) setLoading(false); });
+    } else setLoading(false);
     return () => { active = false; };
   }, [course, date]);
 
   const selectedSlot = useMemo(() => slots.find((slot) => slot.id === selectedSlotId), [selectedSlotId, slots]);
-  const friday = date ? new Date(`${date}T12:00:00+08:00`).getDay() === 5 : false;
+  if (!course) return <FindGameScreen actionDisabled actionLabel="Continue" description="Select your preferred date and time at the club." onAction={() => {}} step={2} title="Choose a tee time">{coursesLoading ? <Text style={styles.prompt}>Loading course…</Text> : <EmptyState description="Choose a course to see its tee times." icon="golf" minHeight={280} title="Course unavailable" />}</FindGameScreen>;
 
-  if (!course) {
-    return <SafeAreaView edges={["top", "bottom"]} style={styles.safeArea}><View style={styles.emptyPage}><EmptyState description="Choose a course after the catalog service is connected." icon="golf" minHeight={680} title="Course unavailable" /></View></SafeAreaView>;
-  }
-
-  return <SafeAreaView edges={["top", "bottom"]} style={styles.safeArea}>
-    <ScrollView contentContainerStyle={styles.content} contentInsetAdjustmentBehavior="automatic" showsVerticalScrollIndicator={false}><ResponsiveContent style={styles.frame}>
-      <BookingStepper step={2} />
-      <View style={styles.heading}>
-        <Text accessibilityRole="header" style={styles.title}>Choose your tee time.</Text>
-        <Text style={styles.subtitle}>Choose a tee time for your foursome before requesting a preferred caddie.</Text>
-      </View>
-      <View style={styles.card}>
-        <Row label="COURSE" value={course.name} />
-        <Row label="GROUP" value="4 golfers" />
-        <View style={styles.rule} />
-        <Text style={styles.policyTitle}>Caddie assignment</Text>
-        <Text style={styles.note}>You’ll request a preferred caddie next. The club can assign a different qualified caddie if your preferred person is still on a prior round. {friday ? "Friday rounds require a caddie." : ""}</Text>
-      </View>
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Select a date</Text>
-        {dates.length ? <ScrollView horizontal contentContainerStyle={styles.dateRow} showsHorizontalScrollIndicator={false}>{dates.map((value) => <DateButton key={value} selected={date === value} value={value} onPress={() => setDate(value)} />)}</ScrollView> : <EmptyState description="Dates will appear when the club tee-sheet service is connected." icon="calendar-blank-outline" minHeight={112} title="No dates available" />}
-      </View>
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Club tee sheet</Text>
-        <Text style={styles.sectionNote}>Live club availability · slots need room for all 4 golfers.</Text>
-        {slots.length ? <View style={styles.slotList}>{slots.map((slot) => <TeeTimeButton key={slot.id} selected={slot.id === selectedSlotId} slot={slot} onPress={() => canSelectTeeTime(slot, partySize) && setSelectedSlotId(slot.id)} />)}</View> : <EmptyState description="Tee times will appear after the club tee-sheet service is connected." icon="calendar-blank-outline" minHeight={330} title="No tee times available" />}
-      </View>
-      {selectedSlot ? <View style={styles.selectedSummary}><Text style={styles.selectedSummaryTitle}>Tee time selected</Text><Text style={styles.selectedSummaryText}>{formatTeeTime(selectedSlot.startsAt)} · Next, choose a preferred caddie</Text></View> : null}
-    </ResponsiveContent></ScrollView>
-    <StickyActionBar><PrimaryButton disabled={!selectedSlot} label={selectedSlot ? "Confirm tee time" : "Choose a tee time for 4 golfers"} onPress={() => selectedSlot && router.push({ pathname: "/golfer/bookings/new/tee-time-confirmation", params: { courseId: course.id, date, teeTimeId: selectedSlot.id, time: selectedSlot.startsAt } })} /></StickyActionBar>
-  </SafeAreaView>;
+  return <FindGameScreen actionDisabled={!selectedSlot} actionLabel="Continue" description="Select your preferred date and time at the club." onAction={() => selectedSlot && router.push({ pathname: "/golfer/caddies", params: { courseId: course.id, caddieId, date, teeTimeId: selectedSlot.id, time: selectedSlot.startsAt } })} step={2} title="Choose a tee time">
+    <SelectedCourseSummary course={course} />
+    <View style={styles.section}><SectionHeading title="Select a date" />{dates.length ? <ScrollView horizontal contentContainerStyle={styles.dateRow} showsHorizontalScrollIndicator={false} style={styles.dateScroller}>{dates.map((value) => <DateButton key={value} onPress={() => { if (value !== date) { setSelectedSlotId(undefined); setSlots([]); setDate(value); } }} selected={date === value} value={value} />)}</ScrollView> : <EmptyState description="Dates will appear when the club tee-sheet service is connected." icon="calendar-blank-outline" minHeight={110} title="No dates available" />}</View>
+    <View style={styles.section}><SectionHeading title="Available tee times" />{!date ? <Text style={styles.prompt}>Select a date to see available tee times.</Text> : loading ? <Text style={styles.prompt}>Loading tee times…</Text> : slots.length ? <View accessibilityRole="radiogroup" style={styles.slotList}>{slots.map((slot) => <TeeTimeOption key={slot.id} onPress={() => setSelectedSlotId(slot.id)} selected={slot.id === selectedSlotId} slot={slot} />)}</View> : <EmptyState description="No tee times are available for this date." icon="calendar-blank-outline" minHeight={210} title="No tee times available" />}</View>
+  </FindGameScreen>;
 }
 
 function DateButton({ onPress, selected, value }: { onPress: () => void; selected: boolean; value: string }) {
   const local = new Date(`${value}T12:00:00+08:00`);
-  return <Pressable accessibilityRole="radio" accessibilityState={{ selected }} onPress={onPress} style={[styles.dateButton, selected && styles.dateButtonSelected]}><Text style={[styles.dateDay, selected && styles.dateTextSelected]}>{local.toLocaleDateString("en-US", { weekday: "short" })}</Text><Text style={[styles.dateNumber, selected && styles.dateTextSelected]}>{local.getDate()}</Text><Text style={[styles.dateMonth, selected && styles.dateTextSelected]}>{local.toLocaleDateString("en-US", { month: "short" })}</Text></Pressable>;
+  return <Pressable accessibilityLabel={local.toLocaleDateString("en-US", { dateStyle: "full" })} accessibilityRole="radio" accessibilityState={{ selected }} onPress={onPress} style={({ pressed }) => [styles.dateButton, selected && styles.dateButtonSelected, pressed && styles.pressed]}><Text style={[styles.dateDay, selected && styles.dateTextSelected]}>{local.toLocaleDateString("en-US", { weekday: "short" })}</Text><Text style={[styles.dateNumber, selected && styles.dateTextSelected]}>{local.getDate()}</Text><Text style={[styles.dateMonth, selected && styles.dateTextSelected]}>{local.toLocaleDateString("en-US", { month: "short" })}</Text></Pressable>;
 }
 
-function TeeTimeButton({ onPress, selected, slot }: { onPress: () => void; selected: boolean; slot: TeeTimeSlot }) {
+function TeeTimeOption({ onPress, selected, slot }: { onPress: () => void; selected: boolean; slot: TeeTimeSlot }) {
   const eligible = canSelectTeeTime(slot, partySize);
-  const detail = eligible ? "Room for 4 golfers" : "Foursome cannot be accommodated";
-  return <Pressable accessibilityLabel={`${formatTeeTime(slot.startsAt)}, ${eligible ? "eligible" : detail}`} accessibilityRole="radio" accessibilityState={{ disabled: !eligible, selected }} disabled={!eligible} onPress={onPress} style={[styles.slot, !eligible && styles.slotUnavailable, selected && styles.slotSelected]}><View><Text style={[styles.slotTime, !eligible && styles.slotTextUnavailable]}>{formatTeeTime(slot.startsAt)}</Text><Text style={[styles.slotDetail, !eligible && styles.slotTextUnavailable]}>{detail}</Text></View><Text style={[styles.slotStatus, !eligible && styles.slotStatusUnavailable]}>{selected ? "Selected" : eligible ? "Available" : "Unavailable"}</Text></Pressable>;
+  return <Pressable accessibilityLabel={`${formatTeeTime(slot.startsAt)}, ${eligible ? "available" : "unavailable"}`} accessibilityRole="radio" accessibilityState={{ disabled: !eligible, selected }} disabled={!eligible} onPress={onPress} style={({ pressed }) => [styles.slot, !eligible && styles.slotUnavailable, selected && styles.slotSelected, pressed && styles.pressed]}><View style={styles.slotCopy}><Text style={[styles.slotTime, !eligible && styles.unavailableText]}>{formatTeeTime(slot.startsAt)}</Text><Text style={styles.slotDetail}>{eligible ? "Room for 4 golfers" : "Foursome cannot be accommodated"}</Text></View><View style={styles.slotState}>{selected ? <MaterialCommunityIcons color={flowColors.forest} name="check-circle" size={22} /> : <Text style={[styles.status, !eligible && styles.unavailableText]}>{eligible ? "Available" : "Unavailable"}</Text>}</View></Pressable>;
 }
-
-function Row({ label, value }: { label: string; value: string }) { return <View style={styles.row}><Text style={styles.label}>{label}</Text><Text style={styles.value}>{value}</Text></View>; }
 
 const styles = StyleSheet.create({
-  frame: { gap: spacing.xl },
-  emptyPage: { flex: 1, justifyContent: "center", padding: spacing.xl },
-  card: { backgroundColor: colors.surface, borderColor: "#999890", borderRadius: radius.md, borderWidth: 1, gap: spacing.md, marginHorizontal: spacing.xl, padding: spacing.xl },
-  content: { gap: spacing.xl, paddingBottom: spacing.xl }, dateButton: { alignItems: "center", borderColor: "#B9B8B1", borderRadius: radius.md, borderWidth: 1, gap: 2, minWidth: 82, padding: spacing.md }, dateButtonSelected: { backgroundColor: "#B3C1AA", borderColor: colors.fairwayDark }, dateDay: { color: "#66786D", fontSize: 11, fontWeight: "800", textTransform: "uppercase" }, dateMonth: { color: "#66786D", fontSize: 12 }, dateNumber: { color: colors.ink, fontSize: 24, fontWeight: "800" }, dateRow: { flexDirection: "row", gap: spacing.md }, dateTextSelected: { color: colors.fairwayDark }, empty: { color: "#6E6D67", fontSize: typography.body }, heading: { gap: spacing.sm, paddingHorizontal: spacing.xl }, label: { color: "#66786D", fontSize: typography.small, fontWeight: "800", letterSpacing: 1 }, note: { color: "#6E6D67", fontSize: typography.small, lineHeight: 19 }, policyTitle: { color: colors.fairwayDark, fontSize: typography.small, fontWeight: "800" }, row: { gap: spacing.xs }, rule: { backgroundColor: "#B9B8B1", height: 1 }, safeArea: { backgroundColor: "#FAF9F6", flex: 1 }, section: { gap: spacing.sm, paddingHorizontal: spacing.xl }, sectionNote: { color: "#6E6D67", fontSize: typography.small, lineHeight: 19 }, sectionTitle: { color: colors.fairwayDark, fontSize: typography.body, fontWeight: "800" }, selectedSummary: { backgroundColor: "#E7EEE9", borderRadius: radius.md, gap: spacing.xs, marginHorizontal: spacing.xl, padding: spacing.lg }, selectedSummaryText: { color: "#24543D", fontSize: typography.body }, selectedSummaryTitle: { color: colors.fairwayDark, fontSize: typography.small, fontWeight: "800", letterSpacing: 1, textTransform: "uppercase" }, slot: { alignItems: "center", backgroundColor: colors.surface, borderColor: "#B9B8B1", borderRadius: radius.md, borderWidth: 1, flexDirection: "row", justifyContent: "space-between", padding: spacing.lg }, slotDetail: { color: "#66786D", fontSize: typography.small, marginTop: 3 }, slotList: { gap: spacing.sm }, slotSelected: { backgroundColor: "#E7EEE9", borderColor: colors.fairwayDark, borderWidth: 2 }, slotStatus: { color: colors.fairway, fontSize: typography.small, fontWeight: "800" }, slotStatusUnavailable: { color: "#6E6D67" }, slotTextUnavailable: { color: "#6E6D67" }, slotTime: { color: colors.ink, fontSize: typography.body, fontWeight: "800" }, slotUnavailable: { backgroundColor: "#EFEEE9" }, subtitle: { color: "#6E6D67", fontSize: typography.body, lineHeight: 23 }, title: { color: "#000000", fontSize: 36, fontWeight: "800", letterSpacing: -1, lineHeight: 42 }, value: { color: "#18382A", fontSize: typography.body, fontWeight: "800" }
+  section: { gap: 12 },
+  dateScroller: { flexGrow: 0 },
+  dateRow: { gap: 9, paddingBottom: 3 },
+  dateButton: { alignItems: "center", backgroundColor: "#FFFFFF", borderColor: flowColors.border, borderRadius: 12, borderWidth: 1, gap: 1, justifyContent: "center", minHeight: 82, minWidth: 72, paddingHorizontal: 10, paddingVertical: 8 },
+  dateButtonSelected: { backgroundColor: flowColors.forest, borderColor: flowColors.forest },
+  dateDay: { color: flowColors.muted, fontSize: 12, fontWeight: "700" },
+  dateMonth: { color: flowColors.muted, fontSize: 12 },
+  dateNumber: { color: flowColors.ink, fontSize: 22, fontWeight: "800" },
+  dateTextSelected: { color: "#FFFFFF" },
+  prompt: { backgroundColor: flowColors.sage, borderRadius: 10, color: flowColors.muted, fontSize: 14, lineHeight: 20, padding: 16 },
+  slotList: { gap: 9 },
+  slot: { alignItems: "center", backgroundColor: "#FFFFFF", borderColor: flowColors.border, borderRadius: 12, borderWidth: 1, flexDirection: "row", gap: 12, minHeight: 70, paddingHorizontal: 15, paddingVertical: 11 },
+  slotSelected: { backgroundColor: "#F1F7F1", borderColor: flowColors.forest, borderWidth: 2 },
+  slotUnavailable: { backgroundColor: "#EFEEE9", opacity: 0.7 },
+  slotCopy: { flex: 1, gap: 3, minWidth: 0 },
+  slotTime: { color: flowColors.ink, fontSize: 17, fontWeight: "800" },
+  slotDetail: { color: flowColors.muted, fontSize: 13, lineHeight: 18 },
+  slotState: { alignItems: "flex-end", minWidth: 50 },
+  status: { color: flowColors.forest, fontSize: 12, fontWeight: "700" },
+  unavailableText: { color: flowColors.muted },
+  pressed: { opacity: 0.75 }
 });

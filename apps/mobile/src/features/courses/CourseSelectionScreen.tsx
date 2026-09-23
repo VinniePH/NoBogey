@@ -1,39 +1,21 @@
 import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
-import { ScrollView, StyleSheet, Text, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { spacing, typography } from "@nobogey/ui";
-import { useMobileData } from "../data/useMobileData";
+import { StyleSheet, Text, View } from "react-native";
 import { EmptyState } from "../../ui/EmptyState";
-import { BookingStepper, PrimaryButton, StickyActionBar } from "../../ui/booking-design";
-import { CourseCard } from "../booking/components/MarketplaceCards";
-import { ResponsiveContent } from "../../ui/ResponsiveContent";
+import { CourseOptionCard, FindGameScreen, SectionHeading, flowColors } from "../booking/components/FindGameUI";
+import { useMobileData } from "../data/useMobileData";
 
 export function CourseSelectionScreen() {
-  const { courses } = useMobileData();
+  const { courses, isLoading } = useMobileData();
   const { caddieId, courseId, date } = useLocalSearchParams<{ caddieId?: string; courseId?: string; date?: string }>();
   const [selectedId, setSelectedId] = useState<string | undefined>(courseId);
 
-  useEffect(() => {
-    setSelectedId(courseId);
-  }, [courseId]);
+  useEffect(() => { setSelectedId(courseId); }, [courseId]);
 
-  return <SafeAreaView edges={["top", "bottom"]} style={styles.safeArea}>
-    <ScrollView contentContainerStyle={styles.content} contentInsetAdjustmentBehavior="automatic" showsVerticalScrollIndicator={false}><ResponsiveContent style={styles.frame}>
-      <BookingStepper step={1} />
-      <View style={styles.heading}><Text accessibilityRole="header" style={styles.title}>Pick your course.</Text><Text style={styles.subtitle}>{date ? `Courses staffed by NoBogey on ${date}.` : "Browse courses currently staffed by NoBogey."}</Text></View>
-      <View accessibilityRole="radiogroup" style={styles.list}>{courses.length ? courses.map((course) => <CourseCard course={course} key={course.id} onPress={() => setSelectedId(course.id)} selected={selectedId === course.id} />) : <EmptyState description="Courses will appear after the catalog service is connected." icon="golf" minHeight={430} title="No courses available" />}</View>
-    </ResponsiveContent></ScrollView>
-    <StickyActionBar><PrimaryButton disabled={!selectedId} label="Choose tee time" onPress={() => router.push({ pathname: "/golfer/bookings/new/tee-times", params: { caddieId, courseId: selectedId, date } })} /></StickyActionBar>
-  </SafeAreaView>;
+  return <FindGameScreen actionDisabled={isLoading || !courses.some((course) => course.id === selectedId)} actionLabel="Continue" description="Book a round with trusted caddies in a few simple steps." onAction={() => router.push({ pathname: "/golfer/bookings/new/tee-times", params: { caddieId, courseId: selectedId, date } })} step={1} title="Find a Game">
+    <SectionHeading description="Select the course where you'd like to play." title="Choose a course" />
+    <View accessibilityRole="radiogroup" style={styles.list}>{isLoading ? <Text style={styles.loading}>Loading courses…</Text> : courses.length ? courses.map((course) => <CourseOptionCard course={course} key={course.id} onPress={() => setSelectedId(course.id)} selected={selectedId === course.id} />) : <EmptyState description="Courses will appear after the catalog service is connected." icon="golf" minHeight={260} title="No courses available" />}</View>
+  </FindGameScreen>;
 }
 
-const styles = StyleSheet.create({
-  content: { gap: spacing.xl, paddingBottom: spacing.xl },
-  frame: { gap: spacing.xl },
-  heading: { gap: spacing.sm, paddingHorizontal: spacing.xl },
-  list: { gap: spacing.lg, paddingHorizontal: spacing.xl },
-  safeArea: { backgroundColor: "#FAF9F6", flex: 1 },
-  subtitle: { color: "#6E6D67", fontSize: typography.body, lineHeight: 23 },
-  title: { color: "#000000", fontSize: 36, fontWeight: "800", letterSpacing: -1, lineHeight: 42 }
-});
+const styles = StyleSheet.create({ list: { gap: 10 }, loading: { color: flowColors.muted, fontSize: 14, paddingVertical: 20 } });

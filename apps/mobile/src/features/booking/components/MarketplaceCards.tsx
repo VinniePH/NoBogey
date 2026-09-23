@@ -1,18 +1,19 @@
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { useState } from "react";
+import { Image, Pressable, StyleSheet, Text, View } from "react-native";
 import type { Caddie, GolfCourse } from "@nobogey/contracts";
 import { colors, spacing, typography } from "@nobogey/ui";
 
-export function CourseCard({ course, selected, onPress, compact = false }: { course: GolfCourse; selected?: boolean; onPress?: () => void; compact?: boolean }) {
+export function CourseCard({ course, selected, onPress, compact = false, compactWidth }: { course: GolfCourse; selected?: boolean; onPress?: () => void; compact?: boolean; compactWidth?: number }) {
   const body = (
-    <View style={[styles.courseCard, compact && styles.courseCardCompact, selected && styles.selectedCard]}>
+    <View style={[styles.courseCard, compact && styles.courseCardCompact, compact && compactWidth ? { width: compactWidth } : null, selected && styles.selectedCard]}>
       <CoursePreview course={course} compact={compact} />
-      <View style={styles.courseCopy}>
+      <View style={[styles.courseCopy, compact && styles.courseCopyCompact]}>
         <View style={styles.courseTitleRow}>
-          <Text numberOfLines={2} style={styles.courseName}>{course.name}</Text>
+          <Text numberOfLines={2} style={[styles.courseName, compact && styles.courseNameCompact]}>{course.name}</Text>
           <Text style={styles.coursePar}>PAR {course.par}</Text>
         </View>
-        <Text style={styles.courseLocation}>{course.city}, {course.province}</Text>
+        <Text style={[styles.courseLocation, compact && styles.courseLocationCompact]}>{course.city}, {course.province}</Text>
         <Text style={styles.courseMeta}>{course.yardage.toLocaleString()} yards</Text>
         <Text style={styles.available}>{course.caddieCount} caddies available today</Text>
       </View>
@@ -22,17 +23,18 @@ export function CourseCard({ course, selected, onPress, compact = false }: { cou
 }
 
 function CoursePreview({ course, compact }: { course: GolfCourse; compact: boolean }) {
+  const [imageFailed, setImageFailed] = useState(false);
   return (
     <View accessibilityLabel={`${course.name} course`} accessibilityRole="image" style={[styles.coursePreview, compact ? styles.coursePreviewCompact : styles.coursePreviewStandard]}>
-      <MaterialCommunityIcons color={colors.fairwayDark} name="golf" size={compact ? 34 : 42} />
+      {compact && course.imageUrl && !imageFailed ? <Image onError={() => setImageFailed(true)} resizeMode="cover" source={{ uri: course.imageUrl }} style={styles.courseImage} /> : <MaterialCommunityIcons color={colors.fairwayDark} name="golf" size={compact ? 34 : 42} />}
     </View>
   );
 }
 
-export function CaddieCard({ caddie, compact = false, onPress, selected }: { caddie: Caddie; compact?: boolean; onPress?: () => void; selected?: boolean }) {
+export function CaddieCard({ caddie, compact = false, compactWidth, onPress, selected }: { caddie: Caddie; compact?: boolean; compactWidth?: number; onPress?: () => void; selected?: boolean }) {
   const isSelectable = selected !== undefined;
   const body = (
-    <View style={[styles.caddieCard, compact && styles.caddieCardCompact, selected && styles.selectedCard]}>
+    <View style={[styles.caddieCard, compact && styles.caddieCardCompact, compact && compactWidth ? { width: compactWidth } : null, selected && styles.selectedCard]}>
       <CaddiePortrait compact={compact} name={caddie.displayName} />
       <View style={styles.caddieTitleRow}>
         <View style={styles.caddieTitleCopy}><Text adjustsFontSizeToFit minimumFontScale={0.7} numberOfLines={1} style={[styles.caddieName, compact && styles.caddieNameCompact]}>{caddie.displayName}</Text><Text numberOfLines={1} style={[styles.caddieDetail, compact && styles.caddieDetailCompact]}>{caddie.yearsExperience} Years Pro · {caddie.languages.join(", ")}</Text></View>
@@ -79,14 +81,18 @@ const styles = StyleSheet.create({
   caddieTitleCopy: { flex: 1, minWidth: 0 },
   caddieTitleRow: { alignItems: "flex-start", flexDirection: "row", gap: spacing.sm, justifyContent: "space-between" },
   courseCard: { backgroundColor: colors.surface, borderColor: "#6D6E67", borderCurve: "continuous", borderRadius: 24, borderWidth: StyleSheet.hairlineWidth, boxShadow: "0 1px 2px rgba(23, 32, 27, 0.04)", overflow: "hidden" },
-  courseCardCompact: { width: 310 },
+  courseCardCompact: { borderColor: "#E5E1D8", borderRadius: 16, width: 310 },
   courseCopy: { gap: 14, paddingHorizontal: 20, paddingVertical: 24 },
+  courseCopyCompact: { gap: 8, paddingHorizontal: 16, paddingVertical: 16 },
+  courseImage: { height: "100%", width: "100%" },
   coursePreview: { alignItems: "center", backgroundColor: "#E7EEE9", justifyContent: "center" },
-  coursePreviewCompact: { height: 176, width: "100%" },
+  coursePreviewCompact: { aspectRatio: 1.9, width: "100%" },
   coursePreviewStandard: { height: 210, width: "100%" },
   courseLocation: { color: "#61736A", fontSize: 20, lineHeight: 26 },
+  courseLocationCompact: { fontSize: 16, lineHeight: 22 },
   courseMeta: { color: "#61736A", fontSize: typography.small, letterSpacing: 0.4 },
   courseName: { color: "#123427", flex: 1, fontSize: 22, fontWeight: "800", letterSpacing: -0.45, lineHeight: 28 },
+  courseNameCompact: { color: "#151515", fontSize: 20, lineHeight: 26 },
   coursePar: { color: "#61736A", fontFamily: "JetBrainsMono", fontSize: 14, letterSpacing: 0.5, paddingTop: 3 },
   courseTitleRow: { alignItems: "flex-start", flexDirection: "row", gap: spacing.sm },
   price: { color: "#17442F", fontFamily: "JetBrainsMono", fontSize: 20, fontWeight: "800" },

@@ -1,28 +1,44 @@
 import { router, useLocalSearchParams } from "expo-router";
-import { ScrollView, StyleSheet, Text, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { colors, radius, spacing, typography } from "@nobogey/ui";
+import { StyleSheet, Text, View } from "react-native";
+import { formatTeeTime } from "@nobogey/utils";
 import { EmptyState } from "../../ui/EmptyState";
-import { BookingStepper, PrimaryButton, StickyActionBar } from "../../ui/booking-design";
+import { FindGameScreen, Notice, ReviewSection, SelectedCaddieSummary, SelectedCourseSummary, flowColors } from "./components/FindGameUI";
 import { useAppSession } from "../session/AppSession";
-import { ResponsiveContent } from "../../ui/ResponsiveContent";
 import { useMobileData } from "../data/useMobileData";
 
 export function BookingSummaryScreen() {
-  const { caddies, courses } = useMobileData();
-  const { caddieId, courseId, teeTimeId, time } = useLocalSearchParams<{ caddieId?: string; courseId?: string; teeTimeId?: string; time?: string }>();
+  const { caddies, courses, isLoading } = useMobileData();
+  const { caddieId, courseId, date, teeTimeId, time, noPreference } = useLocalSearchParams<{ caddieId?: string; courseId?: string; date?: string; teeTimeId?: string; time?: string; noPreference?: string }>();
   const caddie = caddies.find((item) => item.id === caddieId);
   const course = courses.find((item) => item.id === courseId);
   const { golferSignedIn } = useAppSession();
-  if (!caddie || !course) return <SafeAreaView edges={["top", "bottom"]} style={styles.safeArea}><View style={{ padding: spacing.xl }}><EmptyState description="Booking details will appear after the course and caddie services are connected." icon="calendar-remove-outline" minHeight={650} title="Booking request unavailable" /></View></SafeAreaView>;
-  const continueToPayment = () => {
+  const hasNoPreference = noPreference === "1";
+  const canRequest = Boolean(course && teeTimeId && time && caddie && !hasNoPreference);
+
+  if (isLoading) return <FindGameScreen actionDisabled actionLabel="Request booking" description="Almost there! Review your details and confirm your booking request." onAction={() => {}} step={4} title="Review your request"><Text style={styles.meta}>Loading booking details…</Text></FindGameScreen>;
+
+  const continueToConfirmation = () => {
+    if (!canRequest || !course || !caddie) return;
     if (!golferSignedIn) {
       router.push({ pathname: "/sign-in", params: { role: "golfer", returnTo: "/golfer/caddies", caddieId: caddie.id, courseId: course.id, teeTimeId, time } });
       return;
     }
     router.push({ pathname: "/golfer/bookings/new/payment", params: { caddieId: caddie.id, courseId: course.id, teeTimeId, time } });
   };
-  return <SafeAreaView edges={["top", "bottom"]} style={styles.safeArea}><ScrollView contentContainerStyle={styles.content} contentInsetAdjustmentBehavior="automatic"><ResponsiveContent style={{ gap: spacing.xl }}><BookingStepper step={4}/><View style={styles.heading}><Text accessibilityRole="header" style={styles.title}>Review your request.</Text><Text style={styles.subtitle}>Your tee time is reserved for a foursome. Your named caddie is a preferred request.</Text></View><View style={styles.card}><Row label="COURSE" value={course.name}/><Row label="TEE TIME" value={time ?? "Selected tee time"}/><Row label="GROUP" value="4 golfers"/><Row label="PREFERRED CADDIE" value={caddie.displayName}/><View style={styles.rule}/><Text style={styles.notice}>If {caddie.displayName.split(" ")[0]} is still on a prior round, the course will assign the next available qualified caddie.</Text></View></ResponsiveContent></ScrollView><StickyActionBar><PrimaryButton label={golferSignedIn ? "Continue to payment" : "Log in to continue"} onPress={continueToPayment}/></StickyActionBar></SafeAreaView>;
+
+  return <FindGameScreen actionDisabled={!canRequest} actionLabel="Request booking" description="Almost there! Review your details and confirm your booking request." onAction={continueToConfirmation} step={4} title="Review your request">
+    {!course ? <EmptyState description="Booking details will appear after the course service is connected." icon="golf" minHeight={250} title="Course unavailable" /> : <ReviewSection onEdit={() => router.push({ pathname: "/golfer/courses", params: { caddieId, courseId, date } })} title="Course"><SelectedCourseSummary course={course} flat /></ReviewSection>}
+    <ReviewSection onEdit={() => router.push({ pathname: "/golfer/bookings/new/tee-times", params: { caddieId, courseId, date } })} title="Tee time"><View style={styles.timeRow}><Text style={styles.value}>{time ? formatTeeTime(time) : "No tee time selected"}</Text><Text style={styles.meta}>4 golfers</Text></View></ReviewSection>
+    <ReviewSection onEdit={() => router.push({ pathname: "/golfer/caddies", params: { caddieId, courseId, date, teeTimeId, time } })} title="Preferred caddie">{caddie && !hasNoPreference ? <SelectedCaddieSummary caddie={caddie} flat /> : <View style={styles.timeRow}><Text style={styles.value}>{hasNoPreference ? "No preference" : "Caddie unavailable"}</Text>{hasNoPreference ? <Text style={styles.meta}>Let the club assign a caddie for you.</Text> : null}</View>}</ReviewSection>
+    <Notice>{hasNoPreference ? "The golf club makes the final caddie assignment based on availability." : "Your preferred caddie is a request. The golf club will make the final caddie assignment based on availability."}</Notice>
+    {hasNoPreference ? <Text accessibilityLiveRegion="polite" style={styles.limit}>The current booking action requires a named caddie. Select one to continue; a no-preference request is not supported yet.</Text> : <Text style={styles.nextStep}>You'll confirm the request on the next screen.</Text>}
+  </FindGameScreen>;
 }
-function Row({ label, value }: { label: string; value: string }) { return <View style={styles.row}><Text style={styles.label}>{label}</Text><Text style={styles.value}>{value}</Text></View>; }
-const styles = StyleSheet.create({ card: { backgroundColor: colors.surface, borderColor: "#999890", borderRadius: radius.md, borderWidth: 1, gap: spacing.lg, marginHorizontal: spacing.xl, padding: spacing.xl }, content: { gap: spacing.xl, paddingBottom: spacing.xl }, heading: { gap: spacing.sm, paddingHorizontal: spacing.xl }, label: { color: "#66786D", fontSize: typography.small, fontWeight: "800", letterSpacing: 1 }, notice: { color: "#6E6D67", fontSize: typography.small, lineHeight: 19 }, row: { gap: spacing.xs }, rule: { backgroundColor: "#B9B8B1", height: 1 }, safeArea: { backgroundColor: "#FAF9F6", flex: 1 }, subtitle: { color: "#6E6D67", fontSize: typography.body, lineHeight: 23 }, title: { color: "#000000", fontSize: 36, fontWeight: "800", letterSpacing: -1, lineHeight: 42 }, value: { color: "#18382A", fontSize: typography.body, fontWeight: "800" } });
+
+const styles = StyleSheet.create({
+  timeRow: { gap: 4 },
+  value: { color: flowColors.ink, fontSize: 17, fontWeight: "800", lineHeight: 23 },
+  meta: { color: flowColors.muted, fontSize: 14, lineHeight: 20 },
+  limit: { color: "#8B4B24", fontSize: 13, lineHeight: 19 },
+  nextStep: { color: flowColors.muted, fontSize: 13, lineHeight: 19 }
+});
