@@ -1,4 +1,5 @@
 import type { Booking, Caddie, GolfCourse } from "@nobogey/contracts";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { router, useLocalSearchParams } from "expo-router";
 import { useEffect } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
@@ -16,6 +17,7 @@ import { cancelBooking } from '../../../backend/bookings/bookings.service';
 import { CaddieContactCard } from "../contact/CaddieContactCard";
 import { useNotificationAlerts } from "../notifications/NotificationAlertProvider";
 import { getSupabaseClient } from "../../../backend/client";
+import { flowColors } from "./components/FindGameUI";
 
 export function MyBookingsScreen() {
   const { bookings, caddies, courses } = useMobileData();
@@ -27,7 +29,7 @@ export function MyBookingsScreen() {
         <ResponsiveContent style={styles.frame}>
         <View style={styles.intro}>
           <Text accessibilityRole="header" style={styles.title}>My bookings</Text>
-          <Text style={styles.subtitle}>Your upcoming bookings are listed here.</Text>
+          <Text style={styles.subtitle}>{upcomingBookings.length ? `${upcomingBookings.length} upcoming ${upcomingBookings.length === 1 ? "round" : "rounds"}` : "Your upcoming rounds will appear here."}</Text>
         </View>
         {upcomingBookings.length
           ? upcomingBookings.map((booking) => <BookingCard booking={booking} caddie={caddies.find((item) => item.id === booking.caddieId)} course={courses.find((item) => item.id === booking.courseId)} isAccepted={isAssignmentAccepted(booking.id)} isUnread={hasUnreadAlert("golfer", booking.id, "booking_assignment_accepted")} key={booking.id} onOpen={() => markBookingOpened(booking.id, "golfer")} />)
@@ -59,18 +61,12 @@ export function BookingDetailsScreen() {
   return (
     <SafeAreaView edges={["bottom"]} style={styles.safeArea}>
       <ScrollView contentContainerStyle={styles.page}>
-        <View style={styles.intro}>
-          <Text accessibilityRole="header" style={styles.title}>{course.name}</Text>
-          <Text style={styles.subtitle}>{formatTeeTime(booking.teeTime)}</Text>
-        </View>
+        <View style={styles.detailHero}><View style={styles.detailIcon}><MaterialCommunityIcons color={flowColors.forest} name="golf" size={25} /></View><View style={styles.detailHeroCopy}><Text accessibilityRole="header" style={styles.title}>{course.name}</Text><Text style={styles.subtitle}>{formatTeeTime(booking.teeTime)}</Text></View><StatusChip accepted={assignmentAccepted} status={booking.status} /></View>
         <View style={styles.detailCard}>
           <Detail label="Booking reference" value={booking.id} />
-          <Detail label="Caddie" value={caddie.displayName} />
           <Detail label="Group size" value={`${booking.partySize} golfers`} />
-          <Detail label="Caddie rate" value={formatMoney(booking.quotedRate.amountInCentavos)} />
-          <Detail label="Status" value={booking.status} />
-          <Detail label="Caddie response" value={assignmentAccepted ? "Accepted" : "Awaiting response"} />
         </View>
+        <View style={styles.detailCard}><Text style={styles.sectionLabel}>Preferred caddie</Text><View style={styles.caddieRow}><View style={styles.caddieInitial}><Text style={styles.caddieInitialText}>{caddie.displayName.trim().slice(0, 1).toUpperCase()}</Text></View><View style={styles.caddieCopy}><Text style={styles.caddieName}>{caddie.displayName}</Text><Text style={styles.caddieMeta}>{assignmentAccepted ? "Assignment accepted" : "Awaiting response"}</Text></View><Text style={styles.rate}>{formatMoney(booking.quotedRate.amountInCentavos)}</Text></View></View>
         {booking.status === 'requested' || booking.status === 'confirmed' ? <Button onPress={() => void cancelBooking(booking.id).then(refresh).catch((error) => setActionError(error instanceof Error ? error.message : 'Unable to cancel booking.'))}>Cancel booking</Button> : null}
         {actionError ? <Text accessibilityLiveRegion="polite" style={styles.subtitle}>{actionError}</Text> : null}
         <CaddieContactCard isAccepted={assignmentAccepted} />
@@ -110,10 +106,8 @@ function BookingCard({ booking, caddie, course, isAccepted, isUnread, onOpen }: 
       onPress={() => { onOpen(); router.push({ pathname: "/golfer/bookings/[bookingId]", params: { bookingId: booking.id } }); }}
       style={[styles.bookingCard, isUnread && styles.bookingCardUnread]}
     >
-      <View style={styles.cardTitleRow}><Text style={styles.cardTitle}>{course.name}</Text>{isUnread ? <Text style={styles.updateBadge}>New update</Text> : null}</View>
-      <Text style={styles.cardMeta}>{formatTeeTime(booking.teeTime)}</Text>
-      <Text style={styles.cardMeta}>{caddie.displayName}</Text>
-      <Text style={[styles.assignmentStatus, isAccepted && styles.assignmentAccepted]}>{isAccepted ? "Caddie accepted" : "Awaiting caddie response"}</Text>
+      <View style={styles.bookingMain}><View style={styles.dateBlock}><Text style={styles.dateDay}>{formatDatePart(booking.teeTime, "weekday")}</Text><Text style={styles.dateNumber}>{formatDatePart(booking.teeTime, "day")}</Text><Text style={styles.dateMonth}>{formatDatePart(booking.teeTime, "month")}</Text></View><View style={styles.bookingCopy}><View style={styles.cardTitleRow}><Text numberOfLines={1} style={styles.cardTitle}>{course.name}</Text>{isUnread ? <Text style={styles.updateBadge}>Updated</Text> : null}</View><Text style={styles.cardMeta}>{formatTeeTime(booking.teeTime)}</Text><Text style={styles.cardMeta}>{caddie.displayName}</Text></View><MaterialCommunityIcons color={flowColors.forest} name="chevron-right" size={22} /></View>
+      <View style={styles.bookingFooter}><StatusChip accepted={isAccepted} status={booking.status} /><Text style={styles.caddieStatus}>{isAccepted ? "Caddie accepted" : "Awaiting caddie response"}</Text></View>
     </Pressable>
   );
 }
@@ -121,6 +115,8 @@ function BookingCard({ booking, caddie, course, isAccepted, isUnread, onOpen }: 
 function Detail({ label, value }: { label: string; value: string }) {
   return <View style={styles.detail}><Text style={styles.label}>{label}</Text><Text selectable style={styles.value}>{value}</Text></View>;
 }
+function StatusChip({ accepted, status }: { accepted: boolean; status: Booking["status"] }) { const label = status === "confirmed" || accepted ? "Confirmed" : status === "requested" ? "Requested" : status; return <View style={[styles.statusChip, label === "Confirmed" && styles.statusChipConfirmed]}><Text style={[styles.statusChipText, label === "Confirmed" && styles.statusChipTextConfirmed]}>{label}</Text></View>; }
+function formatDatePart(value: string, part: "weekday" | "day" | "month") { return new Intl.DateTimeFormat("en-US", { [part]: part === "day" ? "numeric" : "short", timeZone: "Asia/Manila" }).format(new Date(value)); }
 
 const styles = StyleSheet.create({
   frame: { gap: spacing.lg },
@@ -128,36 +124,59 @@ const styles = StyleSheet.create({
   ratingRow: { flexDirection: "row", gap: spacing.sm },
   ratingStar: { color: colors.warning, fontSize: 34 },
   bookingCard: {
-    backgroundColor: colors.surface,
-    borderColor: colors.border,
-    borderRadius: radius.lg,
+    backgroundColor: "#FFFFFF",
+    borderColor: "#DEDCD4",
+    borderCurve: "continuous",
+    borderRadius: 14,
     borderWidth: 1,
-    gap: spacing.xs,
-    padding: spacing.lg
+    gap: spacing.md,
+    padding: spacing.md
   },
-  bookingCardUnread: { backgroundColor: "#FBF7E8", borderColor: colors.warning, borderWidth: 2 },
-  assignmentAccepted: { color: colors.fairwayDark },
-  assignmentStatus: { color: colors.textMuted, fontSize: typography.small, fontWeight: "800", paddingTop: spacing.xs },
+  bookingCardUnread: { backgroundColor: "#F7FBF6", borderColor: flowColors.forest, borderWidth: 2 },
+  bookingMain: { alignItems: "center", flexDirection: "row", gap: spacing.md },
+  bookingCopy: { flex: 1, gap: 3, minWidth: 0 },
+  bookingFooter: { alignItems: "center", borderTopColor: "#EEECE6", borderTopWidth: 1, flexDirection: "row", justifyContent: "space-between", paddingTop: spacing.sm },
+  caddieStatus: { color: colors.textMuted, fontSize: 12, fontWeight: "700" },
+  dateBlock: { alignItems: "center", backgroundColor: "#E9F1E9", borderRadius: 9, justifyContent: "center", minHeight: 62, width: 54 },
+  dateDay: { color: flowColors.forest, fontSize: 10, fontWeight: "800", textTransform: "uppercase" },
+  dateNumber: { color: flowColors.ink, fontSize: 22, fontWeight: "900", lineHeight: 25 },
+  dateMonth: { color: colors.textMuted, fontSize: 10, fontWeight: "700", textTransform: "uppercase" },
   cardMeta: { color: colors.textMuted, fontSize: typography.small },
-  cardTitle: { color: colors.fairwayDark, fontSize: typography.title, fontWeight: "800" },
+  cardTitle: { color: flowColors.ink, fontSize: 17, fontWeight: "800" },
   cardTitleRow: { alignItems: "flex-start", flexDirection: "row", gap: spacing.sm, justifyContent: "space-between" },
   detail: { gap: spacing.xs },
   emptyBookings: { backgroundColor: "#FAF9F6", borderWidth: 0 },
   detailCard: {
     backgroundColor: colors.surface,
     borderColor: colors.border,
-    borderRadius: radius.lg,
+    borderCurve: "continuous",
+    borderRadius: 14,
     borderWidth: 1,
     gap: spacing.lg,
     padding: spacing.lg
   },
   intro: { gap: spacing.sm },
+  detailHero: { alignItems: "center", flexDirection: "row", gap: spacing.md },
+  detailHeroCopy: { flex: 1, gap: 3, minWidth: 0 },
+  detailIcon: { alignItems: "center", backgroundColor: "#E9F1E9", borderRadius: 12, height: 54, justifyContent: "center", width: 54 },
+  sectionLabel: { color: flowColors.forest, fontSize: 11, fontWeight: "800", letterSpacing: 0.8, textTransform: "uppercase" },
+  caddieRow: { alignItems: "center", flexDirection: "row", gap: spacing.sm },
+  caddieInitial: { alignItems: "center", backgroundColor: "#E9F1E9", borderRadius: 999, height: 42, justifyContent: "center", width: 42 },
+  caddieInitialText: { color: flowColors.forest, fontSize: 18, fontWeight: "800" },
+  caddieCopy: { flex: 1, gap: 2 },
+  caddieName: { color: flowColors.ink, fontSize: 16, fontWeight: "800" },
+  caddieMeta: { color: colors.textMuted, fontSize: 13 },
+  rate: { color: flowColors.forest, fontSize: 15, fontWeight: "800" },
   label: { color: colors.textMuted, fontSize: typography.small, fontWeight: "800", textTransform: "uppercase" },
   page: { gap: spacing.lg, padding: spacing.xl, paddingBottom: 112 },
   safeArea: { backgroundColor: "#FAF9F6", flex: 1 },
   subtitle: { color: colors.textMuted, fontSize: typography.body },
   title: { color: colors.text, fontSize: typography.heading, fontWeight: "900" },
   updateBadge: { backgroundColor: "#FFF0B8", borderRadius: 999, color: "#785E0A", fontSize: 9, fontWeight: "900", overflow: "hidden", paddingHorizontal: 7, paddingVertical: 4, textTransform: "uppercase" },
+  statusChip: { backgroundColor: "#FFF2CE", borderRadius: 999, paddingHorizontal: 8, paddingVertical: 4 },
+  statusChipConfirmed: { backgroundColor: "#E2F0E4" },
+  statusChipText: { color: "#826316", fontSize: 10, fontWeight: "800", textTransform: "uppercase" },
+  statusChipTextConfirmed: { color: flowColors.forest },
   unavailable: { flex: 1, gap: spacing.lg, justifyContent: "center", padding: spacing.xl },
   value: { color: colors.fairwayDark, fontSize: typography.body, fontWeight: "700" }
 });
