@@ -20,10 +20,10 @@ const tours: Record<GuidedTourRole, TourStep[]> = {
   ],
   caddie: [
     { target: "caddie-dashboard", title: "Your dashboard", body: "Manage availability and your upcoming work from here." },
+    { target: "caddie-tab-dashboard", title: "Dashboard", body: "See your next assignment and the actions you use most." },
     { target: "caddie-tab-schedule", title: "Schedule", body: "Set the times you are available to caddie." },
-    { target: "caddie-tab-roster", title: "Roster", body: "Review upcoming assignments and respond to new requests." },
     { target: "caddie-tab-portfolio", title: "Portfolio", body: "Keep your professional profile, credentials, and specialties current." },
-    { target: "caddie-profile", title: "Profile", body: "Review your profile and verification status here." }
+    { target: "caddie-upcoming-assignments", title: "Assignments", body: "Review upcoming assignments and respond to new requests from your schedule." }
   ]
 };
 // Keep the walkthrough visible whenever its role's home screen opens during the demo.

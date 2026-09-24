@@ -1,6 +1,7 @@
+import { MaterialCommunityIcons } from "@expo/vector-icons";
 import type { Booking, Caddie, GolfCourse, Golfer } from "@nobogey/contracts";
 import { formatMoney, formatTeeTime } from "@nobogey/utils";
-import { colors, radius, spacing, typography } from "@nobogey/ui";
+import { colors, spacing, typography } from "@nobogey/ui";
 import { useState } from "react";
 import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -52,16 +53,16 @@ export function CaddieMatchSheet({ assignmentWindowState = "unknown", booking, c
           {isUnavailable
             ? <View style={styles.unavailable}><EmptyState description="This assignment will be available after the booking service is connected." icon="calendar-remove-outline" minHeight={280} title="Match unavailable" /></View>
             : <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator>
-              <MatchDetail label="Golfer" value={golfer?.displayName ?? "Golfer details unavailable"} />
-              <MatchDetail label="Course" value={course.name} />
-              <MatchDetail label="Date" value={formatDate(booking.teeTime)} />
-              <MatchDetail label="Tee time" value={formatTime(booking.teeTime)} />
-              <MatchDetail label="Party size" value={`${booking.partySize} ${booking.partySize === 1 ? "golfer" : "golfers"}`} />
-              <MatchDetail label="Notes" value={booking.notes || "No notes provided."} />
-              <MatchDetail label="Quoted rate" value={formatMoney(booking.quotedRate.amountInCentavos, booking.quotedRate.currency)} />
-              <MatchDetail label="Booking status" value={formatStatus(booking.status)} />
-              <MatchDetail label="Assignment status" value={formatStatus(booking.caddieAssignmentStatus ?? "not assigned")} />
-              <Text style={styles.assignmentNote}>{caddie.displayName} is shown from the local assignment record. Club confirmation remains authoritative.</Text>
+              <StatusPill status={booking.status} />
+              <View style={styles.courseCard}><DetailIcon icon="map-marker" /><View style={styles.flex}><Text style={styles.courseName}>{course.name}</Text><Text style={styles.courseMeta}>{formatDate(booking.teeTime)} · {formatTime(booking.teeTime)}</Text></View></View>
+              <View style={styles.detailList}>
+                <MatchDetail icon="account-outline" label="Golfer" value={golfer?.displayName ?? "Golfer details unavailable"} />
+                <MatchDetail icon="account-group-outline" label="Party" value={`${booking.partySize} ${booking.partySize === 1 ? "golfer" : "golfers"}`} />
+                <MatchDetail icon="currency-usd" label="Rate" value={formatMoney(booking.quotedRate.amountInCentavos, booking.quotedRate.currency)} />
+                <MatchDetail icon="note-text-outline" label="Notes" value={booking.notes || "No notes provided."} />
+              </View>
+              <View style={styles.assignmentCard}><Text style={styles.assignmentHeading}>Assignment info</Text><View style={styles.assignmentRows}><MatchDetail icon="calendar-check-outline" label="Booking status" value={formatStatus(booking.status)} /><MatchDetail icon="account-check-outline" label="Status" value={formatStatus(booking.caddieAssignmentStatus ?? "not assigned")} /></View></View>
+              <View style={styles.assignmentNote}><MaterialCommunityIcons color="#4D8066" name="information-outline" size={18} /><Text style={styles.assignmentNoteText}>{caddie.displayName} is shown from the local assignment record. Club confirmation remains authoritative.</Text></View>
               <AssignmentActions
                 booking={booking}
                 isAccepting={isAccepting}
@@ -107,9 +108,12 @@ function AssignmentActions({ booking, isAccepting, isAssignmentAccepted, onAccep
   </View>;
 }
 
-function MatchDetail({ label, value }: { label: string; value: string }) {
-  return <View style={styles.detail}><Text style={styles.label}>{label}</Text><Text selectable style={styles.value}>{value}</Text></View>;
+function MatchDetail({ icon, label, value }: { icon: string; label: string; value: string }) {
+  return <View style={styles.detail}><DetailIcon icon={icon} /><Text style={styles.label}>{label}</Text><Text numberOfLines={2} selectable style={styles.value}>{value}</Text></View>;
 }
+
+function DetailIcon({ icon }: { icon: string }) { return <View style={styles.detailIcon}><MaterialCommunityIcons color="#256B48" name={icon as never} size={18} /></View>; }
+function StatusPill({ status }: { status: string }) { return <View style={styles.requestedPill}><MaterialCommunityIcons color="#A46817" name="calendar-outline" size={15} /><Text style={styles.requestedText}>{formatStatus(status)}</Text></View>; }
 
 function formatDate(teeTime: string) {
   return new Intl.DateTimeFormat("en-US", { day: "numeric", month: "long", weekday: "long", year: "numeric", timeZone: "Asia/Manila" }).format(new Date(teeTime));
@@ -124,32 +128,44 @@ function formatStatus(status: string) {
 }
 
 const styles = StyleSheet.create({
-  acceptButton: { backgroundColor: colors.primary },
-  acceptText: { color: colors.onPrimary, fontSize: typography.small, fontWeight: "800", textAlign: "center" },
-  actionButton: { alignItems: "center", borderCurve: "continuous", borderRadius: radius.lg, flex: 1, justifyContent: "center", minHeight: 48, paddingHorizontal: spacing.md },
-  actionNote: { color: colors.textMuted, fontSize: typography.caption, lineHeight: 16, textAlign: "center" },
-  actionRow: { alignItems: "center", flexDirection: "row", gap: spacing.md },
-  assignmentNote: { color: colors.textMuted, fontSize: typography.small, lineHeight: 18 },
+  acceptButton: { backgroundColor: "#17623E" },
+  acceptText: { color: colors.onPrimary, fontSize: 13, fontWeight: "900", textAlign: "center" },
+  actionButton: { alignItems: "center", borderCurve: "continuous", borderRadius: 12, flex: 1, justifyContent: "center", minHeight: 48, paddingHorizontal: spacing.md },
+  actionNote: { color: colors.textMuted, fontSize: 12, lineHeight: 16, textAlign: "center" },
+  actionRow: { alignItems: "center", flexDirection: "row", gap: spacing.sm },
+  assignmentCard: { backgroundColor: "#F3F3ED", borderRadius: 14, gap: spacing.sm, padding: spacing.sm },
+  assignmentHeading: { color: "#1D3328", fontSize: 15, fontWeight: "900" },
+  assignmentNote: { alignItems: "center", backgroundColor: "#E7F2E9", borderRadius: 10, flexDirection: "row", gap: 7, padding: spacing.sm },
+  assignmentNoteText: { color: "#527063", flex: 1, fontSize: 11, lineHeight: 15 },
+  assignmentRows: { backgroundColor: "#FFFFFF", borderRadius: 10, gap: 0, paddingHorizontal: spacing.sm },
   assignmentActions: { gap: spacing.sm },
   backdrop: { backgroundColor: "rgba(23, 32, 27, 0.45)", flex: 1, justifyContent: "flex-end" },
   closeButton: { alignItems: "center", justifyContent: "center", minHeight: 44, paddingHorizontal: spacing.sm },
   closeText: { color: colors.fairwayDark, fontSize: typography.small, fontWeight: "800" },
-  content: { gap: spacing.lg, padding: spacing.lg, paddingBottom: spacing.xxl },
-  detail: { gap: spacing.xs },
-  declineButton: { backgroundColor: colors.surface, borderColor: colors.line, borderWidth: 1 },
-  declineText: { color: colors.accent, fontSize: typography.small, fontWeight: "800" },
+  content: { gap: spacing.sm, paddingHorizontal: spacing.lg, paddingBottom: spacing.xl },
+  courseCard: { alignItems: "center", backgroundColor: "#EEF6EF", borderRadius: 12, flexDirection: "row", gap: spacing.sm, padding: spacing.sm },
+  courseMeta: { color: "#264436", fontSize: 13, fontWeight: "400", lineHeight: 17 },
+  courseName: { color: "#173F2E", fontSize: 16, fontWeight: "900" },
+  detail: { alignItems: "center", flexDirection: "row", gap: 8, minHeight: 40 },
+  detailIcon: { alignItems: "center", backgroundColor: "#E8F3E9", borderRadius: 999, height: 32, justifyContent: "center", width: 32 },
+  detailList: { backgroundColor: "#FFFFFF", borderRadius: 12, gap: 0, paddingHorizontal: spacing.sm },
+  declineButton: { backgroundColor: colors.surface, borderColor: "#D3DDD4", borderWidth: 1 },
+  declineText: { color: "#C3443F", fontSize: 13, fontWeight: "900" },
   disabledButton: { opacity: 0.5 },
   expiredBadge: { backgroundColor: colors.line },
   expiredText: { color: colors.textMuted, fontSize: typography.small, fontWeight: "800" },
   handle: { alignSelf: "center", backgroundColor: colors.line, borderRadius: 999, height: 5, marginTop: spacing.sm, width: 40 },
+  flex: { flex: 1 },
   header: { alignItems: "center", flexDirection: "row", justifyContent: "space-between", paddingHorizontal: spacing.lg, paddingVertical: spacing.sm },
-  label: { color: colors.textMuted, fontSize: 11, fontWeight: "800", letterSpacing: 1, textTransform: "uppercase" },
+  label: { color: "#688074", fontSize: 10, fontWeight: "900", letterSpacing: .8, textTransform: "uppercase", width: 76 },
   pressedButton: { opacity: 0.78 },
-  sheet: { alignSelf: "center", backgroundColor: colors.canvas, borderTopLeftRadius: 24, borderTopRightRadius: 24, maxHeight: "92%", maxWidth: 720, minHeight: "56%", overflow: "hidden", width: "100%" },
+  requestedPill: { alignItems: "center", alignSelf: "flex-start", backgroundColor: "#FFF2CF", borderRadius: 999, flexDirection: "row", gap: 5, paddingHorizontal: 10, paddingVertical: 6 },
+  requestedText: { color: "#A46817", fontSize: 12, fontWeight: "900" },
+  sheet: { alignSelf: "center", backgroundColor: "#FCFBF7", borderTopLeftRadius: 24, borderTopRightRadius: 24, maxHeight: "92%", maxWidth: 720, minHeight: "56%", overflow: "hidden", width: "100%" },
   statusBadge: { borderRadius: 999, paddingHorizontal: spacing.lg, paddingVertical: spacing.sm },
   confirmedBadge: { backgroundColor: "#C5F0D4" },
   confirmedText: { color: colors.fairwayDark, fontSize: typography.small, fontWeight: "800" },
-  title: { color: colors.ink, fontSize: typography.title, fontWeight: "800" },
+  title: { color: colors.ink, fontSize: 20, fontWeight: "900" },
   unavailable: { flex: 1, justifyContent: "center", padding: spacing.xl },
-  value: { color: colors.ink, fontSize: typography.body, fontWeight: "700", lineHeight: 22 }
+  value: { color: colors.ink, flex: 1, fontSize: 13, fontWeight: "800", lineHeight: 17 }
 });
