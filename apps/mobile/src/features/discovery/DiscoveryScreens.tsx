@@ -1,14 +1,12 @@
 import { router } from "expo-router";
-import { useState } from "react";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { colors, spacing, typography } from "@nobogey/ui";
 import { useMobileData } from "../data/useMobileData";
 import { EmptyState } from "../../ui/EmptyState";
-import { CourseCard, CaddieCard } from "../booking/components/MarketplaceCards";
-import { CaddieDetailSheet } from "../caddies/components/CaddieDetailSheet";
+import { CourseCard } from "../booking/components/MarketplaceCards";
 import { ResponsiveContent } from "../../ui/ResponsiveContent";
-import { MobileBottomNavigation } from "../../ui/MobileBottomNavigation";
+import { CaddieListingScreen } from "../caddies/CaddieListingScreen";
 
 export function AllCoursesScreen() {
   const { courses } = useMobileData();
@@ -16,11 +14,7 @@ export function AllCoursesScreen() {
 }
 
 export function AllCaddiesScreen() {
-  const { caddies, courses } = useMobileData();
-  const [selectedId, setSelectedId] = useState<string>();
-  const selectedCaddie = caddies.find((caddie) => caddie.id === selectedId) ?? null;
-  const course = courses.find((item) => item.id === selectedCaddie?.homeCourseId);
-  return <SafeAreaView edges={["bottom"]} style={styles.safeArea}><ScrollView contentContainerStyle={styles.content} contentInsetAdjustmentBehavior="automatic" showsVerticalScrollIndicator={false}><ResponsiveContent><View style={styles.heading}><Text accessibilityRole="header" style={styles.title}>All caddies</Text><Text style={styles.subtitle}>Browse verified caddies across NoBogey. Open a profile to see their home course and specialties.</Text></View><View style={styles.list}>{caddies.length ? caddies.map((caddie) => <CaddieCard caddie={caddie} key={caddie.id} onPress={() => setSelectedId(caddie.id)} />) : <EmptyState description="Caddies will appear after the directory service is connected." icon="account-group-outline" minHeight={660} title="No caddies available" />}</View></ResponsiveContent></ScrollView><MobileBottomNavigation active="caddies" /><CaddieDetailSheet caddie={selectedCaddie} course={course} onBook={() => router.push({ pathname: "/golfer/courses", params: { caddieId: selectedCaddie?.id, courseId: selectedCaddie?.homeCourseId } })} onClose={() => setSelectedId(undefined)} visible={Boolean(selectedCaddie)} /></SafeAreaView>;
+  return <CaddieListingScreen />;
 }
 
 const styles = StyleSheet.create({ content: { gap: spacing.xl, padding: spacing.xl, paddingBottom: 112 }, heading: { gap: spacing.sm }, list: { gap: spacing.lg }, safeArea: { backgroundColor: colors.canvas, flex: 1 }, subtitle: { color: colors.textMuted, fontSize: typography.body, lineHeight: 23 }, title: { color: colors.text, fontSize: typography.heading, fontWeight: "800" } });

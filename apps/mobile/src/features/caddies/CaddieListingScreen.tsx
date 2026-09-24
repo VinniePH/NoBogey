@@ -47,8 +47,8 @@ export function CaddieListingScreen() {
 
   return <SafeAreaView edges={["top", "bottom"]} style={styles.safeArea}>
     <ScrollView contentContainerStyle={styles.content} contentInsetAdjustmentBehavior="automatic" showsVerticalScrollIndicator={false}><ResponsiveContent style={styles.frame}>
-      <View style={styles.heading}><Text accessibilityRole="header" style={styles.title}>Find a caddie.</Text><Text style={styles.subtitle}>Browse every verified caddie on NoBogey. Their home course is shown in each profile.</Text></View>
-      {availableCaddies.length ? <View style={styles.grid}>{availableCaddies.map((caddie) => <CaddieCard caddie={caddie} key={caddie.id} onPress={() => setSelectedId(caddie.id)} />)}</View> : <View style={styles.empty}><EmptyState description="No verified caddies are currently listed." icon="account-group-outline" minHeight={620} title="No caddies available" /></View>}
+      <View style={styles.heading}><Text accessibilityRole="header" style={styles.title}>Available caddies</Text><Text style={styles.subtitle}>Browse verified caddies and view their experience, specialties, and home course.</Text></View>
+      {availableCaddies.length ? <View style={styles.grid}>{availableCaddies.map((caddie) => <CaddieCard caddie={caddie} key={caddie.id} onPress={() => setSelectedId(caddie.id)} verified />)}</View> : <View style={styles.empty}><EmptyState description="No verified caddies are currently listed." icon="account-group-outline" minHeight={620} title="No caddies available" /></View>}
     </ResponsiveContent></ScrollView>
     <CaddieDetailSheet caddie={caddies.find((caddie) => caddie.id === selectedId) ?? null} course={courses.find((item) => item.id === (courseId ?? caddies.find((caddie) => caddie.id === selectedId)?.homeCourseId))} onBook={() => router.push({ pathname: "/golfer/courses", params: { caddieId: selectedId, courseId: caddies.find((caddie) => caddie.id === selectedId)?.homeCourseId } })} onClose={() => setSelectedId(undefined)} visible={Boolean(selectedId)} />
     <MobileBottomNavigation active="caddies" />

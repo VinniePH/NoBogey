@@ -1,15 +1,13 @@
 import { StyleSheet, Switch, Text, TextInput, View } from "react-native";
-import { colors, radius, spacing } from "@nobogey/ui";
+import { colors, spacing } from "@nobogey/ui";
 import { useCaddieContact } from "./CaddieContactProvider";
 
 export function CaddieContactSettings() {
   const { contact, updateContact } = useCaddieContact();
   return <View style={styles.content}>
-    <Text style={styles.copy}>These contact details and sharing choices remain on this device until the account service is connected. They are separate from sign-in information.</Text>
-    <ContactField keyboardType="phone-pad" label="Phone number" onChangeText={(phoneNumber) => updateContact({ phoneNumber })} value={contact.phoneNumber} />
-    <ShareRow label="Share phone after acceptance" onValueChange={(sharePhone) => updateContact({ sharePhone })} value={contact.sharePhone} />
-    <ContactField autoCapitalize="none" keyboardType="email-address" label="Contact email address" onChangeText={(contactEmail) => updateContact({ contactEmail })} value={contact.contactEmail} />
-    <ShareRow label="Share email after acceptance" onValueChange={(shareEmail) => updateContact({ shareEmail })} value={contact.shareEmail} />
+    <Text style={styles.copy}>These details stay on this device until caddie contact settings are connected to your account.</Text>
+    <View style={styles.section}><Text style={styles.sectionTitle}>Contact details</Text><View style={styles.card}><ContactField keyboardType="phone-pad" label="Phone number" onChangeText={(phoneNumber) => updateContact({ phoneNumber })} value={contact.phoneNumber} /><ContactField autoCapitalize="none" keyboardType="email-address" label="Contact email address" onChangeText={(contactEmail) => updateContact({ contactEmail })} value={contact.contactEmail} /></View></View>
+    <View style={styles.section}><Text style={styles.sectionTitle}>Share after booking acceptance</Text><View style={styles.card}><ShareRow label="Share phone number" onValueChange={(sharePhone) => updateContact({ sharePhone })} value={contact.sharePhone} /><ShareRow label="Share email address" onValueChange={(shareEmail) => updateContact({ shareEmail })} value={contact.shareEmail} /></View></View>
   </View>;
 }
 
@@ -24,9 +22,12 @@ function ShareRow({ label, onValueChange, value }: { label: string; onValueChang
 const styles = StyleSheet.create({
   content: { gap: spacing.md },
   copy: { color: colors.textMuted, fontSize: 14, lineHeight: 20 },
+  card: { backgroundColor: colors.surface, borderColor: colors.border, borderCurve: "continuous", borderRadius: 12, borderWidth: StyleSheet.hairlineWidth, gap: spacing.md, padding: spacing.md },
   field: { gap: spacing.xs },
-  input: { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.md, borderWidth: 1, color: colors.text, fontSize: 15, minHeight: 48, paddingHorizontal: spacing.md },
+  input: { backgroundColor: "#FBFCF9", borderColor: colors.border, borderCurve: "continuous", borderRadius: 10, borderWidth: StyleSheet.hairlineWidth, color: colors.text, fontSize: 15, minHeight: 50, paddingHorizontal: spacing.md },
   label: { color: colors.text, fontSize: 13, fontWeight: "800" },
   shareLabel: { color: colors.text, flex: 1, fontSize: 14, fontWeight: "700" },
+  section: { gap: spacing.sm },
+  sectionTitle: { color: colors.fairwayDark, fontSize: 11, fontWeight: "800", letterSpacing: 0.9, textTransform: "uppercase" },
   shareRow: { alignItems: "center", borderTopColor: colors.border, borderTopWidth: StyleSheet.hairlineWidth, flexDirection: "row", justifyContent: "space-between", minHeight: 56, paddingTop: spacing.sm }
 });

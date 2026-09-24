@@ -31,11 +31,11 @@ function CoursePreview({ course, compact }: { course: GolfCourse; compact: boole
   );
 }
 
-export function CaddieCard({ caddie, compact = false, compactWidth, onPress, selected }: { caddie: Caddie; compact?: boolean; compactWidth?: number; onPress?: () => void; selected?: boolean }) {
+export function CaddieCard({ caddie, compact = false, compactWidth, onPress, selected, verified = false }: { caddie: Caddie; compact?: boolean; compactWidth?: number; onPress?: () => void; selected?: boolean; verified?: boolean }) {
   const isSelectable = selected !== undefined;
   const body = (
     <View style={[styles.caddieCard, compact && styles.caddieCardCompact, compact && compactWidth ? { width: compactWidth } : null, selected && styles.selectedCard]}>
-      <CaddiePortrait compact={compact} name={caddie.displayName} />
+      <CaddiePortrait compact={compact} name={caddie.displayName} verified={verified} />
       <View style={styles.caddieTitleRow}>
         <View style={styles.caddieTitleCopy}><Text adjustsFontSizeToFit minimumFontScale={0.7} numberOfLines={1} style={[styles.caddieName, compact && styles.caddieNameCompact]}>{caddie.displayName}</Text><Text numberOfLines={1} style={[styles.caddieDetail, compact && styles.caddieDetailCompact]}>{caddie.yearsExperience} Years Pro · {caddie.languages.join(", ")}</Text></View>
         <View style={styles.caddieMeta}><View style={styles.rating}><Text style={[styles.ratingNumber, compact && styles.ratingNumberCompact]}>{caddie.ratingAverage.toFixed(1)}</Text><Text style={[styles.stars, compact && styles.starsCompact]}>★★★★★</Text></View></View>
@@ -53,9 +53,9 @@ export function CaddieCard({ caddie, compact = false, compactWidth, onPress, sel
 
 function Skill({ compact, label, value }: { compact: boolean; label: string; value: string }) { return <View style={[styles.skill, compact && styles.skillCompact]}><Text style={[styles.skillLabel, compact && styles.skillLabelCompact]}>{label}</Text><Text numberOfLines={1} style={[styles.skillValue, compact && styles.skillValueCompact]}>{value}</Text></View>; }
 
-function CaddiePortrait({ compact, name }: { compact: boolean; name: string }) {
+function CaddiePortrait({ compact, name, verified }: { compact: boolean; name: string; verified: boolean }) {
   const initials = name.split(" ").map((part) => part[0]).join("").slice(0, 2).toUpperCase();
-  return <View accessibilityLabel={`${name} initials avatar`} accessibilityRole="image" style={[styles.caddieAvatar, compact && styles.caddieAvatarCompact]}><Text style={styles.caddieAvatarInitials}>{initials}</Text><Text style={styles.caddieAvatarLabel}>Caddie</Text></View>;
+  return <View accessibilityLabel={`${name} initials avatar`} accessibilityRole="image" style={[styles.caddieAvatar, compact && styles.caddieAvatarCompact]}>{verified ? <View style={[styles.verifiedBadge, styles.verifiedBadgeImage, compact && styles.verifiedBadgeImageCompact]}><MaterialCommunityIcons color={colors.fairwayDark} name="check-decagram" size={compact ? 12 : 15} /><Text style={[styles.verifiedText, compact && styles.verifiedTextCompact]}>Verified</Text></View> : null}<Text style={styles.caddieAvatarInitials}>{initials}</Text><Text style={styles.caddieAvatarLabel}>Caddie</Text></View>;
 }
 
 const styles = StyleSheet.create({
@@ -114,5 +114,11 @@ const styles = StyleSheet.create({
   skillValue: { color: "#060806", fontSize: 12, fontWeight: "700" },
   skillValueCompact: { fontSize: 10 },
   stars: { color: "#17442F", fontSize: 18, letterSpacing: -1 },
-  starsCompact: { fontSize: 12 }
+  starsCompact: { fontSize: 12 },
+  verifiedBadge: { alignItems: "center", backgroundColor: "#E2F0E4", borderRadius: 6, flexDirection: "row", gap: 3, paddingHorizontal: 6, paddingVertical: 3 },
+  verifiedBadgeCompact: { borderRadius: 5, paddingHorizontal: 4, paddingVertical: 2 },
+  verifiedBadgeImage: { position: "absolute", right: 12, top: 12 },
+  verifiedBadgeImageCompact: { right: 8, top: 8 },
+  verifiedText: { color: colors.fairwayDark, fontSize: 10, fontWeight: "800" },
+  verifiedTextCompact: { fontSize: 8 }
 });
