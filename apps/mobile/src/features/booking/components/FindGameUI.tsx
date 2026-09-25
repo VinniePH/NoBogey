@@ -19,7 +19,7 @@ export const flowColors = {
   gold: "#B89452"
 } as const;
 
-type Step = 1 | 2 | 3 | 4;
+type Step = 1 | 2;
 type FlowScreenProps = PropsWithChildren<{
   step: Step;
   title: string;
@@ -27,19 +27,20 @@ type FlowScreenProps = PropsWithChildren<{
   actionLabel: string;
   actionDisabled?: boolean;
   onAction: () => void;
+  onBack?: () => void;
 }>;
 
-export function FindGameScreen({ step, title, description, actionLabel, actionDisabled = false, onAction, children }: FlowScreenProps) {
+export function FindGameScreen({ step, title, description, actionLabel, actionDisabled = false, onAction, onBack, children }: FlowScreenProps) {
   const { width } = useWindowDimensions();
   const gutter = Math.max(16, Math.min(24, width * 0.05));
   const titleSize = Math.max(27, Math.min(34, width * 0.08));
   return <SafeAreaView edges={["top", "bottom"]} style={styles.safe}>
-    <Stack.Screen options={{ headerShown: false }} />
+    <Stack.Screen options={{ headerShown: false, title: "Find a Game" }} />
     <ScrollView contentContainerStyle={styles.scrollContent} contentInsetAdjustmentBehavior="automatic" showsVerticalScrollIndicator={false}>
       <View style={styles.container}>
         <ImageBackground imageStyle={styles.heroImage} source={homeCourseHero} resizeMode="cover" style={styles.hero}>
           <View style={[styles.heroOverlay, { paddingHorizontal: gutter }]}>
-            <View style={styles.heroTop}><Pressable accessibilityLabel="Go back" accessibilityRole="button" hitSlop={8} onPress={() => backToPreviousPage("/golfer/home")} style={({ pressed }) => [styles.back, pressed && styles.pressed]}><MaterialCommunityIcons color={flowColors.forest} name="arrow-left" size={21} /></Pressable><Text style={styles.brand}>NoBogey</Text></View>
+            <View style={styles.heroTop}><Pressable accessibilityLabel="Go back" accessibilityRole="button" hitSlop={8} onPress={onBack ?? (() => backToPreviousPage("/golfer/home"))} style={({ pressed }) => [styles.back, pressed && styles.pressed]}><MaterialCommunityIcons color={flowColors.forest} name="arrow-left" size={21} /></Pressable><Text style={styles.brand}>NoBogey</Text></View>
             <Text accessibilityRole="header" style={[styles.title, { fontSize: titleSize, lineHeight: titleSize * 1.12 }]}>{title}</Text>
             <Text style={styles.description}>{description}</Text>
           </View>
@@ -53,13 +54,14 @@ export function FindGameScreen({ step, title, description, actionLabel, actionDi
 }
 
 export function BookingProgress({ step }: { step: Step }) {
-  const labels = ["Course", "Tee time", "Caddie", "Review"] as const;
-  return <View accessibilityLabel={`Booking step ${step} of 4: ${labels[step - 1]}`} style={styles.progress}>
+  const labels = ["Game details", "Review"] as const;
+  const phase = step;
+  return <View accessibilityLabel={`Booking step ${phase} of 2: ${labels[phase - 1]}`} style={styles.progress}>
     {labels.map((label, index) => {
       const number = index + 1;
-      const complete = number < step;
-      const current = number === step;
-      return <View key={label} style={styles.progressItem}><View style={styles.progressTop}>{index > 0 ? <View style={[styles.connector, number <= step && styles.connectorActive]} /> : <View style={styles.connectorPlaceholder} />}<View style={[styles.progressCircle, (complete || current) && styles.progressCircleActive]}>{complete ? <MaterialCommunityIcons color="#FFFFFF" name="check" size={16} /> : <Text style={[styles.progressNumber, current && styles.progressNumberActive]}>{number}</Text>}</View>{index < 3 ? <View style={[styles.connector, complete && styles.connectorActive]} /> : <View style={styles.connectorPlaceholder} />}</View><Text style={[styles.progressLabel, current && styles.progressLabelActive]}>{label}</Text></View>;
+      const complete = number < phase;
+      const current = number === phase;
+      return <View key={label} style={styles.progressItem}><View style={styles.progressTop}>{index > 0 ? <View style={[styles.connector, number <= phase && styles.connectorActive]} /> : <View style={styles.connectorPlaceholder} />}<View style={[styles.progressCircle, (complete || current) && styles.progressCircleActive]}>{complete ? <MaterialCommunityIcons color="#FFFFFF" name="check" size={16} /> : <Text style={[styles.progressNumber, current && styles.progressNumberActive]}>{number}</Text>}</View>{index < labels.length - 1 ? <View style={[styles.connector, complete && styles.connectorActive]} /> : <View style={styles.connectorPlaceholder} />}</View><Text style={[styles.progressLabel, current && styles.progressLabelActive]}>{number}. {label}</Text></View>;
     })}
   </View>;
 }
@@ -89,7 +91,7 @@ export function BookingSummaryStrip({ course, time }: { course: GolfCourse; time
   return <View style={styles.summaryStrip}><MaterialCommunityIcons color={flowColors.forest} name="golf" size={23} /><View style={styles.optionCopy}><Text style={styles.summaryName}>{course.name}</Text><Text style={styles.meta}>{formatTeeTime(time)}</Text></View></View>;
 }
 
-function CaddiePortrait({ caddie }: { caddie: Caddie }) {
+export function CaddiePortrait({ caddie }: { caddie: Caddie }) {
   const [failed, setFailed] = useState(false);
   return <View accessibilityLabel={caddie.avatarUrl && !failed ? `${caddie.displayName} profile photo` : `${caddie.displayName} initials avatar`} accessibilityRole="image" style={styles.caddiePortrait}>{caddie.avatarUrl && !failed ? <Image onError={() => setFailed(true)} resizeMode="cover" source={{ uri: caddie.avatarUrl }} style={styles.fill} /> : <Text style={styles.initials}>{caddie.displayName.trim().slice(0, 1).toUpperCase()}</Text>}</View>;
 }

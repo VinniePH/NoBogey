@@ -9,10 +9,11 @@ import { EmptyState } from '../../ui/EmptyState';
 import { backToPreviousPage } from '../../ui/navigation';
 import { PrimaryButton, StickyActionBar } from '../../ui/booking-design';
 import { useMobileData } from '../data/useMobileData';
+import { parseGolferCount } from './game-details-state';
 
 export function PaymentScreen() {
   const { caddies } = useMobileData();
-  const { caddieId, courseId, teeTimeId, time } = useLocalSearchParams<{ caddieId?: string; courseId?: string; teeTimeId?: string; time?: string }>();
+  const { caddieId, courseId, teeTimeId, time, partySize } = useLocalSearchParams<{ caddieId?: string; courseId?: string; teeTimeId?: string; time?: string; partySize?: string }>();
   const caddie = caddies.find((item) => item.id === caddieId);
   const [idempotencyKey] = useState(() => `mobile-${teeTimeId}-${caddieId}-${Date.now()}`);
   const [submitting, setSubmitting] = useState(false);
@@ -24,7 +25,7 @@ export function PaymentScreen() {
     setSubmitting(true); setError(undefined);
     try {
       const startsAt = new Date(time);
-      const booking = await createBooking({ caddieId: caddie.id, courseId, teeTimeId, startsAt: startsAt.toISOString(), endsAt: new Date(startsAt.getTime() + 4 * 60 * 60 * 1000).toISOString(), partySize: 4, idempotencyKey });
+      const booking = await createBooking({ caddieId: caddie.id, courseId, teeTimeId, startsAt: startsAt.toISOString(), endsAt: new Date(startsAt.getTime() + 4 * 60 * 60 * 1000).toISOString(), partySize: parseGolferCount(partySize) ?? 4, idempotencyKey });
       router.replace({ pathname: '/golfer/bookings/confirmation', params: { bookingId: booking.id, caddieId, courseId, teeTimeId, time } });
     } catch (cause) { setError(cause instanceof Error ? cause.message : 'Unable to create booking.'); }
     finally { setSubmitting(false); }

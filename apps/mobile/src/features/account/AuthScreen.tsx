@@ -14,7 +14,7 @@ import { useAppSession, type AppRole } from '../session/AppSession';
 type Mode = 'login' | 'register';
 
 export function AuthScreen() {
-  const params = useLocalSearchParams<{ mode?: Mode; role?: AppRole; returnTo?: string; caddieId?: string; courseId?: string; teeTimeId?: string; time?: string }>();
+  const params = useLocalSearchParams<{ mode?: Mode; role?: AppRole; returnTo?: string; caddieId?: string; courseId?: string; teeTimeId?: string; time?: string; date?: string; partySize?: string }>();
   const [mode, setMode] = useState<Mode>(params.mode === 'register' ? 'register' : 'login');
   const role: AppRole = params.role === 'caddie' ? 'caddie' : 'golfer';
   const [displayName, setDisplayName] = useState('');
@@ -30,6 +30,8 @@ export function AuthScreen() {
     selectInitialRole(role);
     signInAs(role);
     if (role === 'caddie') return router.replace('/caddie/dashboard');
+    if (params.returnTo === '/golfer/bookings/new') return router.replace({ pathname: '/golfer/bookings/new', params });
+    if (params.returnTo === '/golfer/find-game') return router.replace({ pathname: '/golfer/find-game', params });
     if (params.returnTo === '/golfer/caddies') return router.replace({ pathname: '/golfer/caddies', params });
     router.replace('/golfer/home');
   };
