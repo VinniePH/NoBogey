@@ -3,7 +3,7 @@ import type { TeeTimeSlot } from "@nobogey/contracts";
 import { formatMoney } from "@nobogey/utils";
 import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
-import { BackHandler, Pressable, StyleSheet, Text, View } from "react-native";
+import { BackHandler, Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { getAvailableCaddies } from "../../../backend/caddies/caddies.service";
 import { mobileDataService } from "../../../backend/mock.service";
 import { backToPreviousPage } from "../../ui/navigation";
@@ -74,6 +74,7 @@ export function FindGameDetailsScreen({ initialReview = false }: { initialReview
     return false;
   }, [expanded, review]);
   useFocusEffect(useCallback(() => {
+    if (Platform.OS !== "android") return;
     const subscription = BackHandler.addEventListener("hardwareBackPress", back);
     return () => subscription.remove();
   }, [back]));
