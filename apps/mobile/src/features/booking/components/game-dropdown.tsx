@@ -20,11 +20,11 @@ export function GameDropdown({ label, placeholder, value, icon, leading, disable
         <MaterialCommunityIcons color={flowColors.muted} name={expanded ? "chevron-up" : "chevron-down"} size={20} />
       </Pressable>
       {expanded && !disabled ? <ScrollView accessibilityRole="radiogroup" accessibilityLabel={label} nestedScrollEnabled style={styles.options} contentContainerStyle={styles.optionContent}>
-        {options.map((option) => <Pressable key={option.id} accessibilityRole="radio" accessibilityLabel={`${option.label}${option.detail ? `, ${option.detail}` : ""}`} accessibilityState={{ selected: selectedId === option.id }} onPress={() => onSelect(option.id)} style={({ pressed }) => [styles.option, selectedId === option.id && styles.selected, pressed && styles.pressed]}>
-          {option.leading ?? <MaterialCommunityIcons color={flowColors.forest} name={icon} size={20} />}
-          <View style={styles.copy}><Text style={styles.value}>{option.label}</Text>{option.detail ? <Text style={styles.detail}>{option.detail}</Text> : null}</View>
-          {selectedId === option.id ? <MaterialCommunityIcons color={flowColors.forest} name="check-circle" size={19} /> : null}
-        </Pressable>)}
+        {options.map((option) => { const selected = selectedId === option.id; return <Pressable key={option.id} accessibilityRole="radio" accessibilityLabel={`${option.label}${option.detail ? `, ${option.detail}` : ""}`} accessibilityState={{ selected }} onPress={() => onSelect(option.id)} style={({ pressed }) => [styles.option, selected && styles.selected, pressed && styles.pressed]}>
+          {option.leading ?? <MaterialCommunityIcons color={selected ? flowColors.onGreen : flowColors.forest} name={icon} size={20} />}
+          <View style={styles.copy}><Text style={[styles.value, selected && styles.selectedText]}>{option.label}</Text>{option.detail ? <Text style={[styles.detail, selected && styles.selectedDetail]}>{option.detail}</Text> : null}</View>
+          {selected ? <MaterialCommunityIcons color={flowColors.onGreen} name="check-circle" size={19} /> : null}
+        </Pressable>; })}
       </ScrollView> : null}
     </View>
   </View>;
@@ -43,6 +43,8 @@ const styles = StyleSheet.create({
   optionContent: { padding: 4 },
   option: { flexDirection: "row", alignItems: "center", gap: 12, paddingHorizontal: 8, paddingVertical: 10, minHeight: 46, borderRadius: 6 },
   selected: { backgroundColor: flowColors.sage },
+  selectedText: { color: flowColors.onGreen },
+  selectedDetail: { color: flowColors.onGreenMuted },
   copy: { flex: 1, gap: 2 },
   detail: { color: flowColors.muted, fontSize: 12, lineHeight: 17 },
   pressed: { opacity: 0.7 }

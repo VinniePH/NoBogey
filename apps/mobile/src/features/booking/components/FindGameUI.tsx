@@ -2,24 +2,29 @@ import { MaterialCommunityIcons } from "@expo/vector-icons";
 import type { Caddie, GolfCourse } from "@nobogey/contracts";
 import { Stack } from "expo-router";
 import type { PropsWithChildren } from "react";
-import { useState } from "react";
 import { Image, ImageBackground, Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { formatTeeTime } from "@nobogey/utils";
 import homeCourseHero from "../../../../assets/images/home-course-hero.jpg";
 import { backToPreviousPage } from "../../../ui/navigation";
+import { NoBogeyWordmark } from "../../../ui/NoBogeyWordmark";
+import { localCaddiePlaceholder, localCoursePlaceholder } from "../../../ui/local-image-placeholders";
+import { mobilePalette } from "../../../ui/mobile-palette";
 
 export const flowColors = {
-  forest: "#173F35",
-  cream: "#F7F5EF",
-  sage: "#E9F1E9",
-  ink: "#151515",
-  muted: "#62645F",
-  border: "#DEDCD4",
-  gold: "#B89452"
+  forest: mobilePalette.forest,
+  forestDark: mobilePalette.forestDark,
+  cream: mobilePalette.white,
+  sage: mobilePalette.greenSoft,
+  ink: mobilePalette.ink,
+  muted: mobilePalette.muted,
+  border: mobilePalette.line,
+  gold: mobilePalette.gold,
+  onGreen: mobilePalette.onGreen,
+  onGreenMuted: mobilePalette.onGreenMuted
 } as const;
 
-type Step = 1 | 2;
+type Step = 1 | 2 | 3;
 type FlowScreenProps = PropsWithChildren<{
   step: Step;
   title: string;
@@ -40,7 +45,7 @@ export function FindGameScreen({ step, title, description, actionLabel, actionDi
       <View style={styles.container}>
         <ImageBackground imageStyle={styles.heroImage} source={homeCourseHero} resizeMode="cover" style={styles.hero}>
           <View style={[styles.heroOverlay, { paddingHorizontal: gutter }]}>
-            <View style={styles.heroTop}><Pressable accessibilityLabel="Go back" accessibilityRole="button" hitSlop={8} onPress={onBack ?? (() => backToPreviousPage("/golfer/home"))} style={({ pressed }) => [styles.back, pressed && styles.pressed]}><MaterialCommunityIcons color={flowColors.forest} name="arrow-left" size={21} /></Pressable><Text style={styles.brand}>NoBogey</Text></View>
+            <View style={styles.heroTop}><NoBogeyWordmark style={styles.brand} /><Pressable accessibilityLabel="Go back" accessibilityRole="button" hitSlop={8} onPress={onBack ?? (() => backToPreviousPage("/golfer/home"))} style={({ pressed }) => [styles.back, pressed && styles.pressed]}><MaterialCommunityIcons color={flowColors.forest} name="arrow-left" size={21} /></Pressable></View>
             <Text accessibilityRole="header" style={[styles.title, { fontSize: titleSize, lineHeight: titleSize * 1.12 }]}>{title}</Text>
             <Text style={styles.description}>{description}</Text>
           </View>
@@ -54,9 +59,9 @@ export function FindGameScreen({ step, title, description, actionLabel, actionDi
 }
 
 export function BookingProgress({ step }: { step: Step }) {
-  const labels = ["Game details", "Review"] as const;
+  const labels = ["Game details", "Available caddies", "Confirm booking"] as const;
   const phase = step;
-  return <View accessibilityLabel={`Booking step ${phase} of 2: ${labels[phase - 1]}`} style={styles.progress}>
+  return <View accessibilityLabel={`Booking step ${phase} of 3: ${labels[phase - 1]}`} style={styles.progress}>
     {labels.map((label, index) => {
       const number = index + 1;
       const complete = number < phase;
@@ -71,8 +76,7 @@ export function SectionHeading({ title, description }: { title: string; descript
 }
 
 function CoursePhoto({ course, size }: { course: GolfCourse; size: number }) {
-  const [failed, setFailed] = useState(false);
-  return <View accessibilityLabel={course.imageUrl && !failed ? `${course.name} course photo` : `${course.name} course preview`} accessibilityRole="image" style={[styles.coursePhoto, { width: size, height: size }]}>{course.imageUrl && !failed ? <Image onError={() => setFailed(true)} resizeMode="cover" source={{ uri: course.imageUrl }} style={styles.fill} /> : <MaterialCommunityIcons color={flowColors.forest} name="golf" size={28} />}</View>;
+  return <View accessibilityLabel={`${course.name} course photo`} accessibilityRole="image" style={[styles.coursePhoto, { width: size, height: size }]}><Image resizeMode="cover" source={localCoursePlaceholder(course)} style={styles.fill} /></View>;
 }
 
 export function CourseOptionCard({ course, selected, onPress }: { course: GolfCourse; selected: boolean; onPress: () => void }) {
@@ -92,8 +96,7 @@ export function BookingSummaryStrip({ course, time }: { course: GolfCourse; time
 }
 
 export function CaddiePortrait({ caddie }: { caddie: Caddie }) {
-  const [failed, setFailed] = useState(false);
-  return <View accessibilityLabel={caddie.avatarUrl && !failed ? `${caddie.displayName} profile photo` : `${caddie.displayName} initials avatar`} accessibilityRole="image" style={styles.caddiePortrait}>{caddie.avatarUrl && !failed ? <Image onError={() => setFailed(true)} resizeMode="cover" source={{ uri: caddie.avatarUrl }} style={styles.fill} /> : <Text style={styles.initials}>{caddie.displayName.trim().slice(0, 1).toUpperCase()}</Text>}</View>;
+  return <View accessibilityLabel={`${caddie.displayName} profile photo`} accessibilityRole="image" style={styles.caddiePortrait}><Image resizeMode="cover" source={localCaddiePlaceholder(caddie)} style={styles.fill} /></View>;
 }
 
 export function SelectedCaddieSummary({ caddie, flat = false }: { caddie: Caddie; flat?: boolean }) {
@@ -127,10 +130,10 @@ const styles = StyleSheet.create({
   container: { alignSelf: "center", gap: 20, maxWidth: 680, width: "100%" },
   hero: { backgroundColor: flowColors.sage, overflow: "hidden" },
   heroImage: { width: "100%" },
-  heroOverlay: { backgroundColor: "rgba(247,245,239,0.84)", gap: 8, paddingBottom: 25, paddingTop: 14 },
-  heroTop: { alignItems: "center", flexDirection: "row", gap: 10, marginBottom: 8 },
-  back: { alignItems: "center", backgroundColor: "#FFFFFF", borderRadius: 8, height: 44, justifyContent: "center", width: 44 },
-  brand: { color: flowColors.forest, fontSize: 23, fontStyle: "italic", fontWeight: "900" },
+  heroOverlay: { backgroundColor: "rgba(252,251,247,0.86)", gap: 8, paddingBottom: 25, paddingTop: 14 },
+  heroTop: { alignItems: "center", marginBottom: 8, minHeight: 58, position: "relative" },
+  back: { alignItems: "center", backgroundColor: "#FFFFFF", borderRadius: 8, height: 44, justifyContent: "center", left: 0, position: "absolute", top: 7, width: 44 },
+  brand: { color: flowColors.forest, fontSize: 29, fontStyle: "italic", fontWeight: "900", letterSpacing: -1.4, lineHeight: 34 },
   title: { color: flowColors.ink, fontWeight: "800", letterSpacing: -0.8 },
   description: { color: "#454D47", fontSize: 15, lineHeight: 21, maxWidth: 490 },
   progress: { flexDirection: "row", paddingVertical: 3 },
@@ -166,7 +169,7 @@ const styles = StyleSheet.create({
   caddiePortrait: { alignItems: "center", backgroundColor: flowColors.sage, borderRadius: 99, height: 58, justifyContent: "center", overflow: "hidden", width: 58 },
   initials: { color: flowColors.forest, fontSize: 27, fontWeight: "800" },
   notice: { alignItems: "flex-start", backgroundColor: flowColors.sage, borderRadius: 10, flexDirection: "row", gap: 9, padding: 12 },
-  noticeText: { color: flowColors.forest, flex: 1, fontSize: 13, lineHeight: 19 },
+  noticeText: { color: flowColors.onGreen, flex: 1, fontSize: 13, lineHeight: 19 },
   reviewSection: { backgroundColor: "#FFFFFF", borderColor: flowColors.border, borderRadius: 16, borderWidth: 1, gap: 10, paddingHorizontal: 15, paddingBottom: 15, paddingTop: 3 },
   reviewHeader: { alignItems: "center", flexDirection: "row", justifyContent: "space-between" },
   reviewTitle: { color: flowColors.forest, fontSize: 13, fontWeight: "800", letterSpacing: 0.4, textTransform: "uppercase" },

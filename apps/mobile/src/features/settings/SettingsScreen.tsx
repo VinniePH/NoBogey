@@ -5,6 +5,7 @@ import { Linking, Modal, Pressable, ScrollView, StyleSheet, Switch, Text, TextIn
 import { SafeAreaView } from "react-native-safe-area-context";
 import { colors, radius, spacing } from "@nobogey/ui";
 import { ResponsiveContent } from "../../ui/ResponsiveContent";
+import { NoBogeyWordmark } from "../../ui/NoBogeyWordmark";
 import { backToPreviousPage } from "../../ui/navigation";
 import { TermsAcceptanceModal } from "../legal/TermsAcceptanceModal";
 import { useAppSession } from "../session/AppSession";
@@ -49,13 +50,11 @@ export function SettingsScreen({ role = "golfer" }: { role?: SettingsRole }) {
       <ScrollView contentContainerStyle={styles.content} contentInsetAdjustmentBehavior="automatic" showsVerticalScrollIndicator={false}>
         <ResponsiveContent style={styles.frame}>
           <View style={styles.header}>
+            <NoBogeyWordmark />
             <Pressable accessibilityLabel="Go back" accessibilityRole="button" hitSlop={10} onPress={() => backToPreviousPage(role === "golfer" ? "/golfer/profile" : "/caddie/profile")} style={styles.backButton}>
               <MaterialCommunityIcons color={colors.fairwayDark} name="arrow-left" size={25} />
             </Pressable>
-            <View style={styles.headerCopy}>
-              <Text accessibilityRole="header" style={styles.title}>Settings</Text>
-              <Text style={styles.subtitle}>Manage your NoBogey account and preferences.</Text>
-            </View>
+            <View style={styles.headerCopy} />
             <View style={styles.headerSpacer} />
           </View>
 

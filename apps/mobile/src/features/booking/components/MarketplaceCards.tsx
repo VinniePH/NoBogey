@@ -1,8 +1,8 @@
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import { useState } from "react";
 import { Image, Pressable, StyleSheet, Text, View } from "react-native";
 import type { Caddie, GolfCourse } from "@nobogey/contracts";
 import { colors, spacing, typography } from "@nobogey/ui";
+import { localCaddiePlaceholder, localCoursePlaceholder } from "../../../ui/local-image-placeholders";
 
 export function CourseCard({ course, selected, onPress, compact = false, compactWidth }: { course: GolfCourse; selected?: boolean; onPress?: () => void; compact?: boolean; compactWidth?: number }) {
   const body = (
@@ -23,10 +23,9 @@ export function CourseCard({ course, selected, onPress, compact = false, compact
 }
 
 function CoursePreview({ course, compact }: { course: GolfCourse; compact: boolean }) {
-  const [imageFailed, setImageFailed] = useState(false);
   return (
     <View accessibilityLabel={`${course.name} course`} accessibilityRole="image" style={[styles.coursePreview, compact ? styles.coursePreviewCompact : styles.coursePreviewStandard]}>
-      {compact && course.imageUrl && !imageFailed ? <Image onError={() => setImageFailed(true)} resizeMode="cover" source={{ uri: course.imageUrl }} style={styles.courseImage} /> : <MaterialCommunityIcons color={colors.fairwayDark} name="golf" size={compact ? 34 : 42} />}
+      <Image resizeMode="cover" source={localCoursePlaceholder(course)} style={styles.courseImage} />
     </View>
   );
 }
@@ -35,7 +34,7 @@ export function CaddieCard({ caddie, compact = false, compactWidth, onPress, sel
   const isSelectable = selected !== undefined;
   const body = (
     <View style={[styles.caddieCard, compact && styles.caddieCardCompact, compact && compactWidth ? { width: compactWidth } : null, selected && styles.selectedCard]}>
-      <CaddiePortrait compact={compact} name={caddie.displayName} verified={verified} />
+      <CaddiePortrait caddie={caddie} compact={compact} verified={verified} />
       <View style={styles.caddieTitleRow}>
         <View style={styles.caddieTitleCopy}><Text adjustsFontSizeToFit minimumFontScale={0.7} numberOfLines={1} style={[styles.caddieName, compact && styles.caddieNameCompact]}>{caddie.displayName}</Text><Text numberOfLines={1} style={[styles.caddieDetail, compact && styles.caddieDetailCompact]}>{caddie.yearsExperience} Years Pro · {caddie.languages.join(", ")}</Text></View>
         <View style={styles.caddieMeta}><View style={styles.rating}><Text style={[styles.ratingNumber, compact && styles.ratingNumberCompact]}>{caddie.ratingAverage.toFixed(1)}</Text><Text style={[styles.stars, compact && styles.starsCompact]}>★★★★★</Text></View></View>
@@ -53,9 +52,8 @@ export function CaddieCard({ caddie, compact = false, compactWidth, onPress, sel
 
 function Skill({ compact, label, value }: { compact: boolean; label: string; value: string }) { return <View style={[styles.skill, compact && styles.skillCompact]}><Text style={[styles.skillLabel, compact && styles.skillLabelCompact]}>{label}</Text><Text numberOfLines={1} style={[styles.skillValue, compact && styles.skillValueCompact]}>{value}</Text></View>; }
 
-function CaddiePortrait({ compact, name, verified }: { compact: boolean; name: string; verified: boolean }) {
-  const initials = name.split(" ").map((part) => part[0]).join("").slice(0, 2).toUpperCase();
-  return <View accessibilityLabel={`${name} initials avatar`} accessibilityRole="image" style={[styles.caddieAvatar, compact && styles.caddieAvatarCompact]}>{verified ? <View style={[styles.verifiedBadge, styles.verifiedBadgeImage, compact && styles.verifiedBadgeImageCompact]}><MaterialCommunityIcons color={colors.fairwayDark} name="check-decagram" size={compact ? 12 : 15} /><Text style={[styles.verifiedText, compact && styles.verifiedTextCompact]}>Verified</Text></View> : null}<Text style={styles.caddieAvatarInitials}>{initials}</Text><Text style={styles.caddieAvatarLabel}>Caddie</Text></View>;
+function CaddiePortrait({ caddie, compact, verified }: { caddie: Caddie; compact: boolean; verified: boolean }) {
+  return <View accessibilityLabel={`${caddie.displayName} profile photo`} accessibilityRole="image" style={[styles.caddieAvatar, compact && styles.caddieAvatarCompact]}><Image resizeMode="cover" source={localCaddiePlaceholder(caddie)} style={styles.caddieImage} />{verified ? <View style={[styles.verifiedBadge, styles.verifiedBadgeImage, compact && styles.verifiedBadgeImageCompact]}><MaterialCommunityIcons color={colors.fairwayDark} name="check-decagram" size={compact ? 12 : 15} /><Text style={[styles.verifiedText, compact && styles.verifiedTextCompact]}>Verified</Text></View> : null}</View>;
 }
 
 const styles = StyleSheet.create({
@@ -65,10 +63,9 @@ const styles = StyleSheet.create({
   bookLabelSelected: { backgroundColor: colors.fairwayDark },
   bookLabelText: { color: colors.surface, fontSize: 20, fontWeight: "800" },
   bookLabelTextCompact: { fontSize: 14 },
-  caddieAvatar: { alignItems: "center", backgroundColor: "#E7EEE9", borderCurve: "continuous", borderRadius: 16, gap: spacing.xs, height: 285, justifyContent: "center", width: "100%" },
+  caddieAvatar: { alignItems: "center", backgroundColor: "#E7EEE9", borderCurve: "continuous", borderRadius: 16, gap: spacing.xs, height: 285, justifyContent: "center", overflow: "hidden", width: "100%" },
   caddieAvatarCompact: { height: 210 },
-  caddieAvatarInitials: { color: colors.fairwayDark, fontSize: 40, fontWeight: "800", letterSpacing: -1 },
-  caddieAvatarLabel: { color: colors.muted, fontSize: typography.small, fontWeight: "700" },
+  caddieImage: { height: "100%", width: "100%" },
   caddieCard: { backgroundColor: colors.surface, borderColor: "#6D6E67", borderCurve: "continuous", borderRadius: 24, borderWidth: StyleSheet.hairlineWidth, boxShadow: "0 1px 2px rgba(23, 32, 27, 0.04)", gap: 24, overflow: "hidden", padding: 28, width: "100%" },
   caddieCardCompact: { gap: 15, padding: 18, width: 300 },
   caddieDetail: { color: "#61736A", fontSize: 14, lineHeight: 18 },
