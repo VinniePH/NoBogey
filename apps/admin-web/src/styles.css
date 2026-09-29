@@ -1,7 +1,7 @@
 @font-face { font-family: "Inter"; font-display: swap; font-style: normal; font-weight: 100 900; src: url("../../mobile/assets/fonts/Inter-Variable.ttf") format("truetype"); }
 
 * { box-sizing: border-box; }
-body { margin: 0; overflow: hidden; background: var(--cream); color: var(--ink); font-family: Inter, ui-sans-serif, system-ui, sans-serif; }
+body { margin: 0; background: var(--cream); color: var(--ink); font-family: Inter, ui-sans-serif, system-ui, sans-serif; }
 button, input, select, textarea { font: inherit; }
 button { cursor: pointer; }
 button:disabled { cursor: not-allowed; opacity: .5; }
@@ -179,19 +179,21 @@ main { min-height: 900px; }
 
 @media (max-width: 680px) { .course-banner > div, .content { width: min(100% - 32px, 980px); }.editor { min-height: 0; padding: 30px 16px 48px; }.roster-row { grid-template-columns: minmax(0, 1fr) auto auto; padding-inline: 12px; }.roster-row .small:last-child { grid-column: 2 / 4; }.roster .filters input { min-width: 100%; }.sign-out { display: inline-block; } }
 
-/* Admin CRM shell and QA hierarchy. */
-.admin-shell { display: grid; grid-template-columns: 272px minmax(0, 1fr); min-height: 100vh; }
+/* Admin CRM shell: warm-white workspace, dark-green navigation, gold emphasis. */
+.admin-shell { background: var(--cream); display: grid; grid-template-columns: 264px minmax(0, 1fr); min-height: 100vh; }
 .admin-main { min-width: 0; }
-.topbar { align-items: stretch; background: var(--surface); border-bottom: 0; border-right: 1px solid var(--line); display: flex; flex-direction: column; gap: 0; min-height: 100vh; padding: 28px 18px 20px; position: sticky; top: 0; }
+.topbar { align-items: stretch; background: var(--fairway-dark); border: 0; color: var(--surface); display: flex; flex-direction: column; gap: 0; min-height: 100vh; padding: 26px 16px 18px; position: sticky; top: 0; }
 .wordmark { align-self: flex-start; display: block; margin: 0 0 24px; padding: 0; }
 .wordmark img { display: block; height: auto; max-width: 166px; width: 166px; }
-.admin-label { color: var(--fairway); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 10px; font-weight: 850; letter-spacing: 1.7px; line-height: 1.3; margin: auto 10px 10px; text-transform: uppercase; }
+.admin-label { color: color-mix(in srgb, var(--surface) 72%, transparent); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 10px; font-weight: 850; letter-spacing: 1.7px; line-height: 1.3; margin: auto 10px 10px; text-transform: uppercase; }
 .topbar nav { display: grid; gap: 4px; }
-.topbar nav p { color: var(--muted); font-size: 12px; font-weight: 850; letter-spacing: 1.1px; margin: 17px 10px 7px; text-transform: uppercase; }
+.topbar nav p { border-color: color-mix(in srgb, var(--surface) 18%, transparent); color: var(--gold); font-size: 11px; font-weight: 850; letter-spacing: 1.3px; margin: 17px 10px 7px; text-transform: uppercase; }
 .topbar nav p:first-child { margin-top: 0; }
-.topbar nav button, .topbar button:not(.wordmark) { border-radius: 9px; color: var(--ink); font-size: 14px; font-weight: 700; padding: 11px 12px; text-align: left; width: 100%; }
-.topbar nav .active { background: color-mix(in srgb, var(--fairway) 12%, var(--surface)); border-radius: 9px; color: var(--fairway-dark); }
-.sign-out { margin: 0 !important; text-align: center !important; }
+.topbar nav button, .topbar button:not(.wordmark) { border-radius: 9px; color: color-mix(in srgb, var(--surface) 84%, transparent); font-size: 14px; font-weight: 700; padding: 11px 12px; text-align: left; width: 100%; }
+.topbar nav button:hover { background: color-mix(in srgb, var(--surface) 10%, transparent); color: var(--surface); }
+.topbar nav .active { background: var(--gold); border-radius: 9px; color: var(--forest-dark, #10332b); }
+.sign-out { background: transparent !important; border-color: color-mix(in srgb, var(--surface) 36%, transparent) !important; color: var(--surface) !important; margin: 0 !important; text-align: center !important; }
+.sign-out:hover { background: color-mix(in srgb, var(--surface) 10%, transparent) !important; }
 .course-banner > div, .content { width: min(100% - 72px, 1120px); }
 .course-banner h1, .editor h1, .verification-hero h1 { font-weight: 900; }
 .section-heading .eyebrow { color: var(--fairway); margin: 0 0 5px; }
@@ -220,8 +222,8 @@ main { min-height: 900px; }
 /* Shared page-title treatment. */
 .editor h1, .fleet-page .fleet h1, .assignments-page h1, .verification-hero h1 { font-size: clamp(36px, 5vw, 44px); font-weight: 900; letter-spacing: -2.2px; line-height: .98; margin: 8px 0; }
 
-/* Caddie pages: larger working text without page scrolling. */
-.editor, .fleet-page, .assignments-page, .verification-page { box-sizing: border-box; height: 100dvh; max-height: 100dvh; min-height: 0; overflow: hidden; }
+/* Let CRM records grow naturally instead of clipping below the desktop frame. */
+.editor, .fleet-page, .assignments-page, .verification-page { box-sizing: border-box; min-height: 100dvh; }
 .fleet-tiers { gap: 20px; }
 .fleet-tier { padding-top: 16px; }
 .fleet-tier h2 { font-size: 20px; margin-bottom: 14px; }
@@ -247,14 +249,13 @@ button.danger:not(.filled):hover { background: color-mix(in srgb, var(--danger) 
 
 @media (max-width: 800px) { .admin-shell { display: block; }.topbar { border-bottom: 1px solid var(--line); border-right: 0; min-height: auto; padding: 14px; position: static; }.wordmark { margin-bottom: 10px; }.wordmark img { width: 130px; }.admin-label { display: block; font-size: 9px; margin: 15px 4px 8px; }.topbar nav { display: flex; flex-wrap: wrap; gap: 5px; }.topbar nav p { flex-basis: 100%; font-size: 10px; margin: 10px 4px 2px; }.topbar nav button, .topbar button:not(.wordmark) { font-size: 12px; padding: 8px 9px; width: auto; }.sign-out { margin: 0 !important; width: auto !important; }.course-banner > div, .content { width: min(100% - 32px, 1120px); }.slot { grid-template-columns: 58px minmax(0, 1fr) auto auto auto; }.availability { font-size: 9px; padding: 5px 7px; }.fleet-page, .assignments-page { min-height: auto; padding: 32px 16px 48px; }.fleet-page .fleet-grid { grid-template-columns: 1fr; }.assignments-page .section-heading { align-items: flex-start; }.assignment-date { width: 100%; }.assignment-date input { width: 100%; } }
 
-/* Scheduler states and fixed CRM navigation. */
-.admin-shell, .admin-main, .admin-main > main { height: 100dvh; max-height: 100dvh; overflow: hidden; }
+/* Keep navigation anchored while the working area remains fully scrollable. */
 .admin-shell { min-height: 100dvh; }
-.admin-main { min-height: 100dvh; overflow: hidden; }
-.topbar { height: 100dvh; min-height: 0; overflow: hidden; }
+.admin-main { min-height: 100dvh; }
+.topbar { height: 100dvh; min-height: 0; overflow-y: auto; }
 .wordmark { align-items: center; align-self: center; display: flex; flex-direction: column; gap: 8px; justify-content: center; margin: 0 0 26px; }
-.wordmark img { height: 174px; max-width: none; object-fit: contain; width: 174px; }
-.wordmark span { color: var(--fairway-dark); font-family: Inter, ui-sans-serif, system-ui, sans-serif; font-size: 24px; font-style: italic; font-weight: 900; letter-spacing: -1.4px; }
+.wordmark img { height: 112px; max-width: none; object-fit: contain; width: 112px; }
+.wordmark span { color: var(--surface); font-family: Inter, ui-sans-serif, system-ui, sans-serif; font-size: 23px; font-style: italic; font-weight: 900; letter-spacing: -1.4px; }
 .topbar nav { flex: 0 0 auto; }
 .admin-label { align-self: center; flex: 0 0 auto; margin: auto 0 10px; text-align: center; }
 .sign-out { flex: 0 0 auto; }
@@ -276,7 +277,7 @@ button.danger:not(.filled):hover { background: color-mix(in srgb, var(--danger) 
 
 @media (max-width: 800px) { .topbar { height: auto; overflow: visible; }.wordmark { align-self: center; flex-direction: row; margin-bottom: 14px; }.wordmark img { height: 34px; width: 34px; }.wordmark span { font-size: 21px; }.admin-label { margin-top: 15px; }.tee-times-editor { display: block; height: auto; overflow: visible; }.tee-time-columns { grid-template-columns: 1fr; }.tee-times-editor .scope-card, .tee-times-editor .time-card, .tee-times-editor .tee-list { margin-top: 20px; }.tee-times-editor .tee-list { grid-template-columns: repeat(2, minmax(0, 1fr)); overflow: visible; } }
 
-@media (min-width: 801px) { .wordmark { gap: 2px; left: 50%; margin: 0; position: absolute; top: 10px; transform: translateX(-50%); }.wordmark span { margin-top: -22px; }.topbar nav { padding-top: 224px; } }
+@media (min-width: 801px) { .wordmark { gap: 0; left: 50%; margin: 0; position: absolute; top: 20px; transform: translateX(-50%); }.wordmark span { margin-top: -13px; }.topbar nav { padding-top: 150px; } }
 
 /* Reduce the hero image height while keeping the existing title/subtitle spacing. */
 .course-banner { min-height: 190px; }
