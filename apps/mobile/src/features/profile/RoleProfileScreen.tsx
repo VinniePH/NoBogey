@@ -7,6 +7,7 @@ import { colors, spacing } from "@nobogey/ui";
 import { ResponsiveContent } from "../../ui/ResponsiveContent";
 import { EmptyState } from "../../ui/EmptyState";
 import { backToPreviousPage } from "../../ui/navigation";
+import { NoBogeyWordmark } from "../../ui/NoBogeyWordmark";
 import { useAppSession } from "../session/AppSession";
 import { MobileBottomNavigation } from "../../ui/MobileBottomNavigation";
 import { getCurrentUserProfile } from "../../../backend/users/users.service";
@@ -88,7 +89,7 @@ export function ProfileHeader({ role }: { role: ProfileRole }) {
       <Pressable accessibilityLabel="Go back" accessibilityRole="button" hitSlop={10} onPress={() => backToPreviousPage(role === "golfer" ? "/golfer/home" : "/caddie/dashboard")} style={styles.headerButton}>
         <MaterialCommunityIcons color={colors.fairwayDark} name="arrow-left" size={25} />
       </Pressable>
-      <Text accessibilityRole="header" style={styles.headerTitle}>My Profile</Text>
+      <NoBogeyWordmark />
       <Pressable accessibilityLabel="Open settings" accessibilityRole="button" hitSlop={10} onPress={() => router.push(role === "golfer" ? "/golfer/settings" : "/caddie/settings")} style={styles.headerButton}>
         <MaterialCommunityIcons color={colors.fairwayDark} name="cog-outline" size={24} />
       </Pressable>

@@ -1,6 +1,6 @@
 import { Stack } from "expo-router";
-import { Text } from "react-native";
 import { colors } from "@nobogey/ui";
+import { NoBogeyWordmark } from "../../../src/ui/NoBogeyWordmark";
 
 export default function GolferLayout() {
   return (
@@ -9,7 +9,9 @@ export default function GolferLayout() {
         contentStyle: { backgroundColor: colors.canvas },
         headerShadowVisible: false,
         headerStyle: { backgroundColor: colors.canvas },
-        headerTintColor: colors.ink
+        headerTintColor: colors.ink,
+        headerTitle: () => <NoBogeyWordmark centered={false} />,
+        headerTitleAlign: "center"
       }}
     >
       <Stack.Screen name="home" options={{ headerShown: false }} />
@@ -18,9 +20,9 @@ export default function GolferLayout() {
       <Stack.Screen name="courses/index" options={{ title: "Choose a course" }} />
       <Stack.Screen name="courses/[courseId]" options={{ title: "Course profile" }} />
       <Stack.Screen name="caddies/all" options={{ title: "All caddies" }} />
-      <Stack.Screen name="caddies/index" options={{ headerTitle: () => <Text adjustsFontSizeToFit minimumFontScale={0.75} numberOfLines={1} style={{ color: colors.ink, fontSize: 17, fontWeight: "700", textAlign: "center" }}>Available caddies</Text>, headerTitleAlign: "center" }} />
+      <Stack.Screen name="caddies/index" />
       <Stack.Screen name="caddies/[caddieId]" options={{ title: "Caddie profile" }} />
-      <Stack.Screen name="bookings/index" options={{ headerTitle: () => <Text adjustsFontSizeToFit minimumFontScale={0.75} numberOfLines={1} style={{ color: colors.ink, fontSize: 17, fontWeight: "700", textAlign: "center" }}>My bookings</Text>, headerTitleAlign: "center" }} />
+      <Stack.Screen name="bookings/index" />
       <Stack.Screen name="bookings/[bookingId]/index" options={{ title: "Booking details" }} />
       <Stack.Screen name="bookings/[bookingId]/rate-caddie" options={{ title: "Rate your caddie" }} />
       <Stack.Screen name="bookings/new/index" options={{ title: "Booking" }} />
