@@ -1708,7 +1708,7 @@ button {
 .mobile-page-controls {
   position: absolute;
   right: auto;
-  bottom: 3rem;
+  bottom: 2.5rem;
   left: var(--page-control-left);
   z-index: 40;
   display: flex;
@@ -1773,6 +1773,7 @@ button {
 }
 
 .landing-hero {
+  align-self: stretch;
   min-height: 620px;
   padding-bottom: 4rem;
 }
