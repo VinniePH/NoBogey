@@ -6,7 +6,7 @@ type LogoProps = {
 
 export function Logo({ inverse = false }: LogoProps) {
   return (
-    <a className="group inline-flex items-center gap-2.5" href="#top" aria-label="NoBogey home">
+    <a className="group inline-flex items-center gap-2.5" href="/" aria-label="NoBogey home">
       <span
         className={`grid size-8 place-items-center rounded-full transition-transform duration-300 group-hover:-rotate-6 ${
           inverse ? "bg-ivory text-forest" : "bg-forest text-ivory"
