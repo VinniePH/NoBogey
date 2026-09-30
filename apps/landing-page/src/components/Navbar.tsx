@@ -44,7 +44,7 @@ export function Navbar() {
           ))}
         </div>
         <button
-          className="grid size-10 place-items-center rounded-full border border-line bg-warm-white text-forest md:hidden"
+          className="grid size-10 place-items-center rounded-full border border-line bg-warm-white text-forest lg:hidden"
           type="button"
           aria-label="Open menu"
           aria-expanded={open}
@@ -54,7 +54,7 @@ export function Navbar() {
         </button>
       </nav>
 
-      <div className={`fixed inset-0 z-50 md:hidden ${open ? "pointer-events-auto" : "pointer-events-none"}`} aria-hidden={!open}>
+      <div className={`fixed inset-0 z-50 h-dvh lg:hidden ${open ? "pointer-events-auto" : "pointer-events-none"}`} aria-hidden={!open} inert={!open}>
         <button className={`absolute inset-0 bg-ink/20 transition-opacity duration-300 ${open ? "opacity-100" : "opacity-0"}`} aria-label="Close menu" onClick={() => setOpen(false)} />
         <div className={`absolute right-0 top-0 flex h-full w-[min(88vw,390px)] flex-col bg-ivory p-6 shadow-2xl transition-transform duration-300 ${open ? "translate-x-0" : "translate-x-full"}`}>
           <div className="flex items-center justify-between">

@@ -1699,6 +1699,7 @@ button {
 .landing-carousel-shell {
   position: relative;
   overflow: hidden;
+  padding-top: 74px;
 }
 
 .landing-main {
@@ -1769,18 +1770,117 @@ button {
 }
 
 .landing-slide.section-space {
-  padding-block: clamp(3.5rem, 6vw, 6rem);
+  padding-top: clamp(3.5rem, 6vw, 6rem);
+  padding-bottom: calc(7rem + env(safe-area-inset-bottom, 0px));
 }
 
 .landing-hero {
-  align-self: stretch;
+  align-self: flex-start;
   min-height: 620px;
-  padding-bottom: 4rem;
+  padding-top: clamp(3.5rem, 7vw, 7rem);
+  padding-bottom: calc(7rem + env(safe-area-inset-bottom, 0px));
+}
+
+.landing-hero > img {
+  object-position: 65% center;
+}
+
+.landing-hero .text-muted {
+  color: #5e6058;
+}
+
+.landing-hero h1,
+.landing-courses .section-title,
+.landing-caddies .section-title {
+  text-wrap: balance;
+}
+
+.landing-caddies .caddie-benefits {
+  display: none;
+}
+
+.landing-product .role-panel-description {
+  color: rgba(255, 255, 255, 0.78);
+}
+
+.landing-lifestyle {
+  min-height: 620px;
+}
+
+.landing-lifestyle > .page-container {
+  min-height: 620px;
+  padding-top: 3.5rem;
+  padding-bottom: calc(7rem + env(safe-area-inset-bottom, 0px));
+}
+
+.mobile-page-controls {
+  bottom: calc(1.75rem + env(safe-area-inset-bottom, 0px));
+}
+
+.landing-product .text-white\/65,
+.landing-product .pov-card:not(.pov-card-active) .text-white\/62 {
+  color: rgba(255, 255, 255, 0.78);
+}
+
+.landing-courses,
+.landing-caddies {
+  min-height: calc(100dvh - 74px);
 }
 
 @media (min-width: 1024px) {
   .landing-hero {
-    min-height: auto;
-    padding-top: 7rem;
+    min-height: clamp(620px, calc(100svh - 74px), 820px);
+  }
+
+  .landing-courses > .page-container,
+  .caddie-discovery {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
+    align-items: center;
+    gap: clamp(2rem, 5vw, 5rem);
+  }
+
+  .landing-courses > .page-container > .reveal:first-child {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .landing-caddies > .page-container {
+    display: block;
+  }
+
+  .landing-courses .section-title,
+  .landing-caddies .section-title {
+    font-size: clamp(3rem, 4.7vw, 4.5rem);
+  }
+
+  .landing-courses .mobile-loop-carousel,
+  .landing-caddies .mobile-loop-carousel {
+    margin-top: 0;
+    min-width: 0;
+  }
+
+  .landing-lifestyle,
+  .landing-lifestyle > .page-container {
+    min-height: clamp(620px, calc(100svh - 74px), 820px);
+  }
+}
+
+@media (max-width: 767px) {
+  .landing-hero h1 {
+    font-size: clamp(2.6rem, 11vw, 3.4rem);
+    line-height: 1;
+  }
+
+  .landing-hero > img {
+    object-position: 60% center;
+  }
+
+  .landing-lifestyle > img {
+    object-position: 72% center;
+  }
+
+  .landing-lifestyle blockquote {
+    font-size: clamp(2rem, 8.5vw, 3rem);
   }
 }
