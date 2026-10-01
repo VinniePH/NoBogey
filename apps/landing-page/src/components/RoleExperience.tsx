@@ -108,7 +108,7 @@ function GolferMock({ step, teeTime, caddie, payment, receipt, onTeeTime, onCadd
   const stages = [
     ["Find a course", "Explore Valley Golf and nearby clubs.", "Choose this course"],
     ["Pick your tee time", "Sunday morning · 7:20 AM", "Choose this tee time"],
-    ["Choose your caddie", "Miguel Santos · 4.9 · Available", "Choose this caddie"],
+    ["Choose your caddie", "Jun Mercado · 4.9 · Available", "Choose this caddie"],
     ["Confirm your details", "Alex Garcia · 4 players", "Confirm your details"],
     ["Choose your payment", "Secure checkout · Review next", "Continue to payment"],
     ["Booking receipt", "Valley Golf · Sunday · 7:20 AM", "View booking receipt"]
@@ -133,7 +133,7 @@ function GolferMock({ step, teeTime, caddie, payment, receipt, onTeeTime, onCadd
           <div><ReceiptText size={16} /><span>Receipt</span><strong>{receipt ? "Confirmed" : "After payment"}</strong></div>
         </div>
         {step === 1 ? <div className="mock-choice-grid">{["7:20 AM", "8:40 AM"].map((value) => <button className={teeTime === value ? "selected" : ""} key={value} onClick={() => onTeeTime(value)} type="button"><Clock3 size={14} />{value}</button>)}</div> : null}
-        {step === 2 ? <div className="mock-choice-grid">{["Miguel Santos", "Paolo Reyes"].map((value) => <button className={caddie === value ? "selected" : ""} key={value} onClick={() => onCaddie(value)} type="button"><UsersRound size={14} />{value}</button>)}</div> : null}
+        {step === 2 ? <div className="mock-choice-grid">{["Jun Mercado", "Paolo Reyes"].map((value) => <button className={caddie === value ? "selected" : ""} key={value} onClick={() => onCaddie(value)} type="button"><UsersRound size={14} />{value}</button>)}</div> : null}
         {step === 4 ? <div className="mock-choice-grid">{["Card ending 4242", "GCash"].map((value) => <button className={payment === value ? "selected" : ""} key={value} onClick={() => onPayment(value)} type="button"><CreditCard size={14} />{value}</button>)}</div> : null}
         <button className="mock-primary" onClick={step === 5 ? onReceipt : undefined}>{receipt && step === 5 ? "Booking confirmed" : action} <ChevronRight size={15} /></button>
       </div>
@@ -162,7 +162,7 @@ function CaddieMock({ step, availability, editing, requestStatus, onAvailability
         </div>
         <div className="mock-inline-actions"><button onClick={onAvailability} type="button"><Clock3 size={14} /> {availability ? "Available for tee times" : "Set available tee times"}</button><button onClick={onEditProfile} type="button"><Pencil size={14} /> {editing ? "Save profile" : "Edit profile"}</button><span className="text-xs text-muted">Request: {requestStatus}</span></div>
         {availability ? <div className="mock-edit-panel"><span>Available tee times</span><div>{["7:20 AM", "8:40 AM", "1:40 PM"].map((time) => <button className={selectedTime === time ? "selected" : ""} key={time} onClick={() => setSelectedTime(time)} type="button">{time}</button>)}</div></div> : null}
-        {editing ? <label className="mock-profile-edit">Profile name<input aria-label="Caddie profile name" defaultValue="Miguel Santos" /></label> : null}
+        {editing ? <label className="mock-profile-edit">Profile name<input aria-label="Caddie profile name" defaultValue="Jun Mercado" /></label> : null}
       </div>
     </div>
   );
@@ -189,7 +189,7 @@ function AdminMock({ step }: { step: number }) {
 export function RoleExperienceTabs({ role, onRoleChange }: { role: Role; onRoleChange: (role: Role) => void }) {
   const [activeStep, setActiveStep] = useState(0);
   const [teeTime, setTeeTime] = useState("7:20 AM");
-  const [caddie, setCaddie] = useState("Miguel Santos");
+  const [caddie, setCaddie] = useState("Jun Mercado");
   const [payment, setPayment] = useState("Review next");
   const [receipt, setReceipt] = useState(false);
   const [availability, setAvailability] = useState(false);

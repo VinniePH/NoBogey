@@ -4,6 +4,7 @@
 @theme {
   --font-sans: "Manrope", "Inter", ui-sans-serif, system-ui, sans-serif;
   --color-forest: #173f35;
+  --color-sage: #a8bfa3;
   --color-forest-dark: #10332b;
   --color-ivory: #f7f5ef;
   --color-warm-white: #fcfbf7;
@@ -1797,6 +1798,11 @@ button {
 
 .landing-caddies .caddie-benefits {
   display: none;
+}
+
+.landing-caddies .mobile-loop-viewport {
+  border-color: var(--color-sage);
+  background: color-mix(in srgb, var(--color-sage) 15%, var(--color-warm-white));
 }
 
 .landing-product .role-panel-description {

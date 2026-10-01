@@ -82,10 +82,10 @@ export function DiscoveryScreen() {
         <p className="mt-4 text-[11px] font-semibold">Caddies to know</p>
         <div className="mt-2 flex items-center gap-2 rounded-xl bg-white p-2 shadow-sm">
           <div className="size-8 overflow-hidden rounded-full bg-[#d7dfd8]">
-            <img className="size-full object-cover object-[72%_center]" src="/images/golf-lifestyle.jpg" alt="" />
+            <img className="size-full object-cover object-top" src="/images/jun-mercado.png" alt="" />
           </div>
           <div className="min-w-0 flex-1">
-            <p className="text-[8px] font-semibold">Miguel Santos</p>
+            <p className="text-[8px] font-semibold">Jun Mercado</p>
             <p className="text-[6px] text-[#77766f]">Course strategy · Green reading</p>
           </div>
           <div className="flex items-center gap-0.5 text-[7px] font-semibold"><Star size={7} fill="#173f35" /> 4.9</div>
@@ -128,10 +128,10 @@ export function CaddieProfileScreen({ compact = false }: { compact?: boolean }) 
       <div className={`px-4 ${compact ? "pt-2" : "pt-4"}`}>
         <div className="flex flex-col items-center text-center">
           <div className={`${compact ? "size-16" : "size-20"} overflow-hidden rounded-[1.5rem] bg-[#d7dfd8] shadow-sm`}>
-            <img className="size-full object-cover object-[76%_center] scale-[2]" src="/images/golf-lifestyle.jpg" alt="" />
+            <img className="size-full object-cover object-top" src="/images/jun-mercado.png" alt="" />
           </div>
           <div className="mt-2 flex items-center gap-1.5">
-            <h3 className="text-[13px] font-semibold tracking-[-0.03em]">Miguel Santos</h3>
+            <h3 className="text-[13px] font-semibold tracking-[-0.03em]">Jun Mercado</h3>
             <span className="rounded-full bg-[#e3eee7] px-2 py-0.5 text-[6px] font-semibold text-[#173f35]">Available</span>
           </div>
           <p className="mt-1 flex items-center gap-1 text-[7px] font-semibold"><Star size={8} fill="#c79b43" color="#c79b43" /> 4.9 <span className="font-normal text-[#77766f]">· 8 years experience</span></p>
@@ -148,7 +148,7 @@ export function CaddieProfileScreen({ compact = false }: { compact?: boolean }) 
             </div>
           </div>
         </div>
-        <button className="mt-4 w-full rounded-xl bg-[#173f35] py-2.5 text-[8px] font-semibold text-white">Choose Miguel</button>
+        <button className="mt-4 w-full rounded-xl bg-[#173f35] py-2.5 text-[8px] font-semibold text-white">Choose Jun</button>
       </div>
     </div>
   );
@@ -167,8 +167,8 @@ export function BookingScreen({ confirmation = false }: { confirmation?: boolean
             <p className="text-[9px] font-semibold">Sunday, 7:20 AM</p>
             <p className="mt-1 text-[7px] text-[#77766f]">Valley Golf &amp; Country Club</p>
             <div className="mt-3 flex items-center gap-2 border-t border-[#e5e1d8] pt-3">
-              <div className="size-7 overflow-hidden rounded-full"><img className="size-full object-cover object-[75%_center]" src="/images/golf-lifestyle.jpg" alt="" /></div>
-              <div><p className="text-[7px] font-semibold">Miguel Santos</p><p className="text-[6px] text-[#77766f]">Your caddie</p></div>
+              <div className="size-7 overflow-hidden rounded-full"><img className="size-full object-cover object-top" src="/images/jun-mercado.png" alt="" /></div>
+              <div><p className="text-[7px] font-semibold">Jun Mercado</p><p className="text-[6px] text-[#77766f]">Your caddie</p></div>
             </div>
           </div>
         </div>
@@ -193,7 +193,7 @@ export function BookingScreen({ confirmation = false }: { confirmation?: boolean
         </div>
         <div className="mt-5 rounded-2xl bg-white p-3 shadow-sm">
           <div className="flex items-center gap-2"><CalendarDays size={12} /><div><p className="text-[7px] font-semibold">Sunday, September 13</p><p className="text-[6px] text-[#77766f]">Valley Golf &amp; Country Club</p></div></div>
-          <div className="mt-3 flex items-center gap-2 border-t border-[#e5e1d8] pt-3"><Clock3 size={12} /><div><p className="text-[7px] font-semibold">7:20 AM</p><p className="text-[6px] text-[#77766f]">Miguel Santos · ₱1,500</p></div></div>
+          <div className="mt-3 flex items-center gap-2 border-t border-[#e5e1d8] pt-3"><Clock3 size={12} /><div><p className="text-[7px] font-semibold">7:20 AM</p><p className="text-[6px] text-[#77766f]">Jun Mercado · ₱1,500</p></div></div>
         </div>
         <button className="mt-5 w-full rounded-xl bg-[#173f35] py-2.5 text-[8px] font-semibold text-white">Review booking</button>
       </div>
@@ -217,8 +217,8 @@ export function BookingsScreen() {
           <p className="mt-2 text-[9px] font-semibold">Valley Golf &amp; Country Club</p>
           <p className="mt-1 text-[7px] text-[#77766f]">Sunday · 7:20 AM</p>
           <div className="mt-3 flex items-center gap-2 border-t border-[#e5e1d8] pt-3">
-            <div className="size-7 overflow-hidden rounded-full"><img className="size-full object-cover object-[75%_center]" src="/images/golf-lifestyle.jpg" alt="" /></div>
-            <div className="flex-1"><p className="text-[7px] font-semibold">Miguel Santos</p><p className="text-[6px] text-[#77766f]">Caddie</p></div>
+            <div className="size-7 overflow-hidden rounded-full"><img className="size-full object-cover object-top" src="/images/jun-mercado.png" alt="" /></div>
+            <div className="flex-1"><p className="text-[7px] font-semibold">Jun Mercado</p><p className="text-[6px] text-[#77766f]">Caddie</p></div>
             <ChevronRight size={11} />
           </div>
         </div>
