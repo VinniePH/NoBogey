@@ -58,9 +58,9 @@ const courses = [
 ];
 
 const caddies = [
-  { name: "Miguel Santos", experience: "8 years", specialties: "Course strategy · Green reading", image: "/images/golf-lifestyle.jpg" },
-  { name: "Paolo Reyes", experience: "6 years", specialties: "Club selection · Local knowledge", image: "/images/course-southwoods.jpg" },
-  { name: "Rafael Cruz", experience: "10 years", specialties: "Pace of play · Course management", image: "/images/course-valley.jpg" }
+  { name: "Jun Mercado", experience: "8 years", specialties: "Course strategy · Green reading", image: "/images/jun-mercado.png" },
+  { name: "Paolo Reyes", experience: "6 years", specialties: "Club selection · Local knowledge", image: "/images/paolo-reyes.png" },
+  { name: "Ana Dizon", experience: "10 years", specialties: "Pace of play · Course management", image: "/images/ana-dizon.png" }
 ];
 
 type IconItem = readonly [LucideIcon, string, string?];
@@ -264,9 +264,9 @@ export function App() {
                 </div>
                 <div className="caddie-web-card">
                   <div className="flex items-start gap-4 sm:gap-6">
-                    <div className="size-20 shrink-0 overflow-hidden rounded-2xl bg-forest/10 sm:size-28"><img className="size-full scale-[1.9] object-cover object-[76%_center]" src="/images/golf-lifestyle.jpg" alt="Caddie profile placeholder" /></div>
+                    <div className="size-20 shrink-0 overflow-hidden rounded-2xl bg-forest/10 sm:size-28"><img className="size-full object-cover object-top" src="/images/jun-mercado.png" alt="Jun Mercado caddie portrait" /></div>
                     <div className="min-w-0 flex-1">
-                      <div className="flex flex-wrap items-start justify-between gap-2"><div><h4 className="text-xl font-semibold tracking-[-0.04em]">Miguel Santos</h4><p className="mt-1 flex items-center gap-1 text-sm"><Star size={13} fill="#c79b43" color="#c79b43" /> 4.9 <span className="text-muted">· 8 years</span></p></div><span className="rounded-full bg-[#e2eee6] px-3 py-1.5 text-xs font-semibold text-forest">Available</span></div>
+                      <div className="flex flex-wrap items-start justify-between gap-2"><div><h4 className="text-xl font-semibold tracking-[-0.04em]">Jun Mercado</h4><p className="mt-1 flex items-center gap-1 text-sm"><Star size={13} fill="#c79b43" color="#c79b43" /> 4.9 <span className="text-muted">· 8 years</span></p></div><span className="rounded-full bg-sage px-3 py-1.5 text-xs font-semibold text-forest">Available</span></div>
                       <div className="mt-5 grid gap-3 text-sm sm:grid-cols-2"><p className="flex items-center gap-2 text-muted"><Languages size={15} /> English, Filipino</p><p className="font-semibold sm:text-right">₱1,500 / round</p></div>
                     </div>
                   </div>
@@ -282,7 +282,7 @@ export function App() {
                 </div>
                 <div className="booking-web-card">
                   <div className="flex items-center gap-4 border-b border-line pb-5"><span className="grid size-11 place-items-center rounded-full bg-forest text-white"><Check size={18} /></span><div><p className="font-semibold">Your round is ready to review</p><p className="text-sm text-muted">Everything in one clear place.</p></div></div>
-                  <div className="grid gap-5 pt-5 sm:grid-cols-3"><div><p className="detail-label">Course</p><p className="detail-value">Valley Golf &amp; Country Club</p></div><div><p className="detail-label">Date &amp; time</p><p className="detail-value">Sun, Sep 13 · 7:20 AM</p></div><div><p className="detail-label">Caddie</p><p className="detail-value">Miguel Santos</p></div></div>
+                  <div className="grid gap-5 pt-5 sm:grid-cols-3"><div><p className="detail-label">Course</p><p className="detail-value">Valley Golf &amp; Country Club</p></div><div><p className="detail-label">Date &amp; time</p><p className="detail-value">Sun, Sep 13 · 7:20 AM</p></div><div><p className="detail-label">Caddie</p><p className="detail-value">Jun Mercado</p></div></div>
                   <button className="button-primary mt-6 w-full">Confirm your round</button>
                 </div>
               </Reveal>
@@ -315,7 +315,7 @@ export function App() {
             <Reveal className="relative mx-auto h-[660px] w-full max-w-[530px]">
               <div className="absolute inset-10 rounded-[50%] bg-[#dfe8df] blur-3xl" />
               <div className="absolute left-0 top-20 h-[430px] w-[75%] overflow-hidden rounded-[2rem]"><img className="size-full object-cover" src="/images/course-southwoods.jpg" alt="Golf course fairway" /></div>
-              <PhoneShell className="absolute bottom-0 right-1 w-[245px] sm:right-8 sm:w-[280px]" screenLabel="Miguel Santos caddie profile app screen"><CaddieProfileScreen /></PhoneShell>
+              <PhoneShell className="absolute bottom-0 right-1 w-[245px] sm:right-8 sm:w-[280px]" screenLabel="Jun Mercado caddie profile app screen"><CaddieProfileScreen /></PhoneShell>
             </Reveal>
             <Reveal className="caddie-discovery">
               <div>
@@ -330,7 +330,7 @@ export function App() {
               <a className="button-primary mt-10" href="#features">View Caddies <ArrowRight size={16} /></a>
               </div>
               <MobileLoopCarousel items={caddies} label="caddies">
-                {(caddie) => <><img className="aspect-[4/3] w-full object-cover" src={caddie.image} alt={`${caddie.name} caddie profile`} /><div className="p-5"><div className="flex items-start justify-between gap-3"><div><p className="text-lg font-semibold tracking-[-0.035em]">{caddie.name}</p><p className="mt-1 flex items-center gap-1 text-sm text-muted"><Star size={13} fill="#c79b43" color="#c79b43" /> 4.9 · {caddie.experience}</p></div><span className="rounded-full bg-[#e2eee6] px-3 py-1.5 text-xs font-semibold text-forest">Available</span></div><p className="mt-4 text-sm leading-6 text-muted">{caddie.specialties}</p></div></>}
+                {(caddie) => <><img className="aspect-[4/3] w-full object-cover object-top" src={caddie.image} alt={`${caddie.name} caddie profile`} /><div className="p-5"><div className="flex items-start justify-between gap-3"><div><p className="text-lg font-semibold tracking-[-0.035em]">{caddie.name}</p><p className="mt-1 flex items-center gap-1 text-sm text-muted"><Star size={13} fill="#c79b43" color="#c79b43" /> 4.9 · {caddie.experience}</p></div><span className="rounded-full bg-sage px-3 py-1.5 text-xs font-semibold text-forest">Available</span></div><p className="mt-4 text-sm leading-6 text-muted">{caddie.specialties}</p></div></>}
               </MobileLoopCarousel>
             </Reveal>
           </div>
