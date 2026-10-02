@@ -1,3 +1,4 @@
+import { Select } from "../../Select";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type {
   CaddieVerificationDetail,
@@ -86,8 +87,8 @@ export function CaddieVerificationQueue() {
       </div>
       <div className="verification-filters">
         <label>Search caddies<input value={query} onChange={event => setQuery(event.target.value)} placeholder="Search by name…" /></label>
-        <label>Status<select value={filter} onChange={event => setFilter(event.target.value as VerificationStatusFilter)}>{(["all", "draft", "pending", "changes_requested", "verified", "rejected"] as const).map(value => <option key={value} value={value}>{value === "all" ? "All statuses" : statusLabels[value]}</option>)}</select></label>
-        <label>Sort by<select value={sort} onChange={event => setSort(event.target.value as SortOrder)}><option value="submitted_desc">Newest submission</option><option value="submitted_asc">Oldest submission</option><option value="name">Caddie name</option></select></label>
+        <label>Status<Select value={filter} onChange={event => setFilter(event.target.value as VerificationStatusFilter)}>{(["all", "draft", "pending", "changes_requested", "verified", "rejected"] as const).map(value => <option key={value} value={value}>{value === "all" ? "All statuses" : statusLabels[value]}</option>)}</Select></label>
+        <label>Sort by<Select value={sort} onChange={event => setSort(event.target.value as SortOrder)}><option value="submitted_desc">Newest submission</option><option value="submitted_asc">Oldest submission</option><option value="name">Caddie name</option></Select></label>
       </div>
       {loading ? <div className="verification-state" role="status">Loading verification submissions…</div> : error ? <div className="verification-state verification-error" role="alert"><p>{error}</p><button className="outline-button" onClick={() => void load()}>Retry queue</button></div> : sortedItems.length === 0 ? <div className="verification-state"><h3>No verification submissions</h3><p>Submissions will appear here when the club review service is connected.</p></div> : <><div className="verification-list">{paginatedItems.map(item => <button className="verification-row" key={item.caddieId} onClick={() => setSelectedId(item.caddieId)}><span className="verification-avatar" aria-hidden="true">{item.displayName.split(" ").map(part => part[0]).join("").slice(0, 2)}</span><span className="verification-person"><b>{item.displayName}</b><small>{item.tier} · submitted {formatSubmittedAt(item.submittedAt)}</small></span><StatusBadge status={item.status} /><span className="verification-open" aria-hidden="true">Review →</span></button>)}</div>{pageCount > 1 && <nav className="verification-pagination" aria-label="Verification queue pagination"><button className="small" disabled={currentPage === 1} onClick={() => setPage(currentPage - 1)}>Previous</button><span>Page {currentPage} of {pageCount}</span><button className="small" disabled={currentPage === pageCount} onClick={() => setPage(currentPage + 1)}>Next</button></nav>}</>}
     </section>

@@ -184,10 +184,11 @@ export function App() {
             <div className="relative z-10 max-w-2xl">
               <Reveal>
                 <Eyebrow>Golf, made easier.</Eyebrow>
-                <h1 className="mt-6 text-[clamp(3.4rem,6.6vw,6.4rem)] font-medium leading-[0.91] tracking-[-0.068em]">
-                  The perfect walk,
+                <p className="hero-wordmark">NoBogey</p>
+                <h1 className="mt-5 text-[clamp(2.2rem,4.3vw,4rem)] font-medium leading-[0.98] tracking-[-0.055em]">
+                  The premier
                   <br />
-                  <span className="text-forest">arranged <span className="whitespace-nowrap">on-demand.</span></span>
+                  <span className="text-forest">caddie booking service.</span>
                 </h1>
               </Reveal>
               <Reveal delay={100}>
@@ -396,7 +397,7 @@ export function App() {
       <footer className="bg-[#0d2922] pb-6 pt-10 text-white sm:pt-12">
         <div className="page-container">
           <div className="grid gap-10 border-b border-white/10 pb-10 md:grid-cols-[1.5fr_2fr]">
-            <div><Logo inverse /><p className="mt-5 max-w-xs text-base leading-7 text-white/55">The perfect walk, arranged on-demand.</p></div>
+            <div><Logo inverse /><p className="mt-5 max-w-xs text-base leading-7 text-white/55">The premier caddie booking service.</p></div>
             <div className="grid grid-cols-2 gap-10 sm:grid-cols-3">
               {[
                 ["Product", [["Courses", "#courses"], ["Caddies", "#caddies"], ["Features", "#features"]]],
