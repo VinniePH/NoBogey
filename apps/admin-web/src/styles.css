@@ -285,3 +285,19 @@ button.danger:not(.filled):hover { background: color-mix(in srgb, var(--danger) 
 .login-link { background: transparent; border: 0; color: var(--fairway); font-size: 13px; font-weight: 800; padding: 2px; text-align: center; }
 .login-support { color: var(--muted); font-size: 12px; font-weight: 700; text-align: center; }
 .turnstile-container { display: flex; justify-content: center; min-height: 65px; }
+
+/* Center the date panels and give every CRM dropdown the same treatment. */
+.calendar-popover { left: 50%; right: auto; transform: translateX(-50%); width: max-content; max-width: calc(100vw - 40px); border-radius: 16px; padding: 12px; z-index: 10; }
+.month-board { justify-content: center; }
+.crm-select { display: inline-block; position: relative; min-width: 72px; text-transform: none; letter-spacing: normal; }
+.crm-select .crm-select-trigger { align-items: center; background: var(--cream); border: 1px solid var(--line); border-radius: 10px; color: var(--ink); display: flex; font-size: 12px; font-weight: 700; gap: 16px; height: auto; min-height: 38px; justify-content: space-between; padding: 9px 12px; width: 100%; }
+.crm-select-trigger:hover { border-color: var(--fairway); }
+.crm-select button:focus-visible { outline: 2px solid var(--fairway); outline-offset: 2px; }
+.crm-select .crm-select-menu { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; box-shadow: 0 12px 30px color-mix(in srgb, var(--ink) 14%, transparent); display: grid; gap: 3px; left: 50%; margin-top: 6px; max-height: 240px; min-width: 100%; overflow-y: auto; padding: 5px; position: absolute; top: 100%; transform: translateX(-50%); width: max-content; z-index: 30; }
+.crm-select .crm-select-menu button { align-items: center; background: transparent; border: 0; border-radius: 7px; color: var(--ink); display: flex; font-size: 12px; gap: 20px; height: auto; justify-content: space-between; min-height: 34px; padding: 8px 10px; text-align: left; white-space: nowrap; width: 100%; }
+.crm-select .crm-select-menu button:hover, .crm-select .crm-select-menu button:focus-visible { background: var(--cream); }
+.crm-select .crm-select-menu button[aria-selected="true"] { background: var(--fairway); color: var(--surface); }
+.add-caddie .crm-select { display: block; margin-top: 4px; width: 100%; }
+.fleet-search { align-items: center; }
+.fleet-search .primary { min-height: 34px; padding: 8px 18px; }
+@media (max-width: 680px) { .fleet-search input { flex: 1; min-width: 0; } }
