@@ -49,6 +49,7 @@ export function Card({ children, style, ...props }: PropsWithChildren<ViewProps>
 type ButtonVariant = "primary" | "secondary" | "ghost";
 
 interface ButtonProps {
+  palette?: { primary: string; primaryPressed: string; onPrimary: string } | undefined;
   accessibilityLabel?: string | undefined;
   children: ReactNode;
   disabled?: boolean | undefined;
@@ -57,7 +58,7 @@ interface ButtonProps {
   variant?: ButtonVariant | undefined;
 }
 
-export function Button({ accessibilityLabel, children, disabled = false, loading = false, onPress, variant = "primary" }: ButtonProps) {
+export function Button({ accessibilityLabel, children, disabled = false, loading = false, onPress, variant = "primary", palette = colors }: ButtonProps) {
   const isDisabled = disabled || loading;
   const isPrimary = variant === "primary";
 
@@ -70,7 +71,7 @@ export function Button({ accessibilityLabel, children, disabled = false, loading
       onPress={onPress}
       style={({ pressed }) => ({
         alignItems: "center",
-        backgroundColor: isPrimary ? (pressed ? colors.primaryPressed : colors.primary) : pressed ? colors.canvas : colors.backgroundElevated,
+        backgroundColor: isPrimary ? (pressed ? palette.primaryPressed : palette.primary) : pressed ? colors.canvas : colors.backgroundElevated,
         borderColor: variant === "secondary" ? colors.border : "transparent",
         borderCurve: "continuous",
         borderRadius: radius.md,
@@ -81,8 +82,8 @@ export function Button({ accessibilityLabel, children, disabled = false, loading
         paddingHorizontal: spacing.lg
       })}
     >
-      {loading ? <ActivityIndicator color={isPrimary ? colors.onPrimary : colors.primary} /> : (
-        <AppText selectable={false} style={{ color: isPrimary ? colors.onPrimary : colors.text, fontWeight: "700" }}>
+      {loading ? <ActivityIndicator color={isPrimary ? palette.onPrimary : palette.primary} /> : (
+        <AppText selectable={false} style={{ color: isPrimary ? palette.onPrimary : colors.text, fontWeight: "700" }}>
           {children}
         </AppText>
       )}
