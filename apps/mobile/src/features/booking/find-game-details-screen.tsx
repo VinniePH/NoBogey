@@ -66,7 +66,7 @@ export function FindGameDetailsScreen({ initialReview = false }: { initialReview
   useEffect(() => {
     if (!caddieKey || !course || !slot) return;
     let active = true;
-    void getAvailableCaddies(course.id, slot.startsAt).then((items) => {
+    void getAvailableCaddies(slot.id).then((items) => {
       if (active) setCaddieResult({ key: caddieKey, items: items.map((item) => item.id) });
     }).catch(() => {
       if (active) setCaddieResult({ key: caddieKey, items: [], error: "We couldn’t load caddies. Please try again." });

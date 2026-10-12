@@ -8,6 +8,8 @@
 import type { Booking, CreateBookingInput, TeeTime } from './bookings.types';
 import { getSupabaseClient } from '../client';
 
+const bookingColumns = 'id,golfer_id,caddie_id,course_id,tee_time_id,status,starts_at,party_size,quoted_amount_in_centavos';
+
 function mapBooking(row: Record<string, unknown>): Booking {
   return {
     id: String(row.id), golferId: String(row.golfer_id), caddieId: String(row.caddie_id), courseId: String(row.course_id),
@@ -20,24 +22,29 @@ function mapBooking(row: Record<string, unknown>): Booking {
 /** Fetch available tee times. Will query `tee_times` by course, date, and open status. */
 export async function getAvailableTeeTimes(courseId: string, date: string): Promise<TeeTime[]> {
   const client = getSupabaseClient();
-  const { data, error } = await client.rpc('list_bookable_tee_times', { p_course_id: courseId, p_day: date });
+  const { data, error } = await client.rpc('list_bookable_tee_times', { p_course_id: courseId, p_day: date, p_page_size: 50 });
   if (error) throw error;
-  return ((data ?? []) as Record<string, unknown>[]).map((slot) => ({ id: String(slot.id), courseId: String(slot.course_id), startsAt: String(slot.starts_at), remainingPlayerCapacity: Number(slot.player_capacity), remainingCaddieCapacity: Number(slot.remaining_caddie_capacity), status: slot.status === 'open' ? 'open' as const : 'held' as const, sourceUpdatedAt: String(slot.updated_at) }));
+  return ((data ?? []) as Record<string, unknown>[]).map((slot) => ({ id: String(slot.id), courseId: String(slot.course_id), startsAt: String(slot.starts_at), remainingPlayerCapacity: Number(slot.remaining_player_capacity), remainingCaddieCapacity: Number(slot.remaining_caddie_capacity), status: slot.status === 'open' ? 'open' as const : 'held' as const, sourceUpdatedAt: String(slot.updated_at) }));
 }
 
-/** Create a booking with a required caddie. Will call an atomic `create_booking` RPC. */
+/** Create a booking with a required caddie through the atomic canonical RPC. */
 export async function createBooking(input: CreateBookingInput): Promise<Booking> {
-  const { data, error } = await getSupabaseClient().rpc('create_mobile_booking', {
-    p_tee_time_id: input.teeTimeId, p_caddie_id: input.caddieId,
-    p_party_size: input.partySize, p_idempotency_key: input.idempotencyKey,
-  });
-  if (error) throw error;
-  return mapBooking(data as Record<string, unknown>);
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    const { data, error } = await getSupabaseClient().rpc('create_mobile_booking', {
+      p_tee_time_id: input.teeTimeId, p_caddie_id: input.caddieId,
+      p_party_size: input.partySize, p_idempotency_key: input.idempotencyKey,
+    });
+    if (!error) return mapBooking(data as Record<string, unknown>);
+    const retryable = error.code === '40001' || error.code === '40P01';
+    if (!retryable || attempt === 2) throw error;
+    await new Promise((resolve) => setTimeout(resolve, 50 * (2 ** attempt) + Math.floor(Math.random() * 25)));
+  }
+  throw new Error('BOOKING_RETRY_EXHAUSTED');
 }
 
-/** Fetch a booking summary. Will join `bookings`, `tee_times`, and caddie assignment data. */
+/** Fetch an RLS-protected booking summary from authoritative storage. */
 export async function getBooking(bookingId: string): Promise<Booking | null> {
-  const { data, error } = await getSupabaseClient().from('bookings').select('*').eq('id', bookingId).maybeSingle();
+  const { data, error } = await getSupabaseClient().from('bookings').select(bookingColumns).eq('id', bookingId).maybeSingle();
   if (error) throw error;
   return data ? mapBooking(data) : null;
 }

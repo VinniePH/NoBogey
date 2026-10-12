@@ -75,7 +75,7 @@ The mobile package provides `pnpm android` and `pnpm ios` for local native build
 [`supabase/`](supabase) contains database migrations, seed data, SQL tests, and the `send-booking-emails` Edge Function. Migrations cover profiles and roles, club/caddie records, availability, bookings, verification, preferences, notifications, and admin state.
 
 - **Mobile:** Supabase Auth handles registration, sign-in, session restoration, and password recovery. Data adapters query courses, caddies, availability, and bookings; booking actions use database RPCs. Onboarding drafts, preferences, and in-app notifications also have Supabase integrations.
-- **Admin:** Sign-in checks database roles. Fleet state is stored in `admin_portal_state` with a Realtime subscription; caddie enrollment, compliance, and verification actions call Supabase RPCs. Admin calendar state and mobile booking records use separate data paths, so complete scheduling synchronization still needs verification.
+- **Admin:** Sign-in checks database roles. Caddie enrollment, compliance, verification, dated tee-time publishing, exact caddie slot availability, and active assignment reads use Supabase tables or authorization-checked RPCs. Only non-authoritative UI preferences remain in `admin_portal_state`.
 - **Remaining product work:** Booking submission does not collect payment. Some screens retain demo wording, local interaction state, or placeholder imagery, and account profile routes currently show a coming-soon screen. In-app alerts do not establish device push delivery.
 
 The mobile adapter retains the filename `backend/mock.service.ts` and compatibility export `mobileMockService`, but its current implementation queries Supabase. Some source comments and older runbooks still describe the July/August mock foundation.
@@ -128,6 +128,7 @@ The [GitHub Pages workflow](.github/workflows/landing-pages.yml) builds the land
 
 - [Environment and domain configuration](docs/setup/domain-and-environment.md)
 - [Backend foundation and security boundaries](docs/backend/foundation.md)
+- [Rewired booking architecture, operations, and verification](docs/backend/rewired-booking-architecture.md)
 - [Shared API boundary](docs/api/backend-boundary.md)
 - [Caddie onboarding contract](docs/api/caddie-onboarding-contract.md)
 - [Framework setup runbook](docs/setup/README.md)

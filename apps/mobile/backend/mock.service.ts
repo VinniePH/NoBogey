@@ -8,6 +8,7 @@ type CaddieProfileRow = { user_id: string; tagline: string | null; bio: string |
 type CourseClubRow = { id: string; club_id: string };
 type ProfileNameRow = { id: string; display_name: string | null };
 type AvailabilityRow = { id: string; caddie_id: string; club_id: string; starts_at: string; ends_at: string; is_available: boolean };
+const bookingColumns = 'id,golfer_id,caddie_id,course_id,tee_time_id,status,starts_at,party_size,quoted_amount_in_centavos';
 
 function mapBooking(row: Record<string, unknown>): Booking {
   return { id: String(row.id), golferId: String(row.golfer_id), caddieId: String(row.caddie_id), courseId: String(row.course_id), slotId: String(row.tee_time_id ?? row.id), status: row.status === 'pending' ? 'requested' : row.status as Booking['status'], teeTime: String(row.starts_at), partySize: Number(row.party_size), notes: '', quotedRate: { amountInCentavos: Number(row.quoted_amount_in_centavos), currency: 'PHP' }, preferredCaddieId: String(row.caddie_id), assignedCaddieId: String(row.caddie_id), caddieAssignmentStatus: 'preferred_assigned' };
@@ -27,15 +28,16 @@ export const mobileDataService = {
   async getCourse(courseId: string): Promise<GolfCourse | null> { return (await this.listCourses()).find((course) => course.id === courseId) ?? null; },
   async listCaddies(courseId?: string): Promise<Caddie[]> {
     const client = getSupabaseClient();
-    let assignmentQuery = client.from('caddie_club_assignments').select('caddie_id,club_id,registry_number').eq('verification_status', 'verified');
+    let assignmentQuery = client.from('caddie_club_assignments').select('caddie_id,club_id,registry_number').eq('verification_status', 'verified').eq('is_active', true).limit(100);
     if (courseId) {
-      const { data: course } = await client.from('courses').select('club_id').eq('id', courseId).maybeSingle();
+      const { data: course, error: courseError } = await client.from('courses').select('club_id').eq('id', courseId).maybeSingle();
+      if (courseError) throw courseError;
       if (course?.club_id) assignmentQuery = assignmentQuery.eq('club_id', course.club_id);
     }
     const [{ data: profiles, error: profileError }, { data: assignments, error: assignmentError }, { data: courses, error: coursesError }] = await Promise.all([
-      client.from('caddie_profiles').select('user_id,tagline,bio,years_experience,rate_amount_in_centavos').eq('verification_status', 'verified'),
+      client.from('caddie_profiles').select('user_id,tagline,bio,years_experience,rate_amount_in_centavos').eq('verification_status', 'verified').limit(100),
       assignmentQuery,
-      client.from('courses').select('id,club_id').eq('is_active', true),
+      client.from('courses').select('id,club_id').eq('is_active', true).limit(100),
     ]);
     if (profileError) throw profileError;
     if (assignmentError) throw assignmentError;
@@ -45,16 +47,16 @@ export const mobileDataService = {
     const courseRows = (courses ?? []) as CourseClubRow[];
     const ids = assignmentRows.map((item) => item.caddie_id);
     if (!ids.length) return [];
-    const { data: names, error: namesError } = await client.from('caddie_directory').select('id,display_name').in('id', ids);
+    const { data: names, error: namesError } = await client.rpc('list_verified_caddie_names', { p_ids: ids.slice(0, 100), p_page_size: 100 });
     if (namesError) throw namesError;
     const nameRows = (names ?? []) as ProfileNameRow[];
     return caddieProfiles.filter((profile) => ids.includes(profile.user_id)).map((profile) => { const clubId = assignmentRows.find((item) => item.caddie_id === profile.user_id)?.club_id; return ({ id: profile.user_id, role: 'caddie', displayName: nameRows.find((item) => item.id === profile.user_id)?.display_name ?? 'NoBogey Caddie', homeCourseId: courseRows.find((item) => item.club_id === clubId)?.id ?? '', bio: profile.bio ?? profile.tagline ?? '', specialties: ['Course strategy', 'Green reading'], languages: ['English', 'Filipino'], courseKnowledge: [], yearsExperience: profile.years_experience ?? 0, ratingAverage: 5, reviewCount: 0, completedRounds: 0, portfolioHighlights: [], rate: { amountInCentavos: Number(profile.rate_amount_in_centavos), currency: 'PHP' }, verificationStatus: 'verified' }); });
   },
   async listTeeTimes(courseId: string, date: string): Promise<TeeTimeSlot[]> { return getAvailableTeeTimes(courseId, date); },
   async getTeeTime(slotId: string): Promise<TeeTimeSlot | null> { const { data, error } = await getSupabaseClient().from('tee_times').select('id,course_id,starts_at,player_capacity,status,updated_at').eq('id', slotId).maybeSingle(); if (error) throw error; return data ? { id:data.id,courseId:data.course_id,startsAt:data.starts_at,remainingPlayerCapacity:data.player_capacity,remainingCaddieCapacity:1,status:data.status === 'open' ? 'open' : 'held',sourceUpdatedAt:data.updated_at } : null; },
-  async listBookings(): Promise<Booking[]> { const client = getSupabaseClient(); const { data: session } = await client.auth.getSession(); if (!session.session) return []; const { data, error } = await client.from('bookings').select('*').order('starts_at'); if (error) throw error; return (data ?? []).map(mapBooking); },
-  async getBooking(bookingId: string): Promise<Booking | null> { const { data, error } = await getSupabaseClient().from('bookings').select('*').eq('id', bookingId).maybeSingle(); if (error) throw error; return data ? mapBooking(data) : null; },
-  async listAvailability(caddieId: string): Promise<AvailabilitySlot[]> { const { data, error } = await getSupabaseClient().from('caddie_availability').select('*').eq('caddie_id', caddieId); if (error) throw error; return ((data ?? []) as AvailabilityRow[]).map((row) => ({ id: row.id, caddieId: row.caddie_id, courseId: row.club_id, startsAt: row.starts_at, endsAt: row.ends_at, status: row.is_available ? 'open' : 'blocked' })); },
+  async listBookings(): Promise<Booking[]> { const client = getSupabaseClient(); const { data: session } = await client.auth.getSession(); if (!session.session) return []; const { data, error } = await client.from('bookings').select(bookingColumns).gte('ends_at', new Date().toISOString()).order('starts_at').limit(100); if (error) throw error; return (data ?? []).map(mapBooking); },
+  async getBooking(bookingId: string): Promise<Booking | null> { const { data, error } = await getSupabaseClient().from('bookings').select(bookingColumns).eq('id', bookingId).maybeSingle(); if (error) throw error; return data ? mapBooking(data) : null; },
+  async listAvailability(caddieId: string): Promise<AvailabilitySlot[]> { const { data, error } = await getSupabaseClient().from('caddie_availability').select('id,caddie_id,club_id,starts_at,ends_at,is_available').eq('caddie_id', caddieId).gte('ends_at', new Date().toISOString()).order('starts_at').limit(100); if (error) throw error; return ((data ?? []) as AvailabilityRow[]).map((row) => ({ id: row.id, caddieId: row.caddie_id, courseId: row.club_id, startsAt: row.starts_at, endsAt: row.ends_at, status: row.is_available ? 'open' : 'blocked' })); },
   listWeekDates(): readonly string[] { return Array.from({ length: 7 }, (_, offset) => { const date = new Date(); date.setDate(date.getDate() + offset + 1); return date.toLocaleDateString('en-CA', { timeZone: 'Asia/Manila' }); }); }
 };
 

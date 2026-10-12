@@ -27,11 +27,14 @@ export function getActionsForStatus(status: BookingStatus, windowState: Assignme
       return { kind: "actions", enabled: windowState === "eligible" };
     case "confirmed":
       return { kind: "confirmed" };
+    case "expired":
+      return { kind: "expired" };
     case "draft":
     case "in_progress":
     case "completed":
     case "canceled":
     case "declined":
+    case "no_show":
     case "conflicted":
       return { kind: "none" };
   }

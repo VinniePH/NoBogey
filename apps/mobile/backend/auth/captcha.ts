@@ -1,21 +1,12 @@
 import * as Linking from "expo-linking";
+import { isAllowedMobileCaptchaCallback, MOBILE_CAPTCHA_CALLBACKS, shouldBypassMobileCaptcha } from "./captcha-validation";
 
 const CAPTCHA_URL = "https://nobogeyofficial.com/mobile-captcha";
-const ALLOWED_CALLBACKS = ["nobogey://captcha", "exp+nobogey-mobile://captcha"] as const;
-
-export function isAllowedMobileCaptchaCallback(url: string): boolean {
-  if (!url) return false;
-  return ALLOWED_CALLBACKS.some((allowed) => url.startsWith(allowed));
-}
-
-export function shouldBypassMobileCaptcha(): boolean {
-  return process.env.EXPO_PUBLIC_BYPASS_CAPTCHA === "true";
-}
 
 export async function completeMobileCaptcha(): Promise<void> {
   if (shouldBypassMobileCaptcha()) return;
 
-  const callbackUrl = ALLOWED_CALLBACKS[0];
+  const callbackUrl = MOBILE_CAPTCHA_CALLBACKS[0];
   const token = await new Promise<string>((resolve, reject) => {
     const timeout = setTimeout(() => {
       subscription.remove();

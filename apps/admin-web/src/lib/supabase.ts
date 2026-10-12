@@ -10,5 +10,5 @@ export const supabase = createClient(supabaseUrl, supabasePublishableKey, {
 export async function hasAdminRole(userId: string): Promise<boolean> {
   const { data, error } = await supabase.from("user_roles").select("role").eq("user_id", userId);
   if (error) throw error;
-  return (data ?? []).some(({ role }) => role === "super_admin" || role === "club_admin");
+  return (data ?? []).some(({ role }) => role === "super_admin" || role === "admin" || role === "club_manager");
 }

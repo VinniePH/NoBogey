@@ -21,6 +21,7 @@ export function Turnstile({ onToken }: { onToken: (token: string) => void }) {
       widgetId = window.turnstile.render(container.current, {
         sitekey: SITE_KEY,
         theme: "light",
+        action: "admin-auth",
         callback: (token: string) => onToken(token),
         "expired-callback": () => onToken(""),
         "error-callback": () => onToken("")
@@ -42,7 +43,7 @@ export async function verifyTurnstile(token: string) {
   const response = await fetch("/api/turnstile/verify", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ token })
+    body: JSON.stringify({ token, action: "admin-auth" })
   });
   if (!response.ok) throw new Error("Security check failed. Please try again.");
 }

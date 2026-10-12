@@ -84,7 +84,7 @@ export interface CaddieVerificationDetail extends CaddieVerificationSummary {
   history: CaddieVerificationHistoryEntry[];
 }
 
-export type CaddieVerificationErrorCode = "NOT_FOUND" | "VALIDATION_FAILED" | "UNAVAILABLE";
+export type CaddieVerificationErrorCode = "NOT_FOUND" | "VALIDATION_FAILED" | "UNAVAILABLE" | "FORBIDDEN";
 
 export interface CaddieVerificationErrorShape extends Omit<ApiError, "code"> {
   code: CaddieVerificationErrorCode;
@@ -145,6 +145,8 @@ export type BookingStatus =
   | "completed"
   | "canceled"
   | "declined"
+  | "expired"
+  | "no_show"
   | "conflicted";
 
 export interface Booking {
