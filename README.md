@@ -49,7 +49,7 @@ cp apps/landing-page/.env.example apps/landing-page/.env
 
 Mobile and admin account/data flows require a configured Supabase project with the expected schema and RPCs. Public client variables are embedded in app bundles; keep service-role keys and server secrets out of them.
 
-Admin authentication also calls `/api/turnstile/verify`. Mobile authentication uses the hosted `/mobile-captcha` page and verification endpoint. Starting Vite or Expo alone does not provide these external dependencies.
+Admin and mobile authentication send single-use Turnstile tokens directly to Supabase Auth for server-side verification. Mobile authentication obtains its token from the hosted `/mobile-captcha` page. Starting Vite or Expo alone does not provide these external dependencies.
 
 ## Run the apps
 

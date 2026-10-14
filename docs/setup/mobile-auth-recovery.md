@@ -11,7 +11,7 @@ The bridge preserves the Supabase Auth callback parameters and opens `nobogey://
 
 Keep both HTTPS bridge URLs and both `nobogey://` URLs in Auth > URL Configuration. Enable Cloudflare Turnstile in Auth > Bot and Abuse Protection using the secret paired with the site key used by `infra/cloudflare/nobogey-site-worker.js`. The repository equivalent is `SUPABASE_AUTH_CAPTCHA_SECRET`; never expose that value through an `EXPO_PUBLIC_` or `VITE_` variable.
 
-The Auth client sends the single-use Turnstile token directly to Supabase for sign-up, password sign-in, and password recovery. Do not verify that same token at `/api/turnstile/verify` first because Cloudflare tokens cannot be reused.
+The mobile and admin Auth clients send each single-use Turnstile token directly to Supabase for sign-up, password sign-in, and password recovery. Do not verify an Auth token through a separate endpoint first because Cloudflare tokens cannot be reused.
 
 Deploy the hosted Auth CAPTCHA configuration before releasing the mobile build that contains this flow. The repository config alone does not change a hosted Supabase project.
 

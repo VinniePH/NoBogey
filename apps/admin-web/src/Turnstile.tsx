@@ -37,13 +37,3 @@ export function Turnstile({ onToken }: { onToken: (token: string) => void }) {
   }, [onToken]);
   return <div className="turnstile-container" ref={container} />;
 }
-
-export async function verifyTurnstile(token: string) {
-  if (!token) throw new Error("Complete the security check first.");
-  const response = await fetch("/api/turnstile/verify", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ token, action: "admin-auth" })
-  });
-  if (!response.ok) throw new Error("Security check failed. Please try again.");
-}
