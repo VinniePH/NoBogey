@@ -308,3 +308,9 @@ button.danger:not(.filled):hover { background: color-mix(in srgb, var(--danger) 
 .time-card .time-controls { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px 12px; margin-block: auto; padding-block: 12px; width: 100%; }
 .time-card .time-controls label, .time-card .crm-select { min-width: 0; }
 .time-card .time-controls > .primary { grid-column: 1 / -1; min-height: 42px; width: 100%; }
+
+.login-password-field { display: block; position: relative; }
+.login-password-field input { padding-right: 48px; width: 100%; }
+.login-password-toggle { align-items: center; background: transparent; border: 0; border-radius: 7px; bottom: 1px; color: var(--fairway); display: flex; justify-content: center; padding: 0; position: absolute; right: 1px; top: 1px; width: 44px; }
+.login-password-toggle:hover { background: color-mix(in srgb, var(--fairway) 8%, transparent); }
+.login-password-toggle:focus-visible { outline: 2px solid var(--fairway); outline-offset: -3px; }

@@ -1,6 +1,6 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { Feather } from '@expo/vector-icons';
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors, spacing } from '@nobogey/ui';
@@ -86,7 +86,7 @@ function Field({ label, ...props }: { label: string } & React.ComponentProps<typ
 }
 
 function PasswordField({ onToggleVisibility, visible, ...props }: { onToggleVisibility: () => void; visible: boolean } & React.ComponentProps<typeof TextInput>) {
-  return <View style={styles.field}><Text style={styles.label}>Password</Text><View style={styles.passwordInput}><TextInput accessibilityLabel="Password" autoCapitalize="none" placeholder="Enter password" placeholderTextColor={colors.textMuted} secureTextEntry={!visible} style={styles.passwordTextInput} {...props} /><Pressable accessibilityLabel={visible ? 'Hide password' : 'Show password'} accessibilityRole="button" hitSlop={8} onPress={onToggleVisibility} style={styles.visibilityButton}><MaterialCommunityIcons color={authPalette.forest} name={visible ? 'eye-off-outline' : 'eye-outline'} size={22} /></Pressable></View></View>;
+  return <View style={styles.field}><Text style={styles.label}>Password</Text><View style={styles.passwordInput}><TextInput accessibilityLabel="Password" autoCapitalize="none" autoCorrect={false} placeholder="Enter password" placeholderTextColor={colors.textMuted} secureTextEntry={!visible} style={styles.passwordTextInput} {...props} /><Pressable accessibilityLabel={visible ? 'Hide password' : 'Show password'} accessibilityRole="button" accessibilityState={{ checked: visible }} hitSlop={8} onPress={onToggleVisibility} style={styles.visibilityButton}><Feather color={authPalette.forest} name={visible ? 'eye-off' : 'eye'} size={20} /></Pressable></View></View>;
 }
 
 const styles = StyleSheet.create({
