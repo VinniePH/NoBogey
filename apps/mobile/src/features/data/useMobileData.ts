@@ -1,5 +1,6 @@
 import type { Booking, Caddie, GolfCourse, TeeTimeSlot } from "@nobogey/contracts";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { AppState } from "react-native";
 import { mobileDataService } from "../../../backend/mock.service";
 import { getSupabaseClient } from "../../../backend/client";
 
@@ -17,6 +18,7 @@ export function useMobileData() {
   const [data, setData] = useState<MobileData>(emptyData);
   const [isLoading, setIsLoading] = useState(true);
   const [reloadToken, setReloadToken] = useState(0);
+  const channelName = useRef(`mobile-data-${Math.random().toString(36).slice(2)}`);
 
   useEffect(() => {
     let active = true;
@@ -36,9 +38,30 @@ export function useMobileData() {
         setIsLoading(false);
       }
     });
-    const { data: listener } = getSupabaseClient().auth.onAuthStateChange((event) => { if (event === "SIGNED_IN" || event === "SIGNED_OUT" || event === "USER_UPDATED") setReloadToken(value => value + 1); });
-    return () => { active = false; listener.subscription.unsubscribe(); };
+    return () => { active = false; };
   }, [reloadToken]);
+
+  useEffect(() => {
+    const client = getSupabaseClient();
+    const refresh = () => setReloadToken((value) => value + 1);
+    const { data: listener } = client.auth.onAuthStateChange((event) => {
+      if (event === "SIGNED_IN" || event === "SIGNED_OUT" || event === "USER_UPDATED") refresh();
+    });
+    const channel = client.channel(channelName.current)
+      .on("postgres_changes", { event: "*", schema: "public", table: "bookings" }, refresh)
+      .on("postgres_changes", { event: "*", schema: "public", table: "tee_times" }, refresh)
+      .on("postgres_changes", { event: "*", schema: "public", table: "caddie_tee_time_availability" }, refresh)
+      .subscribe();
+    const appState = AppState.addEventListener("change", (state) => {
+      if (state === "active") refresh();
+    });
+
+    return () => {
+      listener.subscription.unsubscribe();
+      appState.remove();
+      void client.removeChannel(channel);
+    };
+  }, []);
 
   return { ...data, isLoading, refresh: () => setReloadToken((value) => value + 1) };
 }

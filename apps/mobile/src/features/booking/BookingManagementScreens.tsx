@@ -33,7 +33,7 @@ export function MyBookingsScreen() {
         </View>
         {upcomingBookings.length
           ? upcomingBookings.map((booking) => <BookingCard booking={booking} caddie={caddies.find((item) => item.id === booking.caddieId)} course={courses.find((item) => item.id === booking.courseId)} isAccepted={isAssignmentAccepted(booking.id)} isUnread={hasUnreadAlert("golfer", booking.id, "booking_assignment_accepted")} key={booking.id} onOpen={() => markBookingOpened(booking.id, "golfer")} />)
-          : <EmptyState description="Confirmed and requested rounds will appear after the booking service is connected." icon="calendar-blank-outline" minHeight={390} style={styles.emptyBookings} title="No upcoming bookings" />}
+          : <EmptyState description="Your requested and confirmed rounds will appear here." icon="calendar-blank-outline" minHeight={390} style={styles.emptyBookings} title="No upcoming bookings" />}
         </ResponsiveContent>
       </ScrollView>
       <MobileBottomNavigation active="bookings" />

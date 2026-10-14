@@ -5,7 +5,15 @@ import type { NotificationAlert, NotificationKind, NotificationRole } from "./no
 type Row = { id: string; kind: string; title: string; body: string; data: { booking_id?: string }; read_at: string | null; created_at: string };
 type Value = { acceptAssignment: (id: string) => void; dismissBanner: (id: string) => void; getUnreadCount: (role: NotificationRole) => number; getVisibleAlert: (role: NotificationRole) => NotificationAlert | undefined; hasUnreadAlert: (role: NotificationRole, bookingId: string, kind: NotificationKind) => boolean; isAssignmentAccepted: (id: string) => boolean; markBookingOpened: (id: string, role: NotificationRole) => void };
 const Context = createContext<Value | null>(null);
-function map(row: Row): NotificationAlert | null { const bookingId = row.data?.booking_id; if (!bookingId) return null; const request = row.kind === "caddie_booking_assignment" || row.kind === "booking_assignment_requested"; return { id: row.id, kind: request ? "booking_assignment_requested" : "booking_assignment_accepted", recipientRole: request ? "caddie" : "golfer", bookingId, title: row.title, body: row.body, createdAt: row.created_at, ...(row.read_at ? { readAt: row.read_at } : {}) }; }
+function map(row: Row): NotificationAlert | null {
+  const bookingId = row.data?.booking_id;
+  if (!bookingId) return null;
+  const requestKinds = ["booking.requested", "caddie_booking_assignment", "booking_assignment_requested"];
+  const acceptedKinds = ["booking.confirmed", "booking_confirmed", "golfer_booking_confirmation", "booking_assignment_accepted"];
+  if (!requestKinds.includes(row.kind) && !acceptedKinds.includes(row.kind)) return null;
+  const request = requestKinds.includes(row.kind);
+  return { id: row.id, kind: request ? "booking_assignment_requested" : "booking_assignment_accepted", recipientRole: request ? "caddie" : "golfer", bookingId, title: row.title, body: row.body, createdAt: row.created_at, ...(row.read_at ? { readAt: row.read_at } : {}) };
+}
 export function NotificationAlertProvider({ children }: PropsWithChildren) {
   const [alerts, setAlerts] = useState<NotificationAlert[]>([]); const [dismissed, setDismissed] = useState<string[]>([]); const [accepted, setAccepted] = useState<string[]>([]);
   const load = useCallback(async () => { const { data, error } = await getSupabaseClient().from("notifications").select("id,kind,title,body,data,read_at,created_at").order("created_at", { ascending: false }).limit(100); if (!error) setAlerts(((data ?? []) as Row[]).map(map).filter((item): item is NotificationAlert => Boolean(item))); }, []);
