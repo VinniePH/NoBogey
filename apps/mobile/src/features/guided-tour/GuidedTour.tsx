@@ -2,7 +2,9 @@ import type { PropsWithChildren, RefObject } from "react";
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { Modal, Pressable, StyleSheet, Text, View } from "react-native";
 import { colors, spacing } from "@nobogey/ui";
+import { getSupabaseClient } from "../../../backend/client";
 import { loadPreferences, savePreferences } from "../../../backend/users/users.service";
+import { getAutomaticTourKey, shouldStartAutomaticTour } from "./guided-tour-state";
 
 export type GuidedTourRole = "golfer" | "caddie";
 type Rect = { height: number; width: number; x: number; y: number };
@@ -26,13 +28,11 @@ const tours: Record<GuidedTourRole, TourStep[]> = {
     { target: "caddie-upcoming-assignments", title: "Assignments", body: "Review upcoming assignments and respond to new requests from your schedule." }
   ]
 };
-// Keep the walkthrough visible whenever its role's home screen opens during the demo.
-const alwaysReplayForDemo = true;
-
-type Value = { activeTarget: string | undefined; completed: (role: GuidedTourRole) => boolean; isReady: boolean; refreshTarget: () => void; registerTarget: (id: string, ref: RefObject<View | null>) => void; startTour: (role: GuidedTourRole) => void };
+type Value = { accountId: string | null; activeTarget: string | undefined; completed: (role: GuidedTourRole) => boolean; isReady: boolean; refreshTarget: () => void; registerTarget: (id: string, ref: RefObject<View | null>) => void; startTour: (role: GuidedTourRole) => void };
 const Context = createContext<Value | null>(null);
 
 export function GuidedTourProvider({ children }: PropsWithChildren) {
+  const [accountId, setAccountId] = useState<string | null>(null);
   const [completion, setCompletion] = useState<Completion>({});
   const [isReady, setIsReady] = useState(false);
   const [role, setRole] = useState<GuidedTourRole | null>(null);
@@ -40,7 +40,57 @@ export function GuidedTourProvider({ children }: PropsWithChildren) {
   const [rect, setRect] = useState<Rect | null>(null);
   const targets = useRef(new Map<string, RefObject<View | null>>());
 
-  useEffect(() => { void loadPreferences<{ guidedTours?: Completion }>().then((value) => setCompletion(value?.guidedTours ?? {})).catch(() => undefined).finally(() => setIsReady(true)); }, []);
+  useEffect(() => {
+    const client = getSupabaseClient();
+    let disposed = false;
+    let currentUserId: string | null | undefined;
+    let loadVersion = 0;
+
+    const loadForUser = async (userId: string | null) => {
+      if (currentUserId === userId) return;
+      currentUserId = userId;
+      const version = ++loadVersion;
+      setAccountId(userId);
+      setCompletion({});
+      setRole(null);
+      setRect(null);
+      setStepIndex(0);
+      setIsReady(false);
+
+      if (!userId) {
+        setIsReady(true);
+        return;
+      }
+
+      try {
+        const value = await loadPreferences<{ guidedTours?: Completion }>();
+        if (!disposed && version === loadVersion) setCompletion(value?.guidedTours ?? {});
+      } catch {
+        // A first-time user can still use the app if preferences are temporarily unavailable.
+      } finally {
+        if (!disposed && version === loadVersion) setIsReady(true);
+      }
+    };
+
+    void client.auth.getSession()
+      .then(({ data, error }) => {
+        if (error) throw error;
+        return loadForUser(data.session?.user.id ?? null);
+      })
+      .catch(() => loadForUser(null));
+
+    const { data: listener } = client.auth.onAuthStateChange((_event, session) => {
+      // Defer Supabase calls until after the auth callback has released its lock.
+      setTimeout(() => {
+        if (!disposed) void loadForUser(session?.user.id ?? null);
+      }, 0);
+    });
+
+    return () => {
+      disposed = true;
+      listener.subscription.unsubscribe();
+    };
+  }, []);
   const activeStep = role ? tours[role][stepIndex] : undefined;
   const measure = useCallback(() => {
     const target = activeStep ? targets.current.get(activeStep.target)?.current : null;
@@ -51,12 +101,20 @@ export function GuidedTourProvider({ children }: PropsWithChildren) {
   const startTour = useCallback((nextRole: GuidedTourRole) => { if (!isReady) return; setRect(null); setStepIndex(0); setRole(nextRole); }, [isReady]);
   const finish = useCallback((finishedRole: GuidedTourRole) => { setRole(null); setCompletion((current) => { const next = { ...current, [finishedRole]: true }; void savePreferences({ guidedTours: next }).catch(() => undefined); return next; }); }, []);
   const advance = () => { if (!role) return; if (stepIndex + 1 === tours[role].length) finish(role); else { setRect(null); setStepIndex((value) => value + 1); } };
-  const value = useMemo<Value>(() => ({ activeTarget: activeStep?.target, completed: (tourRole) => Boolean(completion[tourRole]), isReady, refreshTarget: measure, registerTarget, startTour }), [activeStep?.target, completion, isReady, measure, registerTarget, startTour]);
+  const value = useMemo<Value>(() => ({ accountId, activeTarget: activeStep?.target, completed: (tourRole) => Boolean(completion[tourRole]), isReady, refreshTarget: measure, registerTarget, startTour }), [accountId, activeStep?.target, completion, isReady, measure, registerTarget, startTour]);
   return <Context.Provider value={value}>{children}<GuidedTourOverlay onAdvance={advance} onDismiss={() => role && finish(role)} rect={rect} role={role} stepIndex={stepIndex} /></Context.Provider>;
 }
 
 export function useGuidedTour() { const value = useContext(Context); if (!value) throw new Error("useGuidedTour must be used within GuidedTourProvider"); return value; }
-export function useAutomaticGuidedTour(role: GuidedTourRole) { const { completed, isReady, startTour } = useGuidedTour(); const started = useRef(false); useEffect(() => { if (!isReady || (!alwaysReplayForDemo && completed(role)) || started.current) return; started.current = true; startTour(role); }, [completed, isReady, role, startTour]); }
+export function useAutomaticGuidedTour(role: GuidedTourRole) {
+  const { accountId, completed, isReady, startTour } = useGuidedTour();
+  const startedFor = useRef<string | null>(null);
+  useEffect(() => {
+    if (!shouldStartAutomaticTour({ accountId, completed: completed(role), isReady, role, startedFor: startedFor.current })) return;
+    startedFor.current = getAutomaticTourKey(accountId, role);
+    startTour(role);
+  }, [accountId, completed, isReady, role, startTour]);
+}
 export function TourTarget({ children, id, style }: PropsWithChildren<{ id: string; style?: React.ComponentProps<typeof View>["style"] }>) { const ref = useRef<View>(null); const { registerTarget } = useGuidedTour(); useEffect(() => { registerTarget(id, ref); }, [id, registerTarget]); return <View collapsable={false} ref={ref} style={style}>{children}</View>; }
 
 function GuidedTourOverlay({ onAdvance, onDismiss, rect, role, stepIndex }: { onAdvance: () => void; onDismiss: () => void; rect: Rect | null; role: GuidedTourRole | null; stepIndex: number }) {
