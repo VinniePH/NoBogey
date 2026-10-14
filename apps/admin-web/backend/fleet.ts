@@ -2,7 +2,14 @@ import { supabase } from "../src/lib/supabase";
 
 export type Tier = "TRAINER" | "CLASS B" | "CLASS A";
 export type Caddie = { id: string; name: string; tier: Tier; rate: number; years: number; active: boolean; strikes: number; custom?: boolean };
-export type FleetState = { caddies: Caddie[]; defaultTimes: string[]; dayTimes: Record<string, string[]>; assignments: Record<string, string[]>; bookingWindow: number };
+export type FleetState = {
+  caddies: Caddie[];
+  defaultTimes: string[];
+  dayTimes: Record<string, string[]>;
+  assignments: Record<string, string[]>;
+  bookingWindow: number;
+  syncError: string | null;
+};
 
 export const MAX_STRIKES = 3;
 export const MAX_PER_TEE_TIME = 4;
@@ -13,11 +20,32 @@ const seed: FleetState = {
   defaultTimes: [],
   dayTimes: {},
   assignments: {},
-  caddies: []
+  caddies: [],
+  syncError: null
 };
 
 let state: FleetState = seed;
 const listeners = new Set<() => void>();
+
+type BackendErrorShape = { code?: unknown; message?: unknown; details?: unknown; hint?: unknown };
+
+export function describeAdminBackendError(cause: unknown, fallback = "Unable to update Supabase.") {
+  const error = cause && typeof cause === "object" ? cause as BackendErrorShape : null;
+  const code = typeof error?.code === "string" ? error.code : "";
+  const message = typeof error?.message === "string" ? error.message : cause instanceof Error ? cause.message : "";
+  const details = typeof error?.details === "string" ? error.details : "";
+  const hint = typeof error?.hint === "string" ? error.hint : "";
+  const diagnostic = [code, message, details, hint].filter(Boolean).join(" ");
+
+  if (/PGRST202|publish_tee_time.*not.*find|schema cache/i.test(diagnostic)) return "The administrator backend is not available yet. Refresh the page and try again.";
+  if (/TEE_TIME_ALREADY_EXISTS|duplicate key/i.test(diagnostic)) return "That tee time is already scheduled.";
+  if (/ACTIVE_BOOKINGS_PREVENT_SCHEDULE_CHANGE/i.test(diagnostic)) return "This tee time has active bookings and cannot be changed.";
+  if (/PERMISSION_DENIED|42501|permission denied/i.test(diagnostic)) return "Your account is not authorized to manage this golf course.";
+  if (/AUTH_REQUIRED|JWT|session/i.test(diagnostic)) return "Your administrator session expired. Sign in again and retry.";
+  if (/VALIDATION_FAILED|22023/i.test(diagnostic)) return "Choose a future tee time with a valid schedule.";
+  if (/Failed to fetch|NetworkError|network request failed/i.test(diagnostic)) return "The portal could not reach Supabase. Check your connection and retry.";
+  return message || fallback;
+}
 
 async function hydrate() {
   const dayTimes: Record<string, string[]> = {};
@@ -29,16 +57,18 @@ async function hydrate() {
     if (assignmentError) throw assignmentError;
     const assignedIds = [...new Set((assignments ?? []).map(item => item.caddie_id))];
     const safeIds = assignedIds.length ? assignedIds : ["00000000-0000-0000-0000-000000000000"];
-    const [{ data: preference }, profileResult, nameResult, complianceResult] = await Promise.all([
+    const [preferenceResult, profileResult, nameResult, complianceResult] = await Promise.all([
       supabase.from("admin_portal_state").select("state").eq("id", "primary").maybeSingle(),
       supabase.from("caddie_profiles").select("user_id,tagline,years_experience,rate_amount_in_centavos,verification_status").in("user_id", safeIds).eq("verification_status", "verified").limit(1000),
       supabase.from("profiles").select("id,display_name,is_active").in("id", safeIds).limit(1000),
       supabase.from("caddie_compliance_events").select("caddie_id").eq("club_id", scope.clubId).in("caddie_id", safeIds).is("resolved_at", null).limit(2000)
     ]);
+    if (preferenceResult.error) throw preferenceResult.error;
     if (profileResult.error) throw profileResult.error;
     if (nameResult.error) throw nameResult.error;
     if (complianceResult.error) throw complianceResult.error;
-    const stored = preference?.state ? preference.state as FleetState : seed;
+    const preference = preferenceResult.data;
+    const stored = preference?.state ? { ...seed, ...(preference.state as Partial<FleetState>) } : seed;
     const caddies = (profileResult.data ?? []).map(profile => ({
       id: profile.user_id,
       name: (nameResult.data ?? []).find(item => item.id === profile.user_id)?.display_name ?? "NoBogey Caddie",
@@ -80,24 +110,27 @@ async function hydrate() {
       const assignmentKey = `${key.date}|${key.time}`;
       authoritativeAssignments[assignmentKey] = [...new Set([...(authoritativeAssignments[assignmentKey] ?? []), booking.caddie_id])];
     }
-    state = { ...stored, defaultTimes: [], dayTimes, assignments: authoritativeAssignments, caddies };
+    state = { ...stored, defaultTimes: [], dayTimes, assignments: authoritativeAssignments, caddies, syncError: null };
     if (!preference?.state) await persist(state);
-  } catch {
-    state = seed;
+  } catch (cause) {
+    const syncError = describeAdminBackendError(cause, "Unable to load administrator data from Supabase.");
+    console.error("Unable to hydrate the administrator portal from Supabase.", cause);
+    state = { ...state, syncError };
   }
   listeners.forEach(listener => listener());
 }
 async function persist(next: FleetState) {
   const { data: auth } = await supabase.auth.getUser();
   if (!auth.user) return;
-  const preferences: FleetState = {
+  const preferences: Omit<FleetState, "syncError"> = {
     bookingWindow: next.bookingWindow,
     defaultTimes: [],
     dayTimes: {},
     assignments: {},
     caddies: []
   };
-  await supabase.from("admin_portal_state").upsert({ id: "primary", state: preferences, updated_by: auth.user.id, updated_at: new Date().toISOString() });
+  const { error } = await supabase.from("admin_portal_state").upsert({ id: "primary", state: preferences, updated_by: auth.user.id, updated_at: new Date().toISOString() });
+  if (error) throw error;
 }
 
 async function managedCourseScope() {
@@ -128,8 +161,14 @@ function manilaSlotKey(value: string) {
   const part = (type: Intl.DateTimeFormatPartTypes) => parts.find(item => item.type === type)?.value ?? "";
   return { date: `${part("year")}-${part("month")}-${part("day")}`, time: `${Number(part("hour"))}:${part("minute")} ${part("dayPeriod")}` };
 }
-void hydrate();
-supabase.auth.onAuthStateChange((event) => { if (event === "SIGNED_IN" || event === "INITIAL_SESSION") void hydrate(); });
+void supabase.auth.getSession().then(({ data }) => { if (data.session) void hydrate(); });
+supabase.auth.onAuthStateChange((event, session) => {
+  if ((event === "SIGNED_IN" || event === "INITIAL_SESSION") && session) void hydrate();
+  if (event === "SIGNED_OUT") {
+    state = seed;
+    listeners.forEach(listener => listener());
+  }
+});
 supabase.channel("admin-portal-state").on("postgres_changes", { event: "*", schema: "public", table: "admin_portal_state", filter: "id=eq.primary" }, () => void hydrate()).subscribe();
 supabase.channel("admin-authoritative-schedule")
   .on("postgres_changes", { event: "*", schema: "public", table: "tee_times" }, () => void hydrate())
@@ -141,7 +180,11 @@ document.addEventListener("visibilitychange", () => { if (document.visibilitySta
 
 function update(next: FleetState) {
   state = next;
-  void persist(state);
+  void persist(state).catch(cause => {
+    console.error("Unable to persist administrator preferences to Supabase.", cause);
+    state = { ...state, syncError: describeAdminBackendError(cause) };
+    listeners.forEach(listener => listener());
+  });
   listeners.forEach(listener => listener());
 }
 
@@ -153,7 +196,6 @@ export function formatTime(hour: number, minute: number, meridiem: string) { ret
 
 function minutes(time: string) { const [clock = "0:00", marker] = time.split(" "); const [h = 0, m = 0] = clock.split(":").map(Number); return (h % 12 + (marker === "PM" ? 12 : 0)) * 60 + m; }
 function sorted(times: string[]) { return [...new Set(times)].sort((a, b) => minutes(a) - minutes(b)); }
-function dayTimes(date: string) { return state.dayTimes[date] ?? state.defaultTimes; }
 
 export function setBookingWindow(value: number) { const bookingWindow = Math.min(60, Math.max(1, Math.round(value) || 3)); update({ ...state, bookingWindow }); }
 export async function addCaddie(email: string, name: string, tier: Tier, rate: number, years: number): Promise<void>;
@@ -181,7 +223,7 @@ export async function addTeeTime(date: string, time: string, allTime = false) {
   const { error } = await supabase.rpc("publish_tee_time", { p_course_id: courseId, p_starts_at: startsAt.toISOString(), p_ends_at: endsAt.toISOString(), p_booking_cutoff_at: cutoff.toISOString(), p_capacity: 4 });
   if (error) throw error;
   if (allTime) { const nextDayTimes = Object.fromEntries(Object.entries(state.dayTimes).map(([day, times]) => [day, day >= date ? sorted([...times, time]) : times])); update({ ...state, defaultTimes: sorted([...state.defaultTimes, time]), dayTimes: nextDayTimes }); return; }
-  update({ ...state, dayTimes: { ...state.dayTimes, [date]: sorted([...dayTimes(date), time]) } });
+  await hydrate();
 }
 export async function removeTeeTime(date: string, time: string, allTime = false) {
   if (allTime) throw new Error("Series removal requires explicit dated tee times.");
@@ -194,7 +236,7 @@ export async function removeTeeTime(date: string, time: string, allTime = false)
   if (error) throw error;
   const assignments = Object.fromEntries(Object.entries(state.assignments).filter(([assignmentKey]) => allTime ? !assignmentKey.endsWith(`|${time}`) : assignmentKey !== `${date}|${time}`));
   if (allTime) { const nextDayTimes = Object.fromEntries(Object.entries(state.dayTimes).map(([day, times]) => [day, day >= date ? times.filter(entry => entry !== time) : times])); update({ ...state, defaultTimes: state.defaultTimes.filter(entry => entry !== time), dayTimes: nextDayTimes, assignments }); return; }
-  update({ ...state, dayTimes: { ...state.dayTimes, [date]: dayTimes(date).filter(entry => entry !== time) }, assignments });
+  await hydrate();
 }
 export async function assignCaddie(date: string, time: string, caddieId: string): Promise<{ ok: true } | { ok: false; reason: string }> {
   const caddie = state.caddies.find(c => c.id === caddieId); const assignmentKey = `${date}|${time}`; const assigned = state.assignments[assignmentKey] ?? [];

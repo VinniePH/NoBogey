@@ -620,10 +620,14 @@ declare
   manager boolean;
   permitted boolean := false;
 begin
-  select b, c.club_id into current_booking, target_club
-  from public.bookings b join public.courses c on c.id = b.course_id
-  where b.id = p_booking_id for update of b;
+  select * into current_booking
+  from public.bookings
+  where id = p_booking_id
+  for update;
   if not found then raise exception 'NOT_FOUND' using errcode = 'P0002'; end if;
+  select club_id into target_club
+  from public.courses
+  where id = current_booking.course_id;
   if caller is null then raise exception 'AUTH_REQUIRED' using errcode = '42501'; end if;
   manager := private.manages_club(target_club, caller);
 
@@ -714,11 +718,14 @@ create or replace function public.admin_set_caddie_tee_time_availability(
 language plpgsql security definer set search_path = '' as $$
 declare caller uuid := auth.uid(); slot public.tee_times; target_club uuid;
 begin
-  select t, c.club_id into slot, target_club
-  from public.tee_times t join public.courses c on c.id = t.course_id
-  where t.id = p_tee_time_id
-  for update of t;
+  select * into slot
+  from public.tee_times
+  where id = p_tee_time_id
+  for update;
   if not found then raise exception 'NOT_FOUND' using errcode = 'P0002'; end if;
+  select club_id into target_club
+  from public.courses
+  where id = slot.course_id;
   if caller is null or not private.manages_club(target_club, caller) then
     raise exception 'PERMISSION_DENIED' using errcode = '42501';
   end if;
@@ -997,8 +1004,14 @@ create or replace function public.update_published_tee_time(
 language plpgsql security definer set search_path = '' as $$
 declare caller uuid := auth.uid(); current_slot public.tee_times; target_club uuid; active_units bigint; result public.tee_times; booking_rules public.booking_policy;
 begin
-  select t, c.club_id into current_slot, target_club from public.tee_times t join public.courses c on c.id = t.course_id where t.id = p_tee_time_id for update of t;
+  select * into current_slot
+  from public.tee_times
+  where id = p_tee_time_id
+  for update;
   if not found then raise exception 'NOT_FOUND' using errcode = 'P0002'; end if;
+  select club_id into target_club
+  from public.courses
+  where id = current_slot.course_id;
   if caller is null or not private.manages_club(target_club, caller) then raise exception 'PERMISSION_DENIED' using errcode = '42501'; end if;
   select * into booking_rules from public.booking_policy where singleton;
   select coalesce(sum(case when booking_rules.capacity_unit = 'bookings' then 1 else a.capacity_units end), 0) into active_units
