@@ -1699,7 +1699,8 @@ button {
 
 .landing-carousel-shell {
   position: relative;
-  overflow: hidden;
+  display: flow-root;
+  overflow: clip;
   padding-top: 74px;
 }
 
@@ -1708,15 +1709,17 @@ button {
 }
 
 .mobile-page-controls {
-  position: absolute;
+  position: sticky;
   right: auto;
   bottom: 2.5rem;
-  left: var(--page-control-left);
+  left: auto;
   z-index: 40;
   display: flex;
   min-width: 0;
-  width: auto;
-  transform: translateX(-50%);
+  width: max-content;
+  height: 3.5rem;
+  margin-inline: auto;
+  transform: none;
   overflow: hidden;
   border: 1px solid rgba(255, 255, 255, 0.72);
   border-radius: 999px;
@@ -1817,7 +1820,10 @@ button {
 }
 
 .mobile-page-controls {
-  bottom: calc(1.75rem + env(safe-area-inset-bottom, 0px));
+  --control-bottom: calc(1.75rem + env(safe-area-inset-bottom, 0px));
+  bottom: var(--control-bottom);
+  margin-top: calc(-3.5rem - var(--control-bottom));
+  margin-bottom: var(--control-bottom);
 }
 
 .landing-product .text-white\/65,

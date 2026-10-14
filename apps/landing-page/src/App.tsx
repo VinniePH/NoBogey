@@ -385,7 +385,7 @@ export function App() {
         </section>
 
         </main>
-        <nav className="mobile-page-controls" aria-label="Landing page slides" style={{ "--page-control-left": "50%" } as CSSProperties}>
+        <nav className="mobile-page-controls" aria-label="Landing page slides">
           <div className="page-progress" aria-label="Current landing page section">
             {Array.from({ length: mobileSlideCount }, (_, index) => (
               <button aria-current={mobileSlide === index ? "step" : undefined} aria-label={`Show section ${index + 1}`} className={`page-dot ${mobileSlide === index ? "page-dot-active" : ""}`} key={index} onClick={() => { setMobileSlide(index); window.history.replaceState(null, "", window.location.pathname); window.scrollTo({ top: 0, behavior: "smooth" }); }} type="button"><span /></button>

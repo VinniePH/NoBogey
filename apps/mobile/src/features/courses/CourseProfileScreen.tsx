@@ -17,8 +17,8 @@ export function CourseProfileScreen() {
   const available = caddies.filter((item) => item.homeCourseId === course.id);
   const location = [course.city, course.province].filter(Boolean).join(", ");
   return <SafeAreaView edges={["top", "bottom"]} style={styles.safeArea}><ScrollView contentContainerStyle={styles.content} contentInsetAdjustmentBehavior="automatic" showsVerticalScrollIndicator={false}><ResponsiveContent style={styles.frame}>
-    <View><View accessibilityLabel={`${course.name} course photo`} accessibilityRole="image" style={styles.heroImage}><Image resizeMode="cover" source={localCoursePlaceholder(course)} style={styles.heroPhoto} /></View><View style={styles.introCard}>{location ? <Text style={styles.kicker}>{location}</Text> : null}<Text accessibilityRole="header" style={styles.title}>{course.name}</Text><View style={styles.rule}/><View style={styles.stats}><Stat label="PAR" value={String(course.par)}/><Stat label="YARDS" value={course.yardage.toLocaleString()}/><Stat label="HOLES" value={String(course.holes)}/><Stat label="AVAILABLE" value={`${course.caddieCount} caddies`}/></View></View></View>
-    <ScreenSection title="Available caddies" action={<Pressable accessibilityLabel="See all available caddies" accessibilityRole="button" hitSlop={8} onPress={() => router.push({ pathname: "/golfer/caddies", params: { courseId: course.id } })} style={styles.seeAllButton}><Text style={styles.seeAll}>See All</Text></Pressable>}>{available.length ? <ScrollView horizontal contentContainerStyle={styles.horizontalList} showsHorizontalScrollIndicator={false}>{available.map((caddie) => <CaddieCard caddie={caddie} key={caddie.id} onPress={() => router.push({ pathname: "/golfer/caddies/[caddieId]", params: { caddieId: caddie.id, courseId: course.id } })} />)}</ScrollView> : <View style={styles.emptyCaddies}><EmptyState description="Caddies will appear after the directory service is connected." icon="account-group-outline" minHeight={590} title="No caddies available" /></View>}</ScreenSection>
+    <View><View accessibilityLabel={`${course.name} course photo`} accessibilityRole="image" style={styles.heroImage}><Image resizeMode="cover" source={localCoursePlaceholder(course)} style={styles.heroPhoto} /></View><View style={styles.introCard}>{location ? <Text style={styles.kicker}>{location}</Text> : null}<Text accessibilityRole="header" style={styles.title}>{course.name}</Text><View style={styles.rule}/><View style={styles.stats}><Stat label="PAR" value={String(course.par)}/><Stat label="YARDS" value={course.yardage.toLocaleString()}/><Stat label="HOLES" value={String(course.holes)}/><Stat label="AVAILABLE" value={`${available.length} ${available.length === 1 ? "caddie" : "caddies"}`}/></View></View></View>
+    <View style={styles.caddiesSection}><ScreenSection title="Available caddies" action={available.length > 0 ? <Pressable accessibilityLabel="See all available caddies" accessibilityRole="button" hitSlop={8} onPress={() => router.push({ pathname: "/golfer/caddies", params: { courseId: course.id } })} style={styles.seeAllButton}><Text style={styles.seeAll}>See All</Text></Pressable> : undefined}>{available.length ? <ScrollView horizontal contentContainerStyle={styles.horizontalList} showsHorizontalScrollIndicator={false}>{available.map((caddie) => <CaddieCard caddie={caddie} key={caddie.id} onPress={() => router.push({ pathname: "/golfer/caddies/[caddieId]", params: { caddieId: caddie.id, courseId: course.id } })} />)}</ScrollView> : <View style={styles.emptyCaddies}><EmptyState description="There are no caddies listed for this course yet. Please check again later." icon="account-group-outline" minHeight={180} title="No caddies available" /></View>}</ScreenSection></View>
     <View style={styles.locationCard}><View style={styles.locationCopy}><Text style={styles.kicker}>LOCATION</Text><Text style={styles.locationName}>{course.name}</Text>{location ? <Text style={styles.address}>⌾ {location}</Text> : null}<PrimaryButton label="Get Directions" /></View></View>
   </ResponsiveContent></ScrollView></SafeAreaView>;
 }
@@ -28,13 +28,14 @@ function Stat({ label, value }: { label: string; value: string }) { return <View
 const styles = StyleSheet.create({
   address: { color: "#718075", fontSize: typography.body },
   content: { gap: 44, paddingBottom: 48 },
-  emptyCaddies: { paddingHorizontal: spacing.xl },
+  caddiesSection: { paddingHorizontal: spacing.xl },
+  emptyCaddies: { width: "100%" },
   emptyPage: { flex: 1, justifyContent: "center", padding: spacing.xl },
-  frame: { gap: 44 },
+  frame: { gap: spacing.xl },
   description: { color: "#6B6A65", fontSize: 24, lineHeight: 30 },
   heroImage: { alignItems: "center", backgroundColor: "#E7EEE9", height: 365, justifyContent: "center", width: "100%" },
   heroPhoto: { height: "100%", width: "100%" },
-  horizontalList: { gap: spacing.lg, paddingHorizontal: spacing.xl },
+  horizontalList: { gap: spacing.lg },
   introCard: { backgroundColor: colors.surface, borderColor: "#999890", borderRadius: 12, borderWidth: 1, elevation: 4, gap: spacing.md, marginHorizontal: spacing.xl, marginTop: -78, padding: spacing.xl, shadowColor: "#000", shadowOpacity: 0.18, shadowRadius: 5 },
   kicker: { color: "#6F8176", fontSize: typography.small, fontWeight: "700", letterSpacing: 2, textTransform: "uppercase" },
   locationCard: { backgroundColor: colors.surface, borderColor: "#999890", borderRadius: radius.md, borderWidth: 1, marginHorizontal: spacing.xl, overflow: "hidden" },

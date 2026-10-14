@@ -1,8 +1,8 @@
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { authPalette } from "../../ui/auth-palette";
 import { router, useLocalSearchParams } from "expo-router";
-import { useEffect, useState } from "react";
-import { Image, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import { useEffect, useRef, useState } from "react";
+import { Animated, Easing, Image, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { spacing } from "@nobogey/ui";
 import NoBogeyLogo from "../../../../../assets/logo/NoBogey-Logo.png";
@@ -16,26 +16,48 @@ type Mode = "login" | "register";
 
 export function SplashScreen() {
   const [logoFailed, setLogoFailed] = useState(false);
-  const [activeBall, setActiveBall] = useState(0);
   const { initialRole, isHydrated } = useAppSession();
-  useEffect(() => {
-    const interval = setInterval(() => setActiveBall((current) => (current + 1) % 4), 280);
-    return () => clearInterval(interval);
-  }, []);
   useEffect(() => {
     if (!isHydrated) return;
     const timeout = setTimeout(() => {
       if (initialRole === "golfer") { router.replace("/golfer/home"); return; }
       if (initialRole === "caddie") { router.replace("/caddie/onboarding"); return; }
       router.replace("/onboarding");
-    }, 1400);
+    }, 2440);
     return () => clearTimeout(timeout);
   }, [initialRole, isHydrated]);
 
-  return <SafeAreaView edges={["top", "bottom"]} style={styles.splash}><View style={styles.splashContent}><View style={styles.splashBrand}><View style={styles.logoFrame}>{logoFailed ? <Text accessibilityRole="image" style={styles.logoFallback}>NB</Text> : <Image accessibilityLabel="NoBogey golfer and caddie logo" onError={() => setLogoFailed(true)} resizeMode="contain" source={SplashLogo} style={styles.logo} />}</View><Text accessibilityRole="header" style={styles.splashWordmark}>NoBogey</Text></View><GolfLoadingIndicator activeBall={activeBall} /></View></SafeAreaView>;
+  return <SafeAreaView edges={["top", "bottom"]} style={styles.splash}><View style={styles.splashContent}><View style={styles.splashBrand}><View style={styles.logoFrame}>{logoFailed ? <Text accessibilityRole="image" style={styles.logoFallback}>NB</Text> : <Image accessibilityLabel="NoBogey golfer and caddie logo" onError={() => setLogoFailed(true)} resizeMode="contain" source={SplashLogo} style={styles.logo} />}</View><Text accessibilityRole="header" style={styles.splashWordmark}>NoBogey</Text></View><GolfLoadingIndicator /></View></SafeAreaView>;
 }
 
-function GolfLoadingIndicator({ activeBall }: { activeBall: number }) { return <View accessibilityLabel="Golf loading" accessibilityRole="progressbar" style={styles.loading}><Text style={styles.loadingLabel}>GOLF</Text><View style={styles.loadingTrack}>{[0, 1, 2, 3].map((ball) => <View key={ball} style={[styles.loadingBall, ball === activeBall && styles.loadingBallActive]}><View style={styles.loadingBallDimple} /></View>)}</View><Text style={styles.loadingLabel}>LOADING</Text></View>; }
+function GolfLoadingIndicator() {
+  const progress = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    const animation = Animated.loop(Animated.sequence([
+      Animated.timing(progress, { toValue: 1, duration: 1100, easing: Easing.inOut(Easing.cubic), useNativeDriver: true }),
+      Animated.delay(120),
+      Animated.timing(progress, { toValue: 0, duration: 1100, easing: Easing.inOut(Easing.cubic), useNativeDriver: true }),
+      Animated.delay(120),
+    ]));
+    animation.start();
+    return () => animation.stop();
+  }, [progress]);
+
+  return <View accessibilityLabel="Golf loading" accessibilityRole="progressbar" style={styles.loadingTrack}>
+    <Animated.View style={[styles.loadingBall, { transform: [
+      { translateX: progress.interpolate({ inputRange: [0, 1], outputRange: [0, 78] }) },
+      { rotate: progress.interpolate({ inputRange: [0, 1], outputRange: ["0deg", "360deg"] }) },
+    ] }]}>
+      {Array.from({ length: 7 }, (_, row) => Array.from({ length: 7 }, (_, column) => {
+        const x = (column - 3) * 3.15;
+        const y = (row - 3) * 3.15;
+        if (x * x + y * y > 10.5 * 10.5) return null;
+        return <View key={`${row}-${column}`} style={[styles.loadingBallDimple, { left: 12.6 + x, top: 12.6 + y }]} />;
+      }))}
+      <View style={styles.loadingBallHighlight} />
+    </Animated.View>
+  </View>;
+}
 
 export function OnboardingScreen() {
   const { selectInitialRole } = useAppSession();
@@ -106,7 +128,11 @@ const styles = StyleSheet.create({
   roleIntroTitle: { color: authPalette.surface, fontSize: 30, fontWeight: "900", letterSpacing: -1 },
   roleIntroSubtitle: { color: authPalette.onGreenMuted, fontSize: 15, lineHeight: 22 },
   roleIconBadge: { alignItems: "center", backgroundColor: authPalette.goldSoft, borderRadius: 12, height: 44, justifyContent: "center", width: 44 },
-  arrow: { color: authPalette.forest, fontSize: 30 }, authContent: { gap: spacing.xl, padding: spacing.xl, paddingTop: 48 }, authHeader: { gap: spacing.sm }, authLogo: { height: 48, width: 48 }, authSafe: { backgroundColor: authPalette.surface, flex: 1 }, authSubtitle: { color: "#617067", fontSize: 16, lineHeight: 23 }, authTitle: { color: "#143B2A", fontSize: 34, fontWeight: "900", letterSpacing: -1 }, field: { gap: 7 }, fieldLabel: { color: "#416052", fontSize: 13, fontWeight: "800" }, form: { gap: spacing.lg }, input: { backgroundColor: "#FFFFFF", borderColor: "#CBD4CC", borderCurve: "continuous", borderRadius: 12, borderWidth: 1, color: "#16231C", fontSize: 16, minHeight: 52, paddingHorizontal: 14 }, loading: { alignItems: "center", gap: 8 }, loadingBall: { alignItems: "center", backgroundColor: authPalette.forest, borderColor: authPalette.goldSoft, borderRadius: 12, borderWidth: 2, height: 24, justifyContent: "center", width: 24 }, loadingBallActive: { backgroundColor: authPalette.gold, transform: [{ scale: 1.12 }] }, loadingBallDimple: { borderColor: authPalette.goldSoft, borderRadius: 4, borderWidth: 1, height: 7, width: 7 }, loadingLabel: { color: authPalette.goldSoft, fontSize: 10, fontWeight: "900", letterSpacing: 2 }, loadingTrack: { alignItems: "center", borderColor: authPalette.gold, borderCurve: "continuous", borderRadius: 20, borderWidth: 2, flexDirection: "row", gap: 8, justifyContent: "center", minHeight: 44, paddingHorizontal: 12 }, logo: { height: "100%", width: "100%" }, logoFallback: { color: authPalette.goldSoft, fontSize: 28, fontWeight: "900" }, logoFrame: { alignItems: "center", height: 196, justifyContent: "center", width: 196 }, modeTab: { alignItems: "center", borderRadius: 10, flex: 1, justifyContent: "center", minHeight: 44 }, modeTabActive: { backgroundColor: "#FFFFFF" }, modeTabText: { color: "#68756C", fontSize: 15, fontWeight: "700" }, modeTabTextActive: { color: "#174B32" }, modeTabs: { backgroundColor: "#E4EAE4", borderRadius: 12, flexDirection: "row", padding: 4 }, placeholderNote: { color: "#6A706B", fontSize: 12, lineHeight: 18, textAlign: "center" }, roleCopy: { flex: 1, gap: 3 }, roleDescription: { color: "#647067", fontSize: 13, lineHeight: 18 }, roleGroup: { gap: spacing.sm }, roleIcon: { fontSize: 25 }, roleTab: { alignItems: "center", backgroundColor: authPalette.surface, borderColor: authPalette.line, borderCurve: "continuous", borderRadius: 14, borderWidth: 1, flexDirection: "row", gap: 12, padding: 16 }, roleTitle: { color: authPalette.forest, fontSize: 17, fontWeight: "800" }, secondaryLink: { color: authPalette.forest, fontSize: 15, fontWeight: "800", textAlign: "center" }, splash: { backgroundColor: authPalette.forest, flex: 1 }, splashBrand: { alignItems: "center", gap: 10 }, splashContent: { alignItems: "center", flex: 1, gap: 18, justifyContent: "center", padding: spacing.xl }, splashWordmark: { color: authPalette.goldSoft, fontSize: 25, fontWeight: "900", letterSpacing: -0.6 }
+  arrow: { color: authPalette.forest, fontSize: 30 }, authContent: { gap: spacing.xl, padding: spacing.xl, paddingTop: 48 }, authHeader: { gap: spacing.sm }, authLogo: { height: 48, width: 48 }, authSafe: { backgroundColor: authPalette.surface, flex: 1 }, authSubtitle: { color: "#617067", fontSize: 16, lineHeight: 23 }, authTitle: { color: "#143B2A", fontSize: 34, fontWeight: "900", letterSpacing: -1 }, field: { gap: 7 }, fieldLabel: { color: "#416052", fontSize: 13, fontWeight: "800" }, form: { gap: spacing.lg }, input: { backgroundColor: "#FFFFFF", borderColor: "#CBD4CC", borderCurve: "continuous", borderRadius: 12, borderWidth: 1, color: "#16231C", fontSize: 16, minHeight: 52, paddingHorizontal: 14 }, loadingTrack: { backgroundColor: "transparent", height: 40, width: 118 },
+  loadingBall: { position: "absolute", left: 6, top: 6, backgroundColor: "#F3F5EF", borderColor: "#CAD4CD", borderRadius: 14, borderWidth: 1, height: 28, width: 28, overflow: "hidden", boxShadow: "0 3px 6px rgba(0, 0, 0, 0.24), inset -3px -4px 7px rgba(78, 105, 90, 0.18)" },
+  loadingBallDimple: { position: "absolute", backgroundColor: "#DEE5DC", borderRadius: 1, height: 1.75, width: 1.75, boxShadow: "inset 0 1px 1px rgba(67, 94, 79, 0.3), 0 1px 0 rgba(255, 255, 255, 0.85)" },
+  loadingBallHighlight: { position: "absolute", left: 3.5, top: 2, width: 13, height: 6, borderRadius: 7, backgroundColor: "rgba(255, 255, 255, 0.5)", transform: [{ rotate: "-30deg" }] },
+  logo: { height: "100%", width: "100%" }, logoFallback: { color: authPalette.goldSoft, fontSize: 28, fontWeight: "900" }, logoFrame: { alignItems: "center", height: 196, justifyContent: "center", width: 196 }, modeTab: { alignItems: "center", borderRadius: 10, flex: 1, justifyContent: "center", minHeight: 44 }, modeTabActive: { backgroundColor: "#FFFFFF" }, modeTabText: { color: "#68756C", fontSize: 15, fontWeight: "700" }, modeTabTextActive: { color: "#174B32" }, modeTabs: { backgroundColor: "#E4EAE4", borderRadius: 12, flexDirection: "row", padding: 4 }, placeholderNote: { color: "#6A706B", fontSize: 12, lineHeight: 18, textAlign: "center" }, roleCopy: { flex: 1, gap: 3 }, roleDescription: { color: "#647067", fontSize: 13, lineHeight: 18 }, roleGroup: { gap: spacing.sm }, roleIcon: { fontSize: 25 }, roleTab: { alignItems: "center", backgroundColor: authPalette.surface, borderColor: authPalette.line, borderCurve: "continuous", borderRadius: 14, borderWidth: 1, flexDirection: "row", gap: 12, padding: 16 }, roleTitle: { color: authPalette.forest, fontSize: 17, fontWeight: "800" }, secondaryLink: { color: authPalette.forest, fontSize: 15, fontWeight: "800", textAlign: "center" }, splash: { backgroundColor: authPalette.forest, flex: 1 }, splashBrand: { alignItems: "center", gap: 10 }, splashContent: { alignItems: "center", flex: 1, gap: 18, justifyContent: "center", padding: spacing.xl }, splashWordmark: { color: authPalette.goldSoft, fontSize: 25, fontWeight: "900", letterSpacing: -0.6 }
 });
 
 export { AuthScreen } from './AuthScreen';
