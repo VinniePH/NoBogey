@@ -15,6 +15,9 @@ export function getSupabaseClient(): SupabaseClient {
         autoRefreshToken: true,
         persistSession: true,
         detectSessionInUrl: false,
+        // Email callbacks carry a one-time code bound to a verifier stored on
+        // this device instead of exposing a reusable session in the deep link.
+        flowType: 'pkce',
       },
     });
   }

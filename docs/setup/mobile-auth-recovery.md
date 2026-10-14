@@ -5,7 +5,7 @@ The mobile app sends confirmation and recovery emails to dedicated HTTPS bridge 
 - `https://nobogeyofficial.com/mobile-auth/confirm`
 - `https://nobogeyofficial.com/mobile-auth/recovery`
 
-The bridge preserves the Supabase Auth fragment and opens `nobogey://auth/callback` or `nobogey://reset-password`. The Expo routes validate the exact scheme, host, and path before accepting a session. Recovery then calls `updateUser({ password })` and clears the local recovery session.
+The bridge preserves the Supabase Auth callback parameters and opens `nobogey://auth/callback` or `nobogey://reset-password`. The mobile client uses PKCE, so the callback code is bound to the verifier stored on the device that requested the email. The Expo routes validate the exact scheme, host, and path before accepting a session. Recovery then calls `updateUser({ password })` and clears the local recovery session.
 
 ## Hosted Supabase settings
 
