@@ -3,8 +3,8 @@ import { isAllowedMobileCaptchaCallback, MOBILE_CAPTCHA_CALLBACKS, shouldBypassM
 
 const CAPTCHA_URL = "https://nobogeyofficial.com/mobile-captcha";
 
-export async function completeMobileCaptcha(): Promise<void> {
-  if (shouldBypassMobileCaptcha()) return;
+export async function completeMobileCaptcha(): Promise<string> {
+  if (shouldBypassMobileCaptcha()) return "development-bypass";
 
   const callbackUrl = MOBILE_CAPTCHA_CALLBACKS[0];
   const token = await new Promise<string>((resolve, reject) => {
@@ -28,10 +28,7 @@ export async function completeMobileCaptcha(): Promise<void> {
     });
   });
 
-  const response = await fetch("https://nobogeyofficial.com/api/turnstile/verify", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ token, action: "mobile-auth" })
-  });
-  if (!response.ok) throw new Error("Security check failed. Please try again.");
+  // Turnstile tokens are single-use. Supabase Auth verifies this token server-side,
+  // so the mobile client must not pre-consume it at the Worker verification endpoint.
+  return token;
 }

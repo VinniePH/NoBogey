@@ -7,6 +7,7 @@ import { colors, spacing } from '@nobogey/ui';
 
 import { signIn, signUp } from '../../../backend/auth/auth.service';
 import { completeMobileCaptcha } from '../../../backend/auth/captcha';
+import { getPasswordPolicyError } from '../../../backend/auth/password-policy';
 import { authPalette } from '../../ui/auth-palette';
 import { Button } from '../../ui/primitives';
 import { TermsAcceptanceModal } from '../legal/TermsAcceptanceModal';
@@ -15,14 +16,14 @@ import { useAppSession, type AppRole } from '../session/AppSession';
 type Mode = 'login' | 'register';
 
 export function AuthScreen() {
-  const params = useLocalSearchParams<{ mode?: Mode; role?: AppRole; returnTo?: string; caddieId?: string; courseId?: string; teeTimeId?: string; time?: string; date?: string; partySize?: string }>();
+  const params = useLocalSearchParams<{ mode?: Mode; role?: AppRole; returnTo?: string; caddieId?: string; courseId?: string; teeTimeId?: string; time?: string; date?: string; partySize?: string; confirmed?: string }>();
   const [mode, setMode] = useState<Mode>(params.mode === 'register' ? 'register' : 'login');
   const role: AppRole = params.role === 'caddie' ? 'caddie' : 'golfer';
   const [displayName, setDisplayName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [passwordVisible, setPasswordVisible] = useState(false);
-  const [message, setMessage] = useState<string>();
+  const [message, setMessage] = useState<string | undefined>(params.confirmed === '1' ? 'Email confirmed. Log in to continue.' : undefined);
   const [submitting, setSubmitting] = useState(false);
   const [termsVisible, setTermsVisible] = useState(false);
   const { selectInitialRole, signInAs } = useAppSession();
@@ -42,18 +43,18 @@ export function AuthScreen() {
     setMessage(undefined);
     try {
       setMessage('Complete the security check in your browser, then return to NoBogey.');
-      await completeMobileCaptcha();
+      const captchaToken = await completeMobileCaptcha();
       setMessage(undefined);
       if (mode === 'register') {
         const username = displayName.replace(/[^A-Za-z0-9_]/g, '').slice(0, 32);
-        const result = await signUp({ email, password, displayName, role, ...(username.length >= 3 ? { username } : {}) });
+        const result = await signUp({ email, password, displayName, role, captchaToken, ...(username.length >= 3 ? { username } : {}) });
         if (result.needsEmailConfirmation) {
           setMessage('Check your email to confirm your account, then return here and log in.');
           setMode('login');
           return;
         }
       } else {
-        const session = await signIn({ email, password });
+        const session = await signIn({ email, password, captchaToken });
         if (!session.roles.includes(role) && !session.roles.includes('super_admin')) throw new Error(`This account is not registered as a ${role}.`);
       }
       finish();
@@ -64,7 +65,18 @@ export function AuthScreen() {
     }
   };
 
-  const submit = () => mode === 'register' ? setTermsVisible(true) : void authenticate();
+  const submit = () => {
+    if (mode === 'login') {
+      void authenticate();
+      return;
+    }
+    const passwordError = getPasswordPolicyError(password);
+    if (passwordError) {
+      setMessage(passwordError);
+      return;
+    }
+    setTermsVisible(true);
+  };
 
   return <SafeAreaView edges={['top', 'bottom']} style={styles.safe}><ScrollView contentContainerStyle={styles.page} contentInsetAdjustmentBehavior="automatic" keyboardShouldPersistTaps="handled"><View style={styles.header}><Text style={styles.eyebrow}>N O B O G E Y  ·  {role.toUpperCase()}</Text><Text accessibilityRole="header" style={styles.title}>{mode === 'login' ? 'Welcome back.' : 'Join NoBogey.'}</Text><Text style={styles.subtitle}>{mode === 'login' ? `Log in to your ${role} account.` : `Create your ${role} account. Email confirmation is required.`}</Text></View><View style={styles.form}>{mode === 'register' ? <Field label="Full name" onChangeText={setDisplayName} value={displayName} /> : null}<Field autoCapitalize="none" keyboardType="email-address" label="Email address" onChangeText={setEmail} value={email} /><PasswordField onChangeText={setPassword} onToggleVisibility={() => setPasswordVisible((visible) => !visible)} value={password} visible={passwordVisible} />{mode === 'login' ? <Pressable accessibilityLabel="Forgot password" accessibilityRole="link" onPress={() => router.push({ pathname: '/reset-password', params: { email, role } })} style={styles.forgotPassword}><Text style={styles.forgotPasswordText}>Forgot password?</Text></Pressable> : null}{message ? <Text accessibilityLiveRegion="polite" style={styles.message}>{message}</Text> : null}<Button palette={authPalette} disabled={submitting || !email || !password || (mode === 'register' && !displayName)} onPress={submit}>{submitting ? 'Please wait…' : mode === 'login' ? 'Log in' : 'Create account'}</Button></View></ScrollView><TermsAcceptanceModal onAccept={() => { setTermsVisible(false); void authenticate(); }} onDecline={() => setTermsVisible(false)} visible={termsVisible} /></SafeAreaView>;
 }

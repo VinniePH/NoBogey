@@ -11,11 +11,13 @@ export interface SignUpInput {
   displayName: string;
   username?: string;
   role: 'golfer' | 'caddie';
+  captchaToken: string;
 }
 
 export interface SignInInput {
   email: string;
   password: string;
+  captchaToken: string;
 }
 
 export interface AuthSession {

@@ -30,7 +30,8 @@ export async function signUp(input: SignUpInput): Promise<SignUpResult> {
     email: input.email.trim().toLowerCase(),
     password: input.password,
     options: {
-      emailRedirectTo: `${appUrl.replace(/\/$/, '')}/auth/callback`,
+      captchaToken: input.captchaToken,
+      emailRedirectTo: `${appUrl.replace(/\/$/, '')}/mobile-auth/confirm`,
       data: { display_name: input.displayName.trim(), username: input.username?.trim() || undefined, intended_role: input.role, terms_version: '2026-08-14', privacy_version: '2026-08-14', legal_accepted_at: new Date().toISOString() },
     },
   });
@@ -49,7 +50,11 @@ export async function signUp(input: SignUpInput): Promise<SignUpResult> {
 /** Sign in an existing account. Will call Supabase Auth password sign-in. */
 export async function signIn(input: SignInInput): Promise<AuthSession> {
   const client = getSupabaseClient();
-  const { data, error } = await client.auth.signInWithPassword({ email: input.email.trim().toLowerCase(), password: input.password });
+  const { data, error } = await client.auth.signInWithPassword({
+    email: input.email.trim().toLowerCase(),
+    password: input.password,
+    options: { captchaToken: input.captchaToken },
+  });
   if (error) throw error;
   let session = await toAuthSession(data.user.id, data.user.email ?? input.email, data.session.access_token, data.session.expires_at ?? 0);
   if (!session.roles.length && (data.user.user_metadata?.intended_role === 'golfer' || data.user.user_metadata?.intended_role === 'caddie')) {
@@ -61,12 +66,22 @@ export async function signIn(input: SignInInput): Promise<AuthSession> {
 }
 
 /** Send the account recovery email through Supabase Auth. */
-export async function requestPasswordReset(email: string): Promise<void> {
+export async function requestPasswordReset(email: string, captchaToken: string): Promise<void> {
   const { appUrl } = getBackendConfig();
   const { error } = await getSupabaseClient().auth.resetPasswordForEmail(email.trim().toLowerCase(), {
-    redirectTo: `${appUrl.replace(/\/$/, '')}/auth/callback`,
+    captchaToken,
+    redirectTo: `${appUrl.replace(/\/$/, '')}/mobile-auth/recovery`,
   });
   if (error) throw error;
+}
+
+/** Replace the password for an authenticated recovery session. */
+export async function updatePassword(password: string): Promise<void> {
+  const client = getSupabaseClient();
+  const { error } = await client.auth.updateUser({ password });
+  if (error) throw error;
+  const { error: signOutError } = await client.auth.signOut({ scope: 'local' });
+  if (signOutError) throw signOutError;
 }
 
 /** Sign out the current account. Will invalidate the local Supabase Auth session. */
