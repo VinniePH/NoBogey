@@ -33,7 +33,11 @@ jobs:
           node-version: 24
           cache: pnpm
       - run: pnpm install --no-frozen-lockfile
-      - run: pnpm --filter @nobogey/landing-page build
+      - name: Build landing page
+        run: pnpm --filter @nobogey/landing-page build
+        env:
+          VITE_GOLFER_ANDROID_APK_URL: ${{ vars.VITE_GOLFER_ANDROID_APK_URL }}
+          VITE_CADDIE_ANDROID_APK_URL: ${{ vars.VITE_CADDIE_ANDROID_APK_URL }}
       - run: pnpm --filter @nobogey/admin-web build
       - name: Add the admin portal to the site artifact
         shell: bash
