@@ -6,11 +6,13 @@ export default function CaddieLayout() {
   return (
     <Stack screenOptions={{ contentStyle: { backgroundColor: colors.canvas }, headerShown: false, headerTitle: () => <NoBogeyWordmark centered={false} />, headerTitleAlign: "center", headerShadowVisible: false, headerStyle: { backgroundColor: colors.canvas } }}>
       <Stack.Screen name="dashboard" />
+      <Stack.Screen name="roster" options={{ headerShown: true, title: "Caddie roster" }} />
       <Stack.Screen name="onboarding" />
       <Stack.Screen name="verification" />
       <Stack.Screen name="profile" />
       <Stack.Screen name="settings" />
       <Stack.Screen name="matches/[bookingId]" options={{ headerShown: true, title: "Match details" }} />
+      <Stack.Screen name="matches/[bookingId]/[confirmation]" options={{ headerShown: true, title: "Round confirmation" }} />
     </Stack>
   );
 }

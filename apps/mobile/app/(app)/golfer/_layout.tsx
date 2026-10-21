@@ -24,6 +24,7 @@ export default function GolferLayout() {
       <Stack.Screen name="caddies/[caddieId]" options={{ title: "Caddie profile" }} />
       <Stack.Screen name="bookings/index" />
       <Stack.Screen name="bookings/[bookingId]/index" options={{ title: "Booking details" }} />
+      <Stack.Screen name="bookings/[bookingId]/[confirmation]" options={{ title: "Round confirmation" }} />
       <Stack.Screen name="bookings/[bookingId]/rate-caddie" options={{ title: "Rate your caddie" }} />
       <Stack.Screen name="bookings/new/index" options={{ title: "Booking" }} />
       <Stack.Screen name="bookings/new/tee-times" options={{ title: "Choose a tee time" }} />

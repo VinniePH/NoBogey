@@ -109,11 +109,11 @@ export function GetStartedPage() {
             <div className="mt-14 grid gap-5 lg:grid-cols-2">
               <MobileRoleCard
                 role="golfer"
-                description="Discover courses, choose a tee time and caddie, complete payment, and keep every booking organized."
+                description="Discover courses, choose a tee time and caddie, and follow your confirmed bookings through mutual meetup and payment confirmation."
               />
               <MobileRoleCard
                 role="caddie"
-                description="Manage your roster, respond to golfer requests, and stay current on upcoming rounds."
+                description="Manage your roster, respond to requests, and confirm meetup and payment received together with your golfer."
               />
             </div>
 

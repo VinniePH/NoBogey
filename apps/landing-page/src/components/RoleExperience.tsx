@@ -29,26 +29,29 @@ type RoleFlow = {
 const roleFlows: Record<Role, RoleFlow> = {
   golfer: {
     eyebrow: "Plan your round",
-    title: "From course discovery to booking receipt.",
-    description: "A clear booking flow keeps every decision in the right order and every detail visible before payment.",
+    title: "From choosing a course to confirming your round.",
+    description: "Open a confirmed round in My bookings, confirm your meetup together, then acknowledge payment on both sides.",
     steps: [
       "Choose a course",
       "Choose a tee time",
       "Choose from available caddies",
       "Confirm your details",
-      "Choose your payment",
-      "View your booking receipt"
+      "Open a confirmed round in My bookings",
+      "Confirm meetup with your caddie",
+      "Confirm payment together"
     ]
   },
   caddie: {
     eyebrow: "Manage your roster",
     title: "Know what’s ahead and respond with clarity.",
-    description: "Upcoming games and golfer requests stay together, so caddies can respond and see the updated booking receipt.",
+    description: "Open a confirmed booking in your roster. Both you and your golfer confirm the meetup, then acknowledge payment and receipt.",
     steps: [
       "Open your roster",
       "Check upcoming games and notifications",
       "Accept or decline golfer requests",
-      "View the updated booking receipt"
+      "Open a confirmed booking",
+      "Confirm meetup with your golfer",
+      "Confirm payment received"
     ]
   },
   admin: {
@@ -104,62 +107,105 @@ function MockHeader({ icon, label }: { icon: ReactNode; label: string }) {
   );
 }
 
-function GolferMock({ step, teeTime, caddie, payment, receipt, onTeeTime, onCaddie, onPayment, onReceipt }: { step: number; teeTime: string; caddie: string; payment: string; receipt: boolean; onTeeTime: (value: string) => void; onCaddie: (value: string) => void; onPayment: (value: string) => void; onReceipt: () => void }) {
+type Participant = "golfer" | "caddie";
+type ConfirmationStep = "meetup" | "payment";
+type MutualState = Record<Participant, boolean>;
+type RoundState = Record<ConfirmationStep, MutualState>;
+const emptyRoundState = (): RoundState => ({ meetup: { golfer: false, caddie: false }, payment: { golfer: false, caddie: false } });
+const bothConfirmed = (state: MutualState) => state.golfer && state.caddie;
+
+type RoundPreviewProps = {
+  role: Participant;
+  teeTime: string;
+  caddie: string;
+  round: RoundState;
+  onContinue: () => void;
+};
+
+function ConfirmedRoundCard({ teeTime, caddie, round, onContinue }: Omit<RoundPreviewProps, "role">) {
+  return <button aria-label="Open confirmed booking at Valley Golf" className="confirmed-round-card" onClick={onContinue} type="button">
+    <span className="notification-pill">Confirmed booking</span>
+    <strong>Valley Golf &amp; Country Club</strong>
+    <span>Sunday · {teeTime} · Alex Garcia · 4 golfers</span>
+    <span>Caddie: {caddie} · PHP 1,500</span>
+    <span className="round-preview-status">Meetup: {bothConfirmed(round.meetup) ? "confirmed" : "pending"} · Payment: {bothConfirmed(round.payment) ? "confirmed" : "pending"}</span>
+    <span className="round-preview-open">View round confirmations <ChevronRight size={15} /></span>
+  </button>;
+}
+
+function ConfirmationMock({ role, step, teeTime, caddie, round, onContinue, onConfirm, onMeetup }: RoundPreviewProps & { step: ConfirmationStep; onConfirm: () => void; onMeetup: () => void }) {
+  const state = round[step];
+  const complete = bothConfirmed(state);
+  const locked = step === "payment" && !bothConfirmed(round.meetup);
+  const other = role === "golfer" ? "caddie" : "golfer";
+  const label = step === "meetup" ? "Meetup confirmation" : "Payment confirmation";
+  return <div className="experience-mock">
+    <MockHeader icon={step === "meetup" ? <UsersRound size={15} /> : <CreditCard size={15} />} label={role === "golfer" ? "Golfer · My bookings" : "Caddie · Roster"} />
+    <div className="experience-mock-body">
+      <p className="mock-eyebrow">Confirmed round · {teeTime}</p>
+      <h4>{complete ? step === "meetup" ? "Meetup confirmed" : "Payment confirmed" : label}</h4>
+      <p className="round-preview-description">{step === "meetup" ? `Confirm once you’ve met your ${other} at the course. Both sides must confirm.` : role === "golfer" ? "Acknowledge paying your caddie. The caddie also needs to confirm receipt." : "Acknowledge receiving the caddie fee. Your golfer also needs to confirm payment."}</p>
+      <div className="round-preview-details"><strong>Valley Golf &amp; Country Club</strong><span>Alex Garcia · {caddie}</span>{step === "payment" ? <strong className="round-preview-amount">PHP 1,500</strong> : <span>Meet at the clubhouse caddie desk.</span>}</div>
+      <div aria-label="Participant confirmations" className="round-preview-participants">{(["golfer", "caddie"] as const).map((participant) => <div key={participant}><div><strong>{participant === "golfer" ? "Golfer" : "Caddie"}{participant === role ? " (you)" : ""}</strong><span>{state[participant] ? "Confirmed" : "Waiting for confirmation"}</span></div>{state[participant] ? <Check aria-label="Confirmed" size={19} /> : <Clock3 aria-label="Pending" size={19} />}</div>)}</div>
+      <p aria-live="polite" className="round-preview-notice">{complete ? "Both sides have confirmed." : locked ? "Both participants must confirm meetup before payment." : state[role] ? `Your side is confirmed. Waiting for your ${other}.` : state[other] ? `Your ${other} has confirmed. Your confirmation is still needed.` : "One confirmation does not complete this step."}</p>
+      <button className="mock-primary" disabled={locked || state[role]} onClick={onConfirm} type="button">{complete ? "Both sides confirmed" : state[role] ? "Your confirmation is recorded" : step === "meetup" ? `I’ve met my ${other}` : role === "golfer" ? "I’ve paid the caddie" : "I’ve received payment"}<Check size={15} /></button>
+      {step === "meetup" && complete ? <button className="round-preview-link" onClick={onContinue} type="button">Continue to payment confirmation <ChevronRight size={15} /></button> : null}
+      {locked ? <button className="round-preview-link" onClick={onMeetup} type="button">Open meetup confirmation <ChevronRight size={15} /></button> : null}
+      <p className="round-preview-caption">Interactive preview. No payment is collected.</p>
+    </div>
+  </div>;
+}
+
+function GolferMock({ step, teeTime, caddie, round, onTeeTime, onCaddie, onContinue }: Omit<RoundPreviewProps, "role"> & { step: number; onTeeTime: (value: string) => void; onCaddie: (value: string) => void }) {
   const stages = [
     ["Find a course", "Explore Valley Golf and nearby clubs.", "Choose this course"],
-    ["Pick your tee time", "Sunday morning · 7:20 AM", "Choose this tee time"],
-    ["Choose your caddie", "Jun Mercado · 4.9 · Available", "Choose this caddie"],
-    ["Confirm your details", "Alex Garcia · 4 players", "Confirm your details"],
-    ["Choose your payment", "Secure checkout · Review next", "Continue to payment"],
-    ["Booking receipt", "Valley Golf · Sunday · 7:20 AM", "View booking receipt"]
+    ["Pick your tee time", "Choose a time for your next round.", "Choose this tee time"],
+    ["Choose your caddie", "Compare available caddies.", "Choose this caddie"],
+    ["Confirm your details", "Alex Garcia · 4 players", "Send booking request"],
+    ["My bookings", "Open a confirmed round", "Open meetup confirmation"]
   ] as const;
   const [stageTitle, stageCopy, action] = stages[step] ?? stages[0];
   return (
     <div className="experience-mock">
       <MockHeader icon={<Flag size={15} />} label="Golfer" />
-      <div className="experience-progress">{stages.map((_, index) => <span className={index <= step ? "active" : ""} key={index} />)}</div>
+      <div className="experience-progress">{roleFlows.golfer.steps.map((_, index) => <span className={index <= step ? "active" : ""} key={index} />)}</div>
       <div className="experience-mock-body">
         <p className="mock-eyebrow">{stageTitle}</p>
         <h4>{stageCopy}</h4>
-        <div className="golfer-course-summary">
-          <img src="/images/course-valley.jpg" alt="" />
-          <div><p>Valley Golf &amp; Country Club</p><span>Antipolo, Rizal</span></div>
-          <ChevronRight size={17} />
-        </div>
-        <div className="mock-detail-grid">
-          <div><Clock3 size={16} /><span>Tee time</span><strong>{teeTime}</strong></div>
-          <div><UsersRound size={16} /><span>Caddie</span><strong>{caddie}</strong></div>
-          <div><CreditCard size={16} /><span>Payment</span><strong>{payment}</strong></div>
-          <div><ReceiptText size={16} /><span>Receipt</span><strong>{receipt ? "Confirmed" : "After payment"}</strong></div>
-        </div>
+        {step === 4 ? <ConfirmedRoundCard caddie={caddie} onContinue={onContinue} round={round} teeTime={teeTime} /> : <>
+          <div className="golfer-course-summary"><img src="/images/course-valley.jpg" alt="" /><div><p>Valley Golf &amp; Country Club</p><span>Antipolo, Rizal</span></div><ChevronRight size={17} /></div>
+          <div className="mock-detail-grid">
+            <div><Clock3 size={16} /><span>Tee time</span><strong>{teeTime}</strong></div>
+            <div><UsersRound size={16} /><span>Preferred caddie</span><strong>{caddie}</strong></div>
+            <div><CreditCard size={16} /><span>Caddie fee</span><strong>PHP 1,500</strong></div>
+            <div><ReceiptText size={16} /><span>Group size</span><strong>4 golfers</strong></div>
+          </div>
+        </>}
         {step === 1 ? <div className="mock-choice-grid">{["7:20 AM", "8:40 AM"].map((value) => <button className={teeTime === value ? "selected" : ""} key={value} onClick={() => onTeeTime(value)} type="button"><Clock3 size={14} />{value}</button>)}</div> : null}
         {step === 2 ? <div className="mock-choice-grid">{["Jun Mercado", "Paolo Reyes"].map((value) => <button className={caddie === value ? "selected" : ""} key={value} onClick={() => onCaddie(value)} type="button"><UsersRound size={14} />{value}</button>)}</div> : null}
-        {step === 4 ? <div className="mock-choice-grid">{["Card ending 4242", "GCash"].map((value) => <button className={payment === value ? "selected" : ""} key={value} onClick={() => onPayment(value)} type="button"><CreditCard size={14} />{value}</button>)}</div> : null}
-        <button className="mock-primary" onClick={step === 5 ? onReceipt : undefined}>{receipt && step === 5 ? "Booking confirmed" : action} <ChevronRight size={15} /></button>
+        {step === 3 ? <p className="round-preview-description">The club owns final caddie assignment. The next step shows an example of an accepted booking.</p> : null}
+        {step !== 4 ? <button className="mock-primary" onClick={onContinue} type="button">{action} <ChevronRight size={15} /></button> : null}
       </div>
     </div>
   );
 }
 
-function CaddieMock({ step, availability, editing, requestStatus, onAvailability, onEditProfile, onRequest }: { step: number; availability: boolean; editing: boolean; requestStatus: string; onAvailability: () => void; onEditProfile: () => void; onRequest: (status: string) => void }) {
+function CaddieMock({ step, availability, editing, requestStatus, onAvailability, onEditProfile, onRequest, teeTime, caddie, round, onContinue }: Omit<RoundPreviewProps, "role"> & { step: number; availability: boolean; editing: boolean; requestStatus: string; onAvailability: () => void; onEditProfile: () => void; onRequest: (status: string) => void }) {
   const [selectedTime, setSelectedTime] = useState("7:20 AM");
   return (
     <div className="experience-mock">
       <MockHeader icon={<UsersRound size={15} />} label="Caddie" />
       <div className="mock-tabs"><span>Schedule</span><span className="active">Roster</span><span>Profile</span></div>
       <div className="experience-mock-body">
-        <div className="flex items-end justify-between gap-4"><div><p className="mock-eyebrow">{step === 0 ? "Upcoming roster" : step === 1 ? "Schedule & notifications" : step === 2 ? "Request decision" : "Booking updated"}</p><h4>{step === 2 ? "Accept or decline requests" : step === 3 ? "Receipt updated" : "Requests that need you"}</h4></div><span className="notification-pill">{step < 2 ? "2 new" : "Ready"}</span></div>
-        <div className="request-card request-card-active">
-          <div className="request-time"><strong>7:20</strong><span>AM</span></div>
-          <div className="min-w-0 flex-1"><p>Valley Golf &amp; Country Club</p><span>Alex Garcia · Sunday</span></div>
+        <div className="flex items-end justify-between gap-4"><div><p className="mock-eyebrow">{step === 0 ? "Upcoming roster" : step === 1 ? "Schedule & notifications" : step === 2 ? "Request decision" : "Booking updated"}</p><h4>{step === 2 ? "Accept or decline requests" : step === 3 ? "Your confirmed booking" : "Requests that need you"}</h4></div><span className="notification-pill">{step < 2 ? "1 new" : "Ready"}</span></div>
+        {step < 3 ? <><div className="request-card request-card-active">
+          <div className="request-time"><strong>1:40</strong><span>PM</span></div>
+          <div className="min-w-0 flex-1"><p>Manila Southwoods</p><span>Miguel Ramos · Sunday</span></div>
           <Bell size={16} />
         </div>
         <div className="request-actions"><button onClick={() => onRequest("Declined")} type="button"><X size={15} /> Decline</button><button onClick={() => onRequest("Accepted")} type="button"><Check size={15} /> Accept</button></div>
-        <div className="request-card">
-          <div className="request-time"><strong>1:40</strong><span>PM</span></div>
-          <div className="min-w-0 flex-1"><p>Manila Southwoods</p><span>Upcoming game · Confirmed</span></div>
-          <ReceiptText size={16} />
-        </div>
+        <p aria-live="polite" className="round-preview-description">Request: {requestStatus}</p></> : null}
+        <ConfirmedRoundCard caddie={caddie} onContinue={onContinue} round={round} teeTime={teeTime} />
         <div className="mock-inline-actions"><button onClick={onAvailability} type="button"><Clock3 size={14} /> {availability ? "Available for tee times" : "Set available tee times"}</button><button onClick={onEditProfile} type="button"><Pencil size={14} /> {editing ? "Save profile" : "Edit profile"}</button><span className="text-xs text-muted">Request: {requestStatus}</span></div>
         {availability ? <div className="mock-edit-panel"><span>Available tee times</span><div>{["7:20 AM", "8:40 AM", "1:40 PM"].map((time) => <button className={selectedTime === time ? "selected" : ""} key={time} onClick={() => setSelectedTime(time)} type="button">{time}</button>)}</div></div> : null}
         {editing ? <label className="mock-profile-edit">Profile name<input aria-label="Caddie profile name" defaultValue="Jun Mercado" /></label> : null}
@@ -190,14 +236,26 @@ export function RoleExperienceTabs({ role, onRoleChange }: { role: Role; onRoleC
   const [activeStep, setActiveStep] = useState(0);
   const [teeTime, setTeeTime] = useState("7:20 AM");
   const [caddie, setCaddie] = useState("Jun Mercado");
-  const [payment, setPayment] = useState("Review next");
-  const [receipt, setReceipt] = useState(false);
+  const [round, setRound] = useState<RoundState>(emptyRoundState);
   const [availability, setAvailability] = useState(false);
   const [editingProfile, setEditingProfile] = useState(false);
   const [requestStatus, setRequestStatus] = useState("Pending");
   const active = roleFlows[role];
   const selectRole = (nextRole: Role) => { onRoleChange(nextRole); setActiveStep(0); };
-  const visual = role === "golfer" ? <GolferMock caddie={caddie} onCaddie={setCaddie} onPayment={setPayment} onReceipt={() => setReceipt(true)} onTeeTime={setTeeTime} payment={payment} receipt={receipt} step={activeStep} teeTime={teeTime} /> : role === "caddie" ? <CaddieMock availability={availability} editing={editingProfile} onAvailability={() => setAvailability((value) => !value)} onEditProfile={() => setEditingProfile((value) => !value)} onRequest={setRequestStatus} requestStatus={requestStatus} step={activeStep} /> : <AdminMock step={activeStep} />;
+  const confirmationStep: ConfirmationStep | undefined = role === "golfer" ? activeStep === 5 ? "meetup" : activeStep === 6 ? "payment" : undefined : role === "caddie" ? activeStep === 4 ? "meetup" : activeStep === 5 ? "payment" : undefined : undefined;
+  const openConfirmation = (participant: Participant, step: ConfirmationStep) => {
+    onRoleChange(participant);
+    setActiveStep((participant === "golfer" ? 5 : 4) + (step === "payment" ? 1 : 0));
+  };
+  const confirm = (participant: Participant, step: ConfirmationStep) => setRound((current) => {
+    if (current[step][participant] || (step === "payment" && !bothConfirmed(current.meetup))) return current;
+    return { ...current, [step]: { ...current[step], [participant]: true } };
+  });
+  const visual = role !== "admin" && confirmationStep
+    ? <ConfirmationMock caddie={caddie} onConfirm={() => confirm(role, confirmationStep)} onContinue={() => openConfirmation(role, "payment")} onMeetup={() => openConfirmation(role, "meetup")} role={role} round={round} step={confirmationStep} teeTime={teeTime} />
+    : role === "golfer" ? <GolferMock caddie={caddie} onCaddie={(value) => { setCaddie(value); setRound(emptyRoundState()); }} onContinue={() => setActiveStep((value) => value + 1)} onTeeTime={(value) => { setTeeTime(value); setRound(emptyRoundState()); }} round={round} step={activeStep} teeTime={teeTime} />
+    : role === "caddie" ? <CaddieMock availability={availability} caddie={caddie} editing={editingProfile} onAvailability={() => setAvailability((value) => !value)} onContinue={() => openConfirmation("caddie", "meetup")} onEditProfile={() => setEditingProfile((value) => !value)} onRequest={setRequestStatus} requestStatus={requestStatus} round={round} step={activeStep} teeTime={teeTime} />
+    : <AdminMock step={activeStep} />;
 
   return (
     <div className="role-experience">

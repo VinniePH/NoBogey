@@ -89,14 +89,14 @@ const povFeatures = [
   {
     role: "Golfer",
     title: "Plan the whole round",
-    copy: "Move from course discovery to a confirmed booking with every decision in one calm flow.",
-    items: ["Course and tee-time discovery", "Caddie matching", "Payment and receipt"]
+    copy: "Plan your round, open a confirmed booking, and confirm meetup and payment together with your caddie.",
+    items: ["Course and tee-time discovery", "Confirmed bookings", "Mutual meetup and payment confirmation"]
   },
   {
     role: "Caddie",
     title: "Stay ready for every game",
-    copy: "Keep your roster, requests, and upcoming schedule clear so you can focus on the course.",
-    items: ["Roster and notifications", "Accept or decline requests", "Updated booking receipt"]
+    copy: "Manage your roster and requests, then confirm meetup and payment received with your golfer.",
+    items: ["Roster and notifications", "Accept or decline requests", "Mutual meetup and payment confirmation"]
   },
   {
     role: "Admin",
