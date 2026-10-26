@@ -44,8 +44,8 @@ export function HomeScreen() {
     <TourTarget id="golfer-home"><ImageBackground imageStyle={styles.heroImage} resizeMode="cover" source={homeCourseHero} style={[styles.hero, { minHeight: Math.max(252, Math.min(310, contentWidth * 0.74)) }]}><View style={[styles.heroCopy, { paddingHorizontal: gutter, paddingTop: Math.max(16, gutter) }]}>
       <View style={styles.brandRow}><NoBogeyWordmark style={{ fontSize: wordmarkSize, lineHeight: wordmarkSize * 1.1 }} /><View style={styles.brandAction}><NotificationBell count={getUnreadCount("golfer")} onPress={() => router.push("/golfer/bookings")} /></View></View>
       <View style={styles.heroMessage}><Text style={[styles.subtitle, { fontSize: subtitleSize, lineHeight: subtitleSize * 1.15 }]}>The <Text style={styles.subtitleAccent}>premier caddie</Text> booking service.</Text><Text style={styles.heroDescription}>Professional caddies for every skill level. Book your preferred bagman at any course in the metro, instantly.</Text></View>
+      <Pressable accessibilityLabel="Book a Caddie Now" accessibilityRole="button" onPress={() => router.push("/golfer/find-game")} style={({ pressed }) => [styles.bookCaddieButton, pressed && styles.bookCaddieButtonPressed]}><Text style={styles.bookCaddieButtonText}>Book a Caddie Now!</Text><MaterialCommunityIcons color="#FFFFFF" name="arrow-right" size={20} /></Pressable>
     </View></ImageBackground></TourTarget>
-    <Pressable accessibilityLabel="Book a Caddie Now" accessibilityRole="button" onPress={() => router.push("/golfer/find-game")} style={({ pressed }) => [styles.bookCaddieButton, { marginHorizontal: gutter, marginTop: -96 }, pressed && styles.bookCaddieButtonPressed]}><Text style={styles.bookCaddieButtonText}>Book a Caddie Now!</Text><MaterialCommunityIcons color="#FFFFFF" name="arrow-right" size={20} /></Pressable>
     <HomeSection actionLabel="See All" onAction={() => router.push("/golfer/courses/all")} subtitle="Popular courses around you" title="Courses" gutter={gutter}>{courses.length ? <ScrollView horizontal contentContainerStyle={[styles.horizontalList, { paddingHorizontal: gutter }]} showsHorizontalScrollIndicator={false}>{courses.map((course) => <CourseCard compact compactWidth={cardWidth} course={course} key={course.id} onPress={() => router.push({ pathname: "/golfer/courses/[courseId]", params: { courseId: course.id } })} />)}</ScrollView> : <View style={{ paddingHorizontal: gutter }}><EmptyState description="Courses will appear after the catalog service is connected." icon="golf" minHeight={390} title="No courses available" /></View>}</HomeSection>
     <HomeSection actionLabel="See All" onAction={() => router.push("/golfer/caddies/all")} title="Caddies" gutter={gutter}>{caddies.length ? <ScrollView horizontal contentContainerStyle={[styles.horizontalList, { paddingHorizontal: gutter }]} showsHorizontalScrollIndicator={false}>{caddies.map((caddie) => <CaddieCard caddie={caddie} compact compactWidth={cardWidth} key={caddie.id} onPress={() => setSelectedCaddieId(caddie.id)} />)}</ScrollView> : <View style={{ paddingHorizontal: gutter }}><EmptyState description="Caddies will appear after the directory service is connected." icon="account-group-outline" minHeight={470} title="No caddies available" /></View>}</HomeSection>
   </ResponsiveContent></ScrollView><MobileBottomNavigation active="home" /><CaddieDetailSheet caddie={selectedCaddie} course={courses.find((course) => course.id === selectedCaddie?.homeCourseId)} onBook={() => router.push({ pathname: "/golfer/courses", params: { caddieId: selectedCaddie?.id, courseId: selectedCaddie?.homeCourseId } })} onClose={() => setSelectedCaddieId(undefined)} visible={Boolean(selectedCaddie)} /></SafeAreaView>;
@@ -61,16 +61,16 @@ const styles = StyleSheet.create({
   page: { gap: 26 },
   hero: { backgroundColor: sage, overflow: "hidden", width: "100%" },
   heroImage: { width: "100%" },
-  heroCopy: { backgroundColor: "rgba(252, 251, 247, 0.82)", flex: 1, gap: 8, paddingBottom: 48 },
+  heroCopy: { backgroundColor: "rgba(252, 251, 247, 0.82)", flex: 1, gap: 8, paddingBottom: 24 },
   brandAction: { alignItems: "flex-end", minWidth: 44, position: "absolute", right: 0, top: 7 },
   brandRow: { alignItems: "center", minHeight: 58, position: "relative" },
   heroMessage: { gap: 8, maxWidth: 570 },
   subtitle: { color: ink, fontWeight: "700", letterSpacing: -0.55, maxWidth: 390 },
   subtitleAccent: { color: mobilePalette.gold },
   heroDescription: { color: mobilePalette.muted, fontSize: 15, lineHeight: 21, maxWidth: 370 },
-  bookCaddieButton: { alignItems: "center", alignSelf: "stretch", backgroundColor: forest, borderCurve: "continuous", borderRadius: 14, boxShadow: "0 5px 18px rgba(23, 63, 53, 0.16)", flexDirection: "row", gap: 10, justifyContent: "center", minHeight: 56, paddingHorizontal: 20 },
+  bookCaddieButton: { alignItems: "center", alignSelf: "stretch", backgroundColor: forest, borderCurve: "continuous", borderRadius: 14, boxShadow: "0 5px 18px rgba(23, 63, 53, 0.16)", flexDirection: "row", gap: 10, justifyContent: "center", marginTop: 8, minHeight: 56, paddingHorizontal: 20, paddingVertical: 14 },
   bookCaddieButtonPressed: { backgroundColor: mobilePalette.forestDark },
-  bookCaddieButtonText: { color: "#FFFFFF", fontSize: 16, fontWeight: "800" },
+  bookCaddieButtonText: { color: "#FFFFFF", flexShrink: 1, fontSize: 16, fontWeight: "800", textAlign: "center" },
   section: { gap: 13 },
   sectionHeader: { alignItems: "center", flexDirection: "row", gap: 10, justifyContent: "space-between" },
   sectionHeading: { flex: 1, minWidth: 0 },
