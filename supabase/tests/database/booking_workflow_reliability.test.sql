@@ -57,7 +57,8 @@ values
   ('74000000-0000-4000-8000-000000000002', '73000000-0000-4000-8000-000000000001', now() + interval '3 days', now() + interval '3 days 4 hours', now() + interval '2 days 22 hours', 4, 'open');
 insert into public.caddie_tee_time_availability(tee_time_id, caddie_id) values
   ('74000000-0000-4000-8000-000000000001', '71000000-0000-4000-8000-000000000003'),
-  ('74000000-0000-4000-8000-000000000002', '71000000-0000-4000-8000-000000000003');
+  ('74000000-0000-4000-8000-000000000002', '71000000-0000-4000-8000-000000000003')
+on conflict (tee_time_id, caddie_id) do nothing;
 update public.booking_policy set reserve_tee_time_inventory = true, capacity_unit = 'golfers', hold_minutes = 15, max_pending_per_golfer = 3;
 
 select set_config('request.jwt.claim.sub', '71000000-0000-4000-8000-000000000001', true);

@@ -1,7 +1,7 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select plan(35);
+select plan(37);
 
 select has_table('public', 'profiles', 'profiles exists');
 select has_table('public', 'user_roles', 'role assignments exist');
@@ -70,8 +70,9 @@ select throws_ok(
   '23P01', 'BOOKING_CONFLICT', 'overlapping booking is rejected atomically'
 );
 select is((select count(*) from public.bookings where golfer_id = '10000000-0000-0000-0000-000000000001'), 1::bigint, 'only one active booking persists');
+select ok((select expires_at > now() from public.bookings where idempotency_key = 'booking-one'), 'pending booking has a live reservation expiration');
 reset role;
-select is((select count(*) from private.notification_outbox where booking_id = (select id from public.bookings limit 1)), 2::bigint, 'booking queues golfer and caddie receipt emails');
+select is((select count(*) from private.notification_outbox where booking_id = (select id from public.bookings limit 1)), 0::bigint, 'pending booking does not queue premature confirmation emails');
 
 update public.payment_intents set provider_reference = 'provider-payment-1' where booking_id = (select id from public.bookings limit 1);
 set local role service_role;
@@ -84,6 +85,7 @@ select lives_ok(
   'duplicate payment callback is idempotent'
 );
 reset role;
+select is((select count(*) from private.notification_outbox where booking_id = (select id from public.bookings limit 1)), 2::bigint, 'confirmed booking queues golfer and caddie receipt emails');
 select is((select count(*) from private.financial_ledger where entry_type = 'payment_captured'), 1::bigint, 'duplicate callback creates one capture ledger entry');
 
 select * from finish();

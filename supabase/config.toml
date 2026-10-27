@@ -183,8 +183,8 @@ minimum_password_length = 12
 # Passwords that do not meet the following requirements will be rejected as weak. Supported values
 # are: `letters_digits`, `lower_upper_letters_digits`, `lower_upper_letters_digits_symbols`
 password_requirements = "lower_upper_letters_digits_symbols"
-# Reject passwords found in the Have I Been Pwned database on hosted Pro projects.
-password_hibp_enabled = true
+# Have I Been Pwned password screening is a hosted-project dashboard setting;
+# it is not a supported local CLI config key.
 
 # Configure passkey sign-ins.
 # [auth.passkey]

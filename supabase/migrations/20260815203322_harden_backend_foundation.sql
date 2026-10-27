@@ -4,8 +4,16 @@ alter table private.payment_callback_events enable row level security;
 alter table private.financial_ledger enable row level security;
 alter table private.audit_logs enable row level security;
 
--- This pre-existing event-trigger helper is not an application RPC.
-revoke execute on function public.rls_auto_enable() from public, anon, authenticated;
+-- This platform-created event-trigger helper is not present in every Supabase
+-- environment (including a fresh local stack). Harden it when it exists while
+-- keeping the migration portable.
+do $$
+begin
+  if to_regprocedure('public.rls_auto_enable()') is not null then
+    revoke execute on function public.rls_auto_enable() from public, anon, authenticated;
+  end if;
+end;
+$$;
 
 create index financial_ledger_payment_intent_id_idx on private.financial_ledger(payment_intent_id);
 create index financial_ledger_payout_id_idx on private.financial_ledger(payout_id);
