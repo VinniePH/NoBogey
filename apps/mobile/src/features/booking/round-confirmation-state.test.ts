@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { confirmRoundStep, emptyRoundConfirmation, isMutual, type RoundConfirmations } from "./round-confirmation-state";
+import { confirmRoundStep, confirmationsFromAcknowledgements, emptyRoundConfirmation, isMutual, mergeRoundAcknowledgements, type RoundConfirmations } from "./round-confirmation-state";
 
 const time = "2026-10-21T08:00:00Z";
 
@@ -43,5 +43,23 @@ describe("mutual round confirmations", () => {
     expect(next.other).toBe(state.other);
     expect(next.round?.payment).toEqual({});
     expect(state.round).toBeUndefined();
+  });
+
+  it("hydrates both participants from authoritative acknowledgements", () => {
+    const state = confirmationsFromAcknowledgements([
+      { bookingId: "round", step: "meetup", participantId: "golfer-id", participantRole: "golfer", confirmedAt: time },
+      { bookingId: "round", step: "meetup", participantId: "caddie-id", participantRole: "caddie", confirmedAt: "2026-10-21T08:01:00Z" },
+    ]);
+    expect(isMutual(state.round!.meetup)).toBe(true);
+    expect(state.round!.meetup.caddie).toBe("2026-10-21T08:01:00Z");
+  });
+
+  it("merges a realtime booking update without dropping existing bookings", () => {
+    const current = { other: emptyRoundConfirmation() };
+    const next = mergeRoundAcknowledgements(current, [
+      { bookingId: "round", step: "meetup", participantId: "golfer-id", participantRole: "golfer", confirmedAt: time },
+    ]);
+    expect(next.other).toBe(current.other);
+    expect(next.round?.meetup.golfer).toBe(time);
   });
 });

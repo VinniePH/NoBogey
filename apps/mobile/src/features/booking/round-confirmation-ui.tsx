@@ -12,7 +12,8 @@ export function openRoundConfirmation(role: RoundRole, bookingId: string, step: 
 }
 
 export function RoundConfirmationSummary({ bookingId }: { bookingId: string }) {
-  const { round } = useRoundConfirmation(bookingId);
+  const { round, isLoading } = useRoundConfirmation(bookingId);
+  if (isLoading) return <Text style={styles.copy}>Loading confirmations...</Text>;
   return <Text style={styles.copy}>Meetup: {isMutual(round.meetup) ? "confirmed" : "pending"} · Payment: {isMutual(round.payment) ? "confirmed" : "pending"}</Text>;
 }
 
@@ -25,7 +26,7 @@ export function RoundConfirmationActions({ booking, role }: { booking: Booking; 
     <Text style={styles.sectionCopy}>Both you and your {role === "golfer" ? "caddie" : "golfer"} confirm each step.</Text>
     <StepCard bookingId={booking.id} role={role} step="meetup" state={round.meetup} />
     <StepCard bookingId={booking.id} role={role} step="payment" state={round.payment} locked={!isMutual(round.meetup)} />
-    <Text style={styles.copy}>Confirmations stay in this app session.</Text>
+    <Text style={styles.copy}>Confirmations are securely synchronized across both participants.</Text>
   </View>;
 }
 
@@ -44,11 +45,17 @@ export function ParticipantConfirmations({ state, role }: { state: MutualConfirm
     {(["golfer", "caddie"] as const).map((participant, index) => <View key={participant} style={[styles.participant, index > 0 && styles.participantDivider]}>
       <View style={styles.stepCopy}>
         <Text style={styles.participantTitle}>{participant === "golfer" ? "Golfer" : "Caddie"}{participant === role ? " (you)" : ""}</Text>
-        <Text style={styles.participantStatus}>{state[participant] ? "Confirmed" : "Waiting for confirmation"}</Text>
+        <Text style={styles.participantStatus}>{state[participant] ? `Confirmed ${formatConfirmationTime(state[participant])}` : "Waiting for confirmation"}</Text>
       </View>
       <Feather color={palette.forest} name={state[participant] ? "check-circle" : "clock"} size={18} />
     </View>)}
   </View>;
+}
+
+function formatConfirmationTime(value: string) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  return date.toLocaleString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
 }
 
 const styles = StyleSheet.create({

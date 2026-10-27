@@ -16,7 +16,7 @@ import { openRoundConfirmation, ParticipantConfirmations } from "./round-confirm
 export function RoundConfirmationScreen({ role }: { role: RoundRole }) {
   const { bookingId = "", confirmation } = useLocalSearchParams<{ bookingId?: string; confirmation?: string }>();
   const { bookings, courses, caddies, isLoading } = useMobileData();
-  const { round, confirm } = useRoundConfirmation(bookingId);
+  const { round, confirm, error, isSubmitting } = useRoundConfirmation(bookingId);
   const booking = bookings.find((item) => item.id === bookingId);
   const step = confirmation === "meetup" || confirmation === "payment" ? confirmation : undefined;
   const goBack = () => {
@@ -72,11 +72,12 @@ export function RoundConfirmationScreen({ role }: { role: RoundRole }) {
         <View accessibilityLiveRegion="polite" style={styles.notice}><Text style={styles.noticeCopy}>{notice}</Text></View>
 
         <View style={styles.actions}>
-          <ConfirmationButton disabled={locked || mine} icon="check" label={actionLabel} onPress={() => confirm(booking, step, role)} primary />
+          <ConfirmationButton disabled={locked || mine || isSubmitting(step)} icon="check" label={isSubmitting(step) ? "Saving confirmation..." : actionLabel} onPress={() => void confirm(step)} primary />
           {step === "meetup" && complete ? <ConfirmationButton label="Continue to payment confirmation" onPress={() => openRoundConfirmation(role, booking.id, "payment")} /> : null}
           {locked ? <ConfirmationButton label="Open meetup confirmation" onPress={() => openRoundConfirmation(role, booking.id, "meetup")} /> : null}
         </View>
-        <Text style={styles.caption}>Confirmations stay in this app session. No payment is collected.</Text>
+        {error ? <Text accessibilityLiveRegion="polite" style={styles.error}>{error}</Text> : null}
+        <Text style={styles.caption}>Confirmations are saved to your booking and synchronized with both participants. No payment is collected.</Text>
       </ResponsiveContent>
     </ScrollView>
   </SafeAreaView>;
@@ -118,5 +119,6 @@ const styles = StyleSheet.create({
   primaryActionText: { color: palette.white },
   disabledAction: { opacity: 0.5 },
   pressedAction: { opacity: 0.8 },
-  caption: { color: "#62685F", fontFamily: "Inter", fontSize: 11, lineHeight: 17, textAlign: "center" }
+  caption: { color: "#62685F", fontFamily: "Inter", fontSize: 11, lineHeight: 17, textAlign: "center" },
+  error: { color: "#A33A32", fontFamily: "Inter", fontSize: 12, lineHeight: 18, textAlign: "center" }
 });

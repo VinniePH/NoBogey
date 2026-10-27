@@ -14,6 +14,7 @@ export * from './courses/courses.service';
 export * from './courses/courses.types';
 export * from './bookings/bookings.service';
 export * from './bookings/bookings.types';
+export * from './bookings/round-confirmations.service';
 export * from './caddies/caddies.service';
 export * from './caddies/caddies.types';
 export * from './matching/matching.service';
