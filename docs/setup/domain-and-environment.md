@@ -23,6 +23,10 @@ The Supabase custom domain is active. New builds and updates use `https://api.no
 
 With Cloudflare, set the CNAME to **DNS only** while verifying.
 
+## Transactional-email DNS
+
+Authentication and booking emails use the dedicated `auth.nobogeyofficial.com` sending domain through Resend. Cloudflare remains authoritative for its SPF, DKIM, and DMARC records. The record values are unique to the Resend account and must be copied exactly from the provider; see [email delivery](./email-delivery.md).
+
 ## Android App Links
 
 The Android application ID is `com.anonymous.nobogeymobile`. Serve `https://nobogeyofficial.com/.well-known/assetlinks.json` with that package name and the production EAS signing certificate's SHA-256 fingerprint.

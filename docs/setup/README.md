@@ -2,6 +2,8 @@
 
 This guide is the operational setup runbook for the NoBogey framework. Use it when setting up the repo from a fresh clone, starting the mobile or admin app, running verification checks, or preparing an Expo/EAS build.
 
+Production authentication and booking email setup is documented in [NoBogey transactional email delivery](./email-delivery.md).
+
 For Codex integrations with Figma, Expo MCP, local Expo tooling, and optional Mobbin research, see [Codex Design And Expo Tools](./codex-design-and-expo-tools.md).
 
 ## 1. What This Framework Contains
