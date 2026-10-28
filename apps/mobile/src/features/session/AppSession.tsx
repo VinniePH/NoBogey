@@ -1,15 +1,19 @@
 import type { PropsWithChildren } from "react";
-import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
+import { AppState } from "react-native";
 import { createCaddieOnboardingDraft, type CaddieOnboardingDraft, type CaddieVerificationStatus, type OnboardingStep } from "../caddie-onboarding/model";
 import { getSession, signOut as signOutFromSupabase } from '../../../backend/auth/auth.service';
+import { getSupabaseClient } from "../../../backend/client";
 import { loadCaddieOnboardingDraft, loadPreferences, saveCaddieOnboardingDraft, savePreferences, submitCaddieOnboarding as submitRemoteCaddieOnboarding } from '../../../backend/users/users.service';
+import { resolveSessionRole, type AppRole } from "./session-state";
 
-export type AppRole = "golfer" | "caddie";
+export type { AppRole } from "./session-state";
 export type CaddieVerificationState = CaddieVerificationStatus;
 
 type Session = {
   activeRole: AppRole | null;
   initialRole: AppRole | null;
+  isAuthenticated: boolean;
   isHydrated: boolean;
   caddieVerification: CaddieVerificationState;
   caddieOnboarding: CaddieOnboardingDraft;
@@ -27,31 +31,91 @@ const SessionContext = createContext<Session | null>(null);
 export function AppSessionProvider({ children }: PropsWithChildren) {
   const [activeRole, setActiveRole] = useState<AppRole | null>(null);
   const [initialRole, setInitialRole] = useState<AppRole | null>(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isHydrated, setIsHydrated] = useState(false);
-  const [golferSignedIn, setGolferSignedIn] = useState(false);
   const [caddieOnboarding, setCaddieOnboarding] = useState<CaddieOnboardingDraft>(createCaddieOnboardingDraft);
+  const hydrationRequest = useRef(0);
+
+  const clearAuthenticatedSession = useCallback(() => {
+    hydrationRequest.current += 1;
+    setActiveRole(null);
+    setInitialRole(null);
+    setIsAuthenticated(false);
+    setIsHydrated(true);
+  }, []);
+
+  const hydrateAuthenticatedSession = useCallback(async () => {
+    const request = ++hydrationRequest.current;
+    try {
+      const authSession = await getSession();
+      if (request !== hydrationRequest.current) return;
+      if (!authSession) {
+        clearAuthenticatedSession();
+        return;
+      }
+
+      const [preferences, remoteDraft] = await Promise.all([
+        loadPreferences<{ activeRole?: AppRole }>().catch(() => null),
+        loadCaddieOnboardingDraft<CaddieOnboardingDraft>().catch(() => null),
+      ]);
+      if (request !== hydrationRequest.current) return;
+
+      const storedRole = preferences?.activeRole;
+      const role = resolveSessionRole(
+        storedRole === "golfer" || storedRole === "caddie" ? storedRole : undefined,
+        authSession.roles,
+      );
+      setInitialRole(role);
+      setActiveRole(role);
+      setIsAuthenticated(true);
+      if (remoteDraft) setCaddieOnboarding({ ...createCaddieOnboardingDraft(), ...remoteDraft });
+    } catch {
+      if (request === hydrationRequest.current) clearAuthenticatedSession();
+    } finally {
+      if (request === hydrationRequest.current) setIsHydrated(true);
+    }
+  }, [clearAuthenticatedSession]);
 
   useEffect(() => {
-    void Promise.all([loadPreferences<{ activeRole?: AppRole }>().catch(() => null), getSession().catch(() => null), loadCaddieOnboardingDraft<CaddieOnboardingDraft>().catch(() => null)])
-      .then(([preferences, authSession, remoteDraft]) => {
-        const storedRole = preferences?.activeRole;
-        if ((storedRole === "golfer" || storedRole === "caddie") && authSession?.roles.includes(storedRole)) {
-          setInitialRole(storedRole);
-          setActiveRole(storedRole);
-          if (storedRole === 'golfer') setGolferSignedIn(true);
-        }
-        if (remoteDraft) setCaddieOnboarding({ ...createCaddieOnboardingDraft(), ...remoteDraft });
-      })
-      .finally(() => setIsHydrated(true));
-  }, []);
+    const client = getSupabaseClient();
+    void hydrateAuthenticatedSession();
+
+    const { data: { subscription } } = client.auth.onAuthStateChange((event) => {
+      if (event === "SIGNED_OUT") {
+        clearAuthenticatedSession();
+        return;
+      }
+      if (event === "SIGNED_IN" || event === "TOKEN_REFRESHED" || event === "USER_UPDATED") {
+        setTimeout(() => void hydrateAuthenticatedSession(), 0);
+      }
+    });
+
+    const syncRefreshWithAppState = (state: string) => {
+      if (state === "active") {
+        client.auth.startAutoRefresh();
+        void hydrateAuthenticatedSession();
+      } else {
+        client.auth.stopAutoRefresh();
+      }
+    };
+    syncRefreshWithAppState(AppState.currentState);
+    const appStateSubscription = AppState.addEventListener("change", syncRefreshWithAppState);
+
+    return () => {
+      subscription.unsubscribe();
+      appStateSubscription.remove();
+      client.auth.stopAutoRefresh();
+    };
+  }, [clearAuthenticatedSession, hydrateAuthenticatedSession]);
 
   const value = useMemo<Session>(() => ({
     activeRole,
     initialRole,
+    isAuthenticated,
     isHydrated,
     caddieVerification: caddieOnboarding.verificationStatus,
     caddieOnboarding,
-    golferSignedIn,
+    golferSignedIn: isAuthenticated && activeRole === "golfer",
     selectInitialRole: (role) => {
       setInitialRole(role);
       setActiveRole(role);
@@ -59,13 +123,12 @@ export function AppSessionProvider({ children }: PropsWithChildren) {
     },
     signInAs: (role) => {
       setActiveRole(role);
-      if (role === "golfer") setGolferSignedIn(true);
+      setInitialRole(role);
+      setIsAuthenticated(true);
     },
     signOut: async () => {
       await signOutFromSupabase();
-      setActiveRole(null);
-      setInitialRole(null);
-      setGolferSignedIn(false);
+      clearAuthenticatedSession();
     },
     switchRole: setActiveRole,
     updateCaddieOnboarding: (update) => {
@@ -87,7 +150,7 @@ export function AppSessionProvider({ children }: PropsWithChildren) {
       await submitRemoteCaddieOnboarding(next);
       setCaddieOnboarding(next);
     }
-  }), [activeRole, caddieOnboarding, golferSignedIn, initialRole, isHydrated]);
+  }), [activeRole, caddieOnboarding, clearAuthenticatedSession, initialRole, isAuthenticated, isHydrated]);
 
   return <SessionContext.Provider value={value}>{children}</SessionContext.Provider>;
 }

@@ -11,21 +11,20 @@ import { Button } from "../../ui/primitives";
 import { backToPreviousPage } from "../../ui/navigation";
 import { TermsAcceptanceModal } from "../legal/TermsAcceptanceModal";
 import { useAppSession, type AppRole } from "../session/AppSession";
+import { resolveStartupRoute } from "../session/session-state";
 
 type Mode = "login" | "register";
 
 export function SplashScreen() {
   const [logoFailed, setLogoFailed] = useState(false);
-  const { initialRole, isHydrated } = useAppSession();
+  const { initialRole, isAuthenticated, isHydrated } = useAppSession();
   useEffect(() => {
     if (!isHydrated) return;
     const timeout = setTimeout(() => {
-      if (initialRole === "golfer") { router.replace("/golfer/home"); return; }
-      if (initialRole === "caddie") { router.replace("/caddie/onboarding"); return; }
-      router.replace("/onboarding");
+      router.replace(resolveStartupRoute(isAuthenticated, initialRole));
     }, 2440);
     return () => clearTimeout(timeout);
-  }, [initialRole, isHydrated]);
+  }, [initialRole, isAuthenticated, isHydrated]);
 
   return <SafeAreaView edges={["top", "bottom"]} style={styles.splash}><View style={styles.splashContent}><View style={styles.splashBrand}><View style={styles.logoFrame}>{logoFailed ? <Text accessibilityRole="image" style={styles.logoFallback}>NB</Text> : <Image accessibilityLabel="NoBogey golfer and caddie logo" onError={() => setLogoFailed(true)} resizeMode="contain" source={SplashLogo} style={styles.logo} />}</View><Text accessibilityRole="header" style={styles.splashWordmark}>NoBogey</Text></View><GolfLoadingIndicator /></View></SafeAreaView>;
 }
@@ -74,7 +73,7 @@ export function OnboardingScreen() {
     router.replace("/caddie/onboarding");
   };
   const roleName = selectedRole === "caddie" ? "caddie" : "golfer";
-  return <SafeAreaView edges={["top", "bottom"]} style={styles.authSafe}><ScrollView contentContainerStyle={[styles.authContent, styles.onboardingContent]} contentInsetAdjustmentBehavior="automatic">{selectedRole ? <><RoleIntro title={`Continue as a ${roleName}?`} subtitle="Are you new to NoBogey, or do you already have an account?" /><Button palette={authPalette} accessibilityLabel={`I’m new to NoBogey as a ${roleName}`} onPress={startRegistration}>I’m new here</Button><Pressable accessibilityLabel={`I already have a ${roleName} account`} accessibilityRole="button" onPress={() => router.replace({ pathname: "/sign-in", params: { role: selectedRole } })} style={styles.existingAccountButton}><Text style={styles.existingAccountText}>I already have an account</Text></Pressable><Pressable accessibilityLabel="Choose a different role" accessibilityRole="button" onPress={() => setSelectedRole(null)}><Text style={styles.secondaryLink}>Choose a different role</Text></Pressable></> : <><RoleIntro title="How do you play?" subtitle="Choose the role you use most. It stays selected on this phone." /><RoleChoice description="Browse tee times and caddies before creating an account." icon="golf" label="I’m a golfer" onPress={() => choose("golfer")} /><RoleChoice description="Create a professional profile for verification by your home club." icon="account-tie-outline" label="I’m a caddie" onPress={() => choose("caddie")} /></>}<Text style={styles.placeholderNote}>Golfers can add a caddie identity later from Profile.</Text></ScrollView></SafeAreaView>;
+  return <SafeAreaView edges={["top", "bottom"]} style={styles.authSafe}><ScrollView contentContainerStyle={[styles.authContent, styles.onboardingContent]} contentInsetAdjustmentBehavior="automatic">{selectedRole ? <><RoleIntro title={`Continue as a ${roleName}?`} subtitle="Are you new to NoBogey, or do you already have an account?" /><Button palette={authPalette} accessibilityLabel={`I’m new to NoBogey as a ${roleName}`} onPress={startRegistration}>I’m new here</Button><Pressable accessibilityLabel={`I already have a ${roleName} account`} accessibilityRole="button" onPress={() => router.replace({ pathname: "/sign-in", params: { role: selectedRole } })} style={styles.existingAccountButton}><Text style={styles.existingAccountText}>I already have an account</Text></Pressable><Pressable accessibilityLabel="Choose a different role" accessibilityRole="button" onPress={() => setSelectedRole(null)}><Text style={styles.secondaryLink}>Choose a different role</Text></Pressable></> : <><RoleIntro title="How do you use NoBogey?" subtitle="Choose whether you are continuing as a golfer or a caddie." /><RoleChoice description="Browse tee times and caddies before creating an account." icon="golf" label="I’m a golfer" onPress={() => choose("golfer")} /><RoleChoice description="Create a professional profile for verification by your home club." icon="account-tie-outline" label="I’m a caddie" onPress={() => choose("caddie")} /></>}<Text style={styles.placeholderNote}>Golfers can add a caddie identity later from Profile.</Text></ScrollView></SafeAreaView>;
 }
 
 function _LegacyAuthScreen() {
