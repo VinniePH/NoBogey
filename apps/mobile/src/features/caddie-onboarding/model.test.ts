@@ -1,17 +1,15 @@
 import { describe, expect, it } from "vitest";
-import { applyVerificationStatus, canSubmitOnboarding, createCaddieOnboardingDraft, createVerificationRequest, passwordMeetsRequirements, validateStep } from "./model";
+import { applyVerificationStatus, canSubmitOnboarding, createCaddieOnboardingDraft, createVerificationRequest, validateStep } from "./model";
 
 describe("caddie onboarding model", () => {
-  it("requires an account photo and a strong password", () => {
+  it("requires profile identity after account creation", () => {
     const draft = createCaddieOnboardingDraft();
-    expect(validateStep(draft, 1)).toMatchObject({ fullName: expect.any(String), email: expect.any(String), password: expect.any(String), profilePhoto: expect.any(String) });
-    expect(passwordMeetsRequirements("Golf2026")).toBe(true);
-    expect(passwordMeetsRequirements("golf")).toBe(false);
+    expect(validateStep(draft, 1)).toEqual({ fullName: expect.any(String), profilePhoto: expect.any(String) });
   });
 
-  it("does not let Terms acceptance replace password validation", () => {
-    const draft = { ...createCaddieOnboardingDraft(), fullName: "Rafa Dizon", email: "rafa@example.com", profilePhotoUri: "avatar://caddie-hat", termsAcceptedAt: "2026-08-15T00:00:00.000Z" };
-    expect(validateStep(draft, 1)).toMatchObject({ password: expect.any(String) });
+  it("accepts a complete profile identity without collecting credentials again", () => {
+    const draft = { ...createCaddieOnboardingDraft(), fullName: "Rafa Dizon", profilePhotoUri: "avatar://caddie-hat", termsAcceptedAt: "2026-08-15T00:00:00.000Z" };
+    expect(validateStep(draft, 1)).toEqual({});
   });
 
   it("requires a directory course and experience selection", () => {
@@ -22,7 +20,7 @@ describe("caddie onboarding model", () => {
 
   it("enforces two languages and produces a versioned verification request", () => {
     const threeLanguages = ["English", "Filipino", "Japanese"] as unknown as ReturnType<typeof createCaddieOnboardingDraft>["languages"];
-    const draft = { ...createCaddieOnboardingDraft(), fullName: "Rafa Dizon", email: "rafa@example.com", password: "Golf2026", profilePhotoUri: "file://photo", homeCourseId: "tagaytay-highlands", yearsExperience: "three_to_five" as const, tagline: "Course-smart caddie", languages: threeLanguages };
+    const draft = { ...createCaddieOnboardingDraft(), fullName: "Rafa Dizon", profilePhotoUri: "file://photo", homeCourseId: "tagaytay-highlands", yearsExperience: "three_to_five" as const, tagline: "Course-smart caddie", languages: threeLanguages };
     expect(canSubmitOnboarding(draft)).toMatchObject({ languages: expect.any(String) });
     const request = createVerificationRequest({ ...draft, languages: ["English", "Filipino"] });
     expect(request.status).toBe("pending");

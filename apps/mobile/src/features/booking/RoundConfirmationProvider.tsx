@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type PropsWithChildren } from "react";
 import { AppState } from "react-native";
+import { describeUserError } from "@nobogey/utils";
 import { confirmBookingAcknowledgement, listBookingAcknowledgements } from "../../../backend/bookings/round-confirmations.service";
 import { getSupabaseClient } from "../../../backend/client";
 import { confirmationsFromAcknowledgements, emptyRoundConfirmation, mergeRoundAcknowledgements, type RoundConfirmations, type RoundStep } from "./round-confirmation-state";
@@ -31,7 +32,7 @@ export function RoundConfirmationProvider({ children }: PropsWithChildren) {
       setConfirmations(confirmationsFromAcknowledgements(acknowledgements));
       setError(null);
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : "Unable to load round confirmations.");
+      setError(describeUserError(reason, "Round confirmations could not be loaded. Please try again."));
     } finally {
       setIsLoading(false);
     }
@@ -71,7 +72,7 @@ export function RoundConfirmationProvider({ children }: PropsWithChildren) {
       const acknowledgements = await confirmBookingAcknowledgement(bookingId, step);
       setConfirmations((current) => mergeRoundAcknowledgements(current, acknowledgements));
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : "Unable to save the acknowledgement.");
+      setError(describeUserError(reason, "Your confirmation was not saved. Please try again."));
     } finally {
       setPending((current) => {
         const next = new Set(current);

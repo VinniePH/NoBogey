@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { describeUserError } from "@nobogey/utils";
 import {
   formatAdminNotificationTime,
   getAdminNotificationCounts,
@@ -30,7 +31,7 @@ export function AdminNotifications({ navigate }: { navigate: (path: string) => v
       setCounts(nextCounts);
       setError("");
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : "Unable to load notifications.");
+      setError(describeUserError(reason, "Notifications could not be loaded. Please try again."));
     } finally {
       setLoading(false);
     }
@@ -53,7 +54,7 @@ export function AdminNotifications({ navigate }: { navigate: (path: string) => v
       await markAdminNotificationRead(id);
       await refresh();
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : "Unable to update the notification.");
+      setError(describeUserError(reason, "The notification could not be updated. Please try again."));
     }
   };
   const markAllRead = async () => {
@@ -61,7 +62,7 @@ export function AdminNotifications({ navigate }: { navigate: (path: string) => v
       await markAllAdminNotificationsRead();
       await refresh();
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : "Unable to update notifications.");
+      setError(describeUserError(reason, "Notifications could not be updated. Please try again."));
     }
   };
 

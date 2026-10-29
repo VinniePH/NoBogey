@@ -1,14 +1,9 @@
-/**
- * Auth service — isolates golfer and caddie authentication for the mobile app.
- *
- * Expected inputs/outputs: credentials or a session request in, session/identity data out.
- * Supabase target (future): auth.users, auth.sessions, and the Auth API.
- * Status: PLACEHOLDER — not wired to Supabase yet.
- * Wire-up TODO: call Supabase Auth and synchronize the authenticated user with profiles.
- */
+/** Supabase Auth and application-role provisioning for the mobile app. */
 import { getSupabaseClient } from '../client';
 import { getBackendConfig } from '../shared/config';
 import type { AuthSession, SignInInput, SignUpInput, SignUpResult } from './auth.types';
+
+type MobileRole = Extract<AuthSession['roles'][number], 'golfer' | 'caddie'>;
 
 async function toAuthSession(userId: string, email: string, accessToken: string, expiresAt: number): Promise<AuthSession> {
   const { data, error } = await getSupabaseClient().from('user_roles').select('role').eq('user_id', userId);
@@ -20,6 +15,11 @@ async function toAuthSession(userId: string, email: string, accessToken: string,
     expiresAt,
     roles: (data ?? []).map(({ role }) => role) as AuthSession['roles'],
   };
+}
+
+async function completeSignupRole(role: MobileRole): Promise<void> {
+  const { error } = await getSupabaseClient().rpc('complete_signup', { p_role: role });
+  if (error) throw error;
 }
 
 /** Sign up a golfer or caddie. Will call Supabase Auth and create the related profile. */
@@ -38,8 +38,7 @@ export async function signUp(input: SignUpInput): Promise<SignUpResult> {
   if (error) throw error;
   if (!data.user) throw new Error('Supabase did not return the created user');
   if (!data.session) return { userId: data.user.id, needsEmailConfirmation: true, session: null };
-  const { error: profileError } = await client.rpc('complete_signup', { p_role: input.role });
-  if (profileError) throw profileError;
+  await completeSignupRole(input.role);
   return {
     userId: data.user.id,
     needsEmailConfirmation: false,
@@ -58,11 +57,36 @@ export async function signIn(input: SignInInput): Promise<AuthSession> {
   if (error) throw error;
   let session = await toAuthSession(data.user.id, data.user.email ?? input.email, data.session.access_token, data.session.expires_at ?? 0);
   if (!session.roles.length && (data.user.user_metadata?.intended_role === 'golfer' || data.user.user_metadata?.intended_role === 'caddie')) {
-    const { error: profileError } = await client.rpc('complete_signup', { p_role: data.user.user_metadata.intended_role });
-    if (profileError) throw profileError;
+    await completeSignupRole(data.user.user_metadata.intended_role);
     session = await toAuthSession(data.user.id, data.user.email ?? input.email, data.session.access_token, data.session.expires_at ?? 0);
   }
   return session;
+}
+
+/** Add a mobile identity to the current authenticated account and return its refreshed roles. */
+export async function ensureCurrentUserRole(role: MobileRole): Promise<AuthSession> {
+  const client = getSupabaseClient();
+  const { data, error } = await client.auth.getSession();
+  if (error) throw error;
+  if (!data.session) throw new Error('AUTH_REQUIRED');
+  await completeSignupRole(role);
+  return toAuthSession(
+    data.session.user.id,
+    data.session.user.email ?? '',
+    data.session.access_token,
+    data.session.expires_at ?? 0,
+  );
+}
+
+/** Finish profile provisioning after an email-confirmation callback establishes a session. */
+export async function completeConfirmedSignup(): Promise<MobileRole | null> {
+  const client = getSupabaseClient();
+  const { data, error } = await client.auth.getUser();
+  if (error) throw error;
+  const role = data.user?.user_metadata?.intended_role;
+  if (role !== 'golfer' && role !== 'caddie') return null;
+  await completeSignupRole(role);
+  return role;
 }
 
 /** Send the account recovery email through Supabase Auth. */

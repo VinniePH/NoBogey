@@ -1,6 +1,6 @@
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import type { TeeTimeSlot } from "@nobogey/contracts";
-import { formatMoney } from "@nobogey/utils";
+import { describeUserError, formatMoney } from "@nobogey/utils";
 import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
 import { BackHandler, Platform, Pressable, StyleSheet, Text, View } from "react-native";
@@ -109,7 +109,7 @@ export function FindGameDetailsScreen({ initialReview = false }: { initialReview
       await createBooking({ caddieId: caddie.id, courseId: course.id, teeTimeId: slot.id, startsAt: slot.startsAt, endsAt: new Date(new Date(slot.startsAt).getTime() + 4 * 60 * 60 * 1000).toISOString(), partySize: draft.partySize, idempotencyKey });
       setConfirmed(true);
     } catch (cause) {
-      setBookingError(cause instanceof Error ? cause.message : "Unable to create booking.");
+      setBookingError(describeUserError(cause, "Your booking was not submitted. Please try again."));
     } finally {
       setSubmitting(false);
     }

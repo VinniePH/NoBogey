@@ -1,9 +1,10 @@
-import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useMemo, useState } from "react";
-import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import { ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { colors, radius, spacing } from "@nobogey/ui";
+import { describeUserError } from "@nobogey/utils";
 import { authPalette } from "../../ui/auth-palette";
 import { Button, Card } from "../../ui/primitives";
 import { ResponsiveContent } from "../../ui/ResponsiveContent";
@@ -13,11 +14,11 @@ import { useAppSession } from "../session/AppSession";
 import { caddieAvatarOptions, selectedCaddieAvatar } from "./avatar-options";
 import { canSubmitOnboarding, courseDirectory, experienceLabels, languageOptions, selectedCourse, skillOptions, validateStep, type CaddieOnboardingDraft, type ExperienceRange, type OnboardingStep, type SupportedLanguage } from "./model";
 
-const stepLabels = ["Account", "Club", "Skills", "Portfolio", "Review"];
+const stepLabels = ["Profile", "Club", "Skills", "Portfolio", "Review"];
 
 export function CaddieOnboardingScreen() {
   const params = useLocalSearchParams<{ step?: string; readOnly?: string }>();
-  const { caddieOnboarding: draft, caddieVerification, setCaddieOnboardingStep, submitCaddieOnboarding, updateCaddieOnboarding } = useAppSession();
+  const { caddieOnboarding: draft, caddieVerification, isAuthenticated, isHydrated, setCaddieOnboardingStep, submitCaddieOnboarding, updateCaddieOnboarding } = useAppSession();
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [termsContinuation, setTermsContinuation] = useState<"step2" | "submit">("step2");
   const [termsVisible, setTermsVisible] = useState(false);
@@ -27,6 +28,7 @@ export function CaddieOnboardingScreen() {
 
   useEffect(() => { if (!readOnly && caddieVerification !== "draft" && caddieVerification !== "changes_requested") router.replace("/caddie/verification"); }, [caddieVerification, readOnly]);
   useEffect(() => { if (step !== draft.step) setCaddieOnboardingStep(step); }, [draft.step, setCaddieOnboardingStep, step]);
+  useEffect(() => { if (isHydrated && !isAuthenticated) router.replace("/onboarding"); }, [isAuthenticated, isHydrated]);
 
   const advance = (next: OnboardingStep) => {
     setCaddieOnboardingStep(next);
@@ -46,7 +48,7 @@ export function CaddieOnboardingScreen() {
   const finishSubmission = async () => {
     setErrors({});
     try { await submitCaddieOnboarding(); router.replace("/caddie/verification"); }
-    catch (error) { setErrors({ submission: typeof error === "object" && error && "message" in error ? String(error.message) : "Unable to submit onboarding." }); }
+    catch (error) { setErrors({ submission: describeUserError(error, "Your profile was not submitted because there was a problem. Please try again.") }); }
   };
   const submit = () => {
     const nextErrors = canSubmitOnboarding(draft);
@@ -60,14 +62,15 @@ export function CaddieOnboardingScreen() {
     void finishSubmission();
   };
 
-  return <SafeAreaView edges={["top", "bottom"]} style={styles.safe}><KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={{ flex: 1 }}><ScrollView style={{ flex: 1 }} contentInsetAdjustmentBehavior="automatic" contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled"><ResponsiveContent style={styles.content}><View style={styles.head}><Text style={styles.eyebrow}>N O B O G E Y  ·  CADDIE</Text><Text accessibilityRole="header" style={styles.title}>{readOnly ? "Submitted profile" : "Build your caddie profile"}</Text><Text style={styles.headSubtitle}>{readOnly ? "This is the profile version currently with your home club." : "Create your account, then submit your profile to your home club."}</Text></View><Steps current={step} />{errors.submission ? <Error text={errors.submission} /> : null}{step === 1 ? <Account draft={draft} errors={errors} update={updateCaddieOnboarding} /> : null}{step === 2 ? <Club draft={draft} errors={errors} update={updateCaddieOnboarding} /> : null}{step === 3 ? <Skills draft={draft} update={updateCaddieOnboarding} /> : null}{step === 4 ? <Portfolio draft={draft} errors={errors} update={updateCaddieOnboarding} /> : null}{step === 5 ? <Review draft={draft} edit={readOnly ? () => {} : go} /> : null}{readOnly ? <Button palette={authPalette} accessibilityLabel="Back to verification status" onPress={() => backToPreviousPage("/caddie/verification")} variant="secondary">Back to verification status</Button> : step === 5 ? <Button palette={authPalette} accessibilityLabel="Submit for verification" onPress={submit}>Submit for Verification</Button> : <View style={styles.actions}>{step > 1 ? <Button palette={authPalette} accessibilityLabel="Previous onboarding step" onPress={() => go((step - 1) as OnboardingStep)} variant="secondary">Back</Button> : null}<View style={styles.fill}><Button palette={authPalette} accessibilityLabel="Continue" onPress={() => go((step + 1) as OnboardingStep)}>Continue</Button></View></View>}</ResponsiveContent></ScrollView></KeyboardAvoidingView><TermsAcceptanceModal onAccept={() => { setTermsVisible(false); updateCaddieOnboarding({ termsAcceptedAt: new Date().toISOString(), termsVersion }); if (termsContinuation === "submit") void finishSubmission(); else advance(2); }} onDecline={() => setTermsVisible(false)} visible={termsVisible} /></SafeAreaView>;
+  if (!isHydrated || !isAuthenticated) return <SafeAreaView edges={["top", "bottom"]} style={styles.safe}><View style={{ alignItems: "center", flex: 1, gap: spacing.md, justifyContent: "center", padding: spacing.xl }}><ActivityIndicator color={authPalette.forest} size="large" /><Text style={styles.subtitle}>{isHydrated ? "Returning to account selection…" : "Checking your account…"}</Text></View></SafeAreaView>;
+
+  return <SafeAreaView edges={["top", "bottom"]} style={styles.safe}><KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={{ flex: 1 }}><ScrollView style={{ flex: 1 }} contentInsetAdjustmentBehavior="automatic" contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled"><ResponsiveContent style={styles.content}><View style={styles.head}><Text style={styles.eyebrow}>N O B O G E Y  ·  CADDIE</Text><Text accessibilityRole="header" style={styles.title}>{readOnly ? "Submitted profile" : "Complete your caddie profile"}</Text><Text style={styles.headSubtitle}>{readOnly ? "This is the profile version currently with your home club." : "Your account is ready. Complete this profile for review by your home club."}</Text></View><Steps current={step} />{errors.submission ? <Error text={errors.submission} /> : null}{step === 1 ? <Account draft={draft} errors={errors} update={updateCaddieOnboarding} /> : null}{step === 2 ? <Club draft={draft} errors={errors} update={updateCaddieOnboarding} /> : null}{step === 3 ? <Skills draft={draft} update={updateCaddieOnboarding} /> : null}{step === 4 ? <Portfolio draft={draft} errors={errors} update={updateCaddieOnboarding} /> : null}{step === 5 ? <Review draft={draft} edit={readOnly ? () => {} : go} /> : null}{readOnly ? <Button palette={authPalette} accessibilityLabel="Back to verification status" onPress={() => backToPreviousPage("/caddie/verification")} variant="secondary">Back to verification status</Button> : step === 5 ? <Button palette={authPalette} accessibilityLabel="Submit for verification" onPress={submit}>Submit for Verification</Button> : <View style={styles.actions}>{step > 1 ? <Button palette={authPalette} accessibilityLabel="Previous onboarding step" onPress={() => go((step - 1) as OnboardingStep)} variant="secondary">Back</Button> : null}<View style={styles.fill}><Button palette={authPalette} accessibilityLabel="Continue" onPress={() => go((step + 1) as OnboardingStep)}>Continue</Button></View></View>}</ResponsiveContent></ScrollView></KeyboardAvoidingView><TermsAcceptanceModal onAccept={() => { setTermsVisible(false); updateCaddieOnboarding({ termsAcceptedAt: new Date().toISOString(), termsVersion }); if (termsContinuation === "submit") void finishSubmission(); else advance(2); }} onDecline={() => setTermsVisible(false)} visible={termsVisible} /></SafeAreaView>;
 }
 
 function Steps({ current }: { current: OnboardingStep }) { return <View style={styles.steps}>{stepLabels.map((label, index) => <View key={label} style={styles.step}><View style={[styles.dot, index + 1 <= current && styles.dotActive]}><Text style={[styles.dotText, index + 1 <= current && styles.dotTextActive]}>{index + 1}</Text></View><Text style={styles.stepText}>{label}</Text></View>)}</View>; }
 
 function Account({ draft, errors = {}, update }: StepProps) {
-  const [passwordVisible, setPasswordVisible] = useState(false);
-  return <Section title="Create your account"><Field error={errors.fullName} label="Full Name" onChangeText={(fullName) => update({ fullName })} placeholder="Enter your full name" value={draft.fullName} /><Field autoCapitalize="none" error={errors.email} keyboardType="email-address" label="Email Address" onChangeText={(email) => update({ email })} placeholder="you@example.com" value={draft.email} /><View style={styles.field}><Text style={styles.label}>Password</Text><View style={styles.password}><TextInput accessibilityLabel="Password" autoCapitalize="none" autoCorrect={false} onChangeText={(password) => update({ password })} placeholder="Create a secure password" placeholderTextColor={colors.textMuted} secureTextEntry={!passwordVisible} style={styles.passwordInput} value={draft.password} /><Pressable accessibilityLabel={passwordVisible ? "Hide password" : "Show password"} accessibilityRole="button" accessibilityState={{ checked: passwordVisible }} hitSlop={8} onPress={() => setPasswordVisible(visible => !visible)} style={styles.show}><Feather color={authPalette.forest} name={passwordVisible ? "eye-off" : "eye"} size={20} /></Pressable></View><Text style={styles.helper}>8+ characters, an uppercase letter, and a number.</Text>{errors.password ? <Error text={errors.password} /> : null}</View><View style={styles.field}><Text style={styles.label}>Avatar icon</Text><View style={styles.avatarChoices}>{caddieAvatarOptions.map((avatar) => <Pressable accessibilityLabel={`Choose ${avatar.label} avatar`} accessibilityRole="radio" accessibilityState={{ selected: draft.profilePhotoUri === avatar.id }} key={avatar.id} onPress={() => update({ profilePhotoUri: avatar.id })} style={[styles.avatarChoice, draft.profilePhotoUri === avatar.id && styles.avatarChoiceActive]}><AvatarIcon avatar={avatar.id} size={54} /></Pressable>)}</View><Text style={styles.helper}>Choose a profile avatar icon.</Text>{errors.profilePhoto ? <Error text={errors.profilePhoto} /> : null}</View></Section>;
+  return <Section title="Your identity" description="Your sign-in details are already secured in your NoBogey account."><Field error={errors.fullName} label="Full Name" onChangeText={(fullName) => update({ fullName })} placeholder="Enter your full name" value={draft.fullName} /><View style={styles.field}><Text style={styles.label}>Avatar icon</Text><View style={styles.avatarChoices}>{caddieAvatarOptions.map((avatar) => <Pressable accessibilityLabel={`Choose ${avatar.label} avatar`} accessibilityRole="radio" accessibilityState={{ selected: draft.profilePhotoUri === avatar.id }} key={avatar.id} onPress={() => update({ profilePhotoUri: avatar.id })} style={[styles.avatarChoice, draft.profilePhotoUri === avatar.id && styles.avatarChoiceActive]}><AvatarIcon avatar={avatar.id} size={54} /></Pressable>)}</View><Text style={styles.helper}>Choose a profile avatar icon.</Text>{errors.profilePhoto ? <Error text={errors.profilePhoto} /> : null}</View></Section>;
 }
 
 function Club({ draft, errors = {}, update }: StepProps) {
@@ -88,7 +91,7 @@ function Section({ children, description, title }: { children: React.ReactNode; 
 function Field({ error, label, ...props }: React.ComponentProps<typeof TextInput> & { error?: string | undefined; label: string }) { return <View style={styles.field}><Text style={styles.label}>{label}</Text><TextInput accessibilityLabel={label} placeholderTextColor={colors.textMuted} style={[styles.input, props.multiline && styles.textArea]} {...props} />{error ? <Error text={error} /> : null}</View>; }
 function Edit({ label, onPress }: { label: string; onPress: () => void }) { return <View style={styles.edit}><Text style={styles.editLabel}>{label}</Text><Pressable accessibilityLabel={`Edit ${label.toLowerCase()}`} accessibilityRole="button" onPress={onPress}><Text style={styles.actionText}>Edit</Text></Pressable></View>; }
 function Chips({ values }: { values: string[] }) { return values.length ? <View style={styles.chips}>{values.map((value) => <Text key={value} style={styles.chip}>{value}</Text>)}</View> : <Text style={styles.body}>Not added yet.</Text>; }
-function Error({ text }: { text: string }) { return <Text accessibilityLiveRegion="polite" style={styles.error}>Error: {text}</Text>; }
+function Error({ text }: { text: string }) { return <Text accessibilityLiveRegion="polite" role="alert" style={styles.error}>{text}</Text>; }
 
 type StepProps = { draft: CaddieOnboardingDraft; errors?: Record<string, string>; update: (update: Partial<CaddieOnboardingDraft>) => void };
 

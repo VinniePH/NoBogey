@@ -54,6 +54,9 @@ importers:
       '@nobogey/ui':
         specifier: workspace:*
         version: link:../../packages/ui
+      '@nobogey/utils':
+        specifier: workspace:*
+        version: link:../../packages/utils
       '@supabase/supabase-js':
         specifier: 2.57.4
         version: 2.57.4

@@ -1,4 +1,5 @@
 import { supabase } from "../src/lib/supabase";
+import { describeUserError } from "@nobogey/utils";
 
 export type Tier = "TRAINER" | "CLASS B" | "CLASS A";
 export type Caddie = { id: string; name: string; tier: Tier; rate: number; years: number; active: boolean; strikes: number; custom?: boolean };
@@ -44,7 +45,7 @@ export function describeAdminBackendError(cause: unknown, fallback = "Unable to 
   if (/AUTH_REQUIRED|JWT|session/i.test(diagnostic)) return "Your administrator session expired. Sign in again and retry.";
   if (/VALIDATION_FAILED|22023/i.test(diagnostic)) return "Choose a future tee time with a valid schedule.";
   if (/Failed to fetch|NetworkError|network request failed/i.test(diagnostic)) return "The portal could not reach Supabase. Check your connection and retry.";
-  return message || fallback;
+  return describeUserError(cause, fallback);
 }
 
 async function hydrate() {

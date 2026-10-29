@@ -4,8 +4,9 @@ import { Feather } from '@expo/vector-icons';
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors, spacing } from '@nobogey/ui';
+import { describeUserError } from '@nobogey/utils';
 
-import { signIn, signUp } from '../../../backend/auth/auth.service';
+import { ensureCurrentUserRole, signIn, signUp } from '../../../backend/auth/auth.service';
 import { completeMobileCaptcha } from '../../../backend/auth/captcha';
 import { getPasswordPolicyError } from '../../../backend/auth/password-policy';
 import { authPalette } from '../../ui/auth-palette';
@@ -31,7 +32,7 @@ export function AuthScreen() {
   const finish = () => {
     selectInitialRole(role);
     signInAs(role);
-    if (role === 'caddie') return router.replace('/caddie/dashboard');
+    if (role === 'caddie') return router.replace(params.returnTo === '/caddie/onboarding' ? '/caddie/onboarding' : '/caddie/dashboard');
     if (params.returnTo === '/golfer/bookings/new') return router.replace({ pathname: '/golfer/bookings/new', params });
     if (params.returnTo === '/golfer/find-game') return router.replace({ pathname: '/golfer/find-game', params });
     if (params.returnTo === '/golfer/caddies') return router.replace({ pathname: '/golfer/caddies', params });
@@ -49,17 +50,20 @@ export function AuthScreen() {
         const username = displayName.replace(/[^A-Za-z0-9_]/g, '').slice(0, 32);
         const result = await signUp({ email, password, displayName, role, captchaToken, ...(username.length >= 3 ? { username } : {}) });
         if (result.needsEmailConfirmation) {
-          setMessage('Check your email to confirm your account, then return here and log in.');
+          setMessage('Check your email to confirm your account, then return here and log in. If no email arrives, sign in instead or reset your password.');
           setMode('login');
           return;
         }
       } else {
-        const session = await signIn({ email, password, captchaToken });
+        let session = await signIn({ email, password, captchaToken });
+        if (!session.roles.includes(role) && session.roles.includes('super_admin')) {
+          session = await ensureCurrentUserRole(role);
+        }
         if (!session.roles.includes(role) && !session.roles.includes('super_admin')) throw new Error(`This account is not registered as a ${role}.`);
       }
       finish();
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : 'Unable to authenticate.');
+      setMessage(describeUserError(error, mode === 'register' ? 'Your account could not be created. Please try again.' : 'You could not be signed in. Please try again.'));
     } finally {
       setSubmitting(false);
     }

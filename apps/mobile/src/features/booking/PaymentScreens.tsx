@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors, radius, spacing, typography } from '@nobogey/ui';
+import { describeUserError } from '@nobogey/utils';
 
 import { createBooking } from '../../../backend/bookings/bookings.service';
 import { EmptyState } from '../../ui/EmptyState';
@@ -27,7 +28,7 @@ export function PaymentScreen() {
       const startsAt = new Date(time);
       const booking = await createBooking({ caddieId: caddie.id, courseId, teeTimeId, startsAt: startsAt.toISOString(), endsAt: new Date(startsAt.getTime() + 4 * 60 * 60 * 1000).toISOString(), partySize: parseGolferCount(partySize) ?? 4, idempotencyKey });
       router.replace({ pathname: '/golfer/bookings/confirmation', params: { bookingId: booking.id, caddieId, courseId, teeTimeId, time } });
-    } catch (cause) { setError(cause instanceof Error ? cause.message : 'Unable to create booking.'); }
+    } catch (cause) { setError(describeUserError(cause, 'Your booking was not submitted. Please try again.')); }
     finally { setSubmitting(false); }
   };
 

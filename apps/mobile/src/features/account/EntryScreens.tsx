@@ -59,21 +59,23 @@ function GolfLoadingIndicator() {
 }
 
 export function OnboardingScreen() {
-  const { selectInitialRole } = useAppSession();
   const [selectedRole, setSelectedRole] = useState<AppRole | null>(null);
   const choose = (role: AppRole) => {
     setSelectedRole(role);
   };
   const startRegistration = () => {
-    if (selectedRole === "golfer") {
-      router.replace({ pathname: "/sign-in", params: { mode: "register", role: "golfer" } });
-      return;
-    }
-    selectInitialRole("caddie");
-    router.replace("/caddie/onboarding");
+    if (!selectedRole) return;
+    router.replace({
+      pathname: "/sign-in",
+      params: {
+        mode: "register",
+        role: selectedRole,
+        ...(selectedRole === "caddie" ? { returnTo: "/caddie/onboarding" } : {}),
+      },
+    });
   };
   const roleName = selectedRole === "caddie" ? "caddie" : "golfer";
-  return <SafeAreaView edges={["top", "bottom"]} style={styles.authSafe}><ScrollView contentContainerStyle={[styles.authContent, styles.onboardingContent]} contentInsetAdjustmentBehavior="automatic">{selectedRole ? <><RoleIntro title={`Continue as a ${roleName}?`} subtitle="Are you new to NoBogey, or do you already have an account?" /><Button palette={authPalette} accessibilityLabel={`I’m new to NoBogey as a ${roleName}`} onPress={startRegistration}>I’m new here</Button><Pressable accessibilityLabel={`I already have a ${roleName} account`} accessibilityRole="button" onPress={() => router.replace({ pathname: "/sign-in", params: { role: selectedRole } })} style={styles.existingAccountButton}><Text style={styles.existingAccountText}>I already have an account</Text></Pressable><Pressable accessibilityLabel="Choose a different role" accessibilityRole="button" onPress={() => setSelectedRole(null)}><Text style={styles.secondaryLink}>Choose a different role</Text></Pressable></> : <><RoleIntro title="How do you use NoBogey?" subtitle="Choose whether you are continuing as a golfer or a caddie." /><RoleChoice description="Browse tee times and caddies before creating an account." icon="golf" label="I’m a golfer" onPress={() => choose("golfer")} /><RoleChoice description="Create a professional profile for verification by your home club." icon="account-tie-outline" label="I’m a caddie" onPress={() => choose("caddie")} /></>}<Text style={styles.placeholderNote}>Golfers can add a caddie identity later from Profile.</Text></ScrollView></SafeAreaView>;
+  return <SafeAreaView edges={["top", "bottom"]} style={styles.authSafe}><ScrollView contentContainerStyle={[styles.authContent, styles.onboardingContent]} contentInsetAdjustmentBehavior="automatic">{selectedRole ? <><RoleIntro title={`Continue as a ${roleName}?`} subtitle="Are you new to NoBogey, or do you already have an account?" /><Button palette={authPalette} accessibilityLabel={`I’m new to NoBogey as a ${roleName}`} onPress={startRegistration}>I’m new here</Button><Pressable accessibilityLabel={`I already have a ${roleName} account`} accessibilityRole="button" onPress={() => router.replace({ pathname: "/sign-in", params: { role: selectedRole, ...(selectedRole === "caddie" ? { returnTo: "/caddie/onboarding" } : {}) } })} style={styles.existingAccountButton}><Text style={styles.existingAccountText}>I already have an account</Text></Pressable><Pressable accessibilityLabel="Choose a different role" accessibilityRole="button" onPress={() => setSelectedRole(null)}><Text style={styles.secondaryLink}>Choose a different role</Text></Pressable></> : <><RoleIntro title="How do you use NoBogey?" subtitle="Choose whether you are continuing as a golfer or a caddie." /><RoleChoice description="Browse tee times and caddies before creating an account." icon="golf" label="I’m a golfer" onPress={() => choose("golfer")} /><RoleChoice description="Create a professional profile for verification by your home club." icon="account-tie-outline" label="I’m a caddie" onPress={() => choose("caddie")} /></>}<Text style={styles.placeholderNote}>Golfers can add a caddie identity later from Profile.</Text></ScrollView></SafeAreaView>;
 }
 
 function _LegacyAuthScreen() {

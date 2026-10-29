@@ -6,6 +6,7 @@ import type {
   CaddieVerificationSummary,
   VerificationStatusFilter
 } from "@nobogey/contracts";
+import { describeUserError } from "@nobogey/utils";
 import {
   CaddieVerificationAdapterError,
   approveCaddieVerification,
@@ -28,7 +29,7 @@ type ReviewAction = "approve" | "reject" | "more_info";
 const pageSize = 5;
 
 function messageFor(error: unknown) {
-  return error instanceof CaddieVerificationAdapterError ? error.message : "Something went wrong while updating this verification. Please retry.";
+  return error instanceof CaddieVerificationAdapterError ? error.message : describeUserError(error, "This verification could not be updated. Please try again.");
 }
 
 function StatusBadge({ status }: { status: CaddieVerificationStatus }) {

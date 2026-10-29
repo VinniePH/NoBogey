@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from 'react';
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors, spacing } from '@nobogey/ui';
+import { describeUserError } from '@nobogey/utils';
 
 import { establishSessionFromMobileAuthCallback, parseMobileAuthCallback } from '../../../backend/auth/auth-callback';
 import { requestPasswordReset, updatePassword } from '../../../backend/auth/auth.service';
@@ -39,7 +40,7 @@ export function PasswordResetScreen() {
         setRecoveryReady(true);
         setMessage(undefined);
       })
-      .catch((error: unknown) => setMessage(error instanceof Error ? error.message : 'This reset link is invalid or has expired.'))
+      .catch((error: unknown) => setMessage(describeUserError(error, 'This reset link is invalid or has expired.')))
       .finally(() => setSubmitting(false));
   }, [callbackUrl, parsedCallback?.kind]);
 
@@ -55,7 +56,7 @@ export function PasswordResetScreen() {
       await requestPasswordReset(email, captchaToken);
       setMessage('If an account matches that address, a secure reset link is on its way.');
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : 'Unable to send the reset email.');
+      setMessage(describeUserError(error, 'The reset email could not be sent. Please try again.'));
     } finally {
       setSubmitting(false);
     }
@@ -78,7 +79,7 @@ export function PasswordResetScreen() {
       setCompleted(true);
       setMessage('Your password has been updated. Sign in with your new password.');
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : 'Unable to update your password. Request a new reset link and try again.');
+      setMessage(describeUserError(error, 'Your password could not be updated. Request a new reset link and try again.'));
     } finally {
       setSubmitting(false);
     }

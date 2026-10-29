@@ -60,8 +60,6 @@ export type CaddieOnboardingDraft = {
   caddieId: string;
   step: OnboardingStep;
   fullName: string;
-  email: string;
-  password: string;
   profilePhotoUri: string;
   homeCourseId: string;
   registryNumber: string;
@@ -89,11 +87,7 @@ export const experienceYears: Record<ExperienceRange, number> = { less_than_one:
 export const golferSkillLabels: Record<GolferSkillRange, string> = { beginner: "Beginner", recreational: "Recreational", intermediate: "Intermediate", advanced: "Advanced", competitive: "Competitive", professional: "Professional" };
 
 export function createCaddieOnboardingDraft(): CaddieOnboardingDraft {
-  return { caddieId: "local-caddie", step: 1, fullName: "", email: "", password: "", profilePhotoUri: "", homeCourseId: "", registryNumber: "", yearsExperience: "", employmentStatus: "", skills: [], tagline: "", bio: "", credentials: [], highlights: [], preferredGolferSkillRange: [], languages: [], workSampleUris: [], verificationStatus: "draft" };
-}
-
-export function passwordMeetsRequirements(password: string) {
-  return password.length >= 8 && /[A-Z]/.test(password) && /[0-9]/.test(password);
+  return { caddieId: "local-caddie", step: 1, fullName: "", profilePhotoUri: "", homeCourseId: "", registryNumber: "", yearsExperience: "", employmentStatus: "", skills: [], tagline: "", bio: "", credentials: [], highlights: [], preferredGolferSkillRange: [], languages: [], workSampleUris: [], verificationStatus: "draft" };
 }
 
 export function selectedCourse(draft: CaddieOnboardingDraft) {
@@ -102,7 +96,7 @@ export function selectedCourse(draft: CaddieOnboardingDraft) {
 
 export function validateStep(draft: CaddieOnboardingDraft, step: OnboardingStep): Record<string, string> {
   const course = selectedCourse(draft);
-  if (step === 1) return { ...(draft.fullName.trim() ? {} : { fullName: "Enter your full name." }), ...(/^\S+@\S+\.\S+$/.test(draft.email) ? {} : { email: "Enter a valid email address." }), ...(passwordMeetsRequirements(draft.password) ? {} : { password: "Use 8+ characters with an uppercase letter and a number." }), ...(draft.profilePhotoUri ? {} : { profilePhoto: "Choose an avatar icon to continue." }) };
+  if (step === 1) return { ...(draft.fullName.trim() ? {} : { fullName: "Enter your full name." }), ...(draft.profilePhotoUri ? {} : { profilePhoto: "Choose an avatar icon to continue." }) };
   if (step === 2) return { ...(course ? {} : { homeCourse: "Select a course from the directory." }), ...(draft.yearsExperience ? {} : { yearsExperience: "Choose your years of experience." }) };
   if (step === 4) return { ...(draft.tagline.trim() ? {} : { tagline: "Add a professional tagline." }), ...(draft.languages.length > 2 ? { languages: "Choose no more than two languages." } : {}), ...draft.credentials.reduce<Record<string, string>>((errors, credential) => ({ ...errors, ...(credential.name.trim() && credential.issuer.trim() && credential.issueDate ? {} : { [`credential-${credential.id}`]: "Each credential needs a name, issuer, and issue date." }) }), {}) };
   return {};

@@ -5,7 +5,7 @@ import { useEffect } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { useState } from 'react';
 import { SafeAreaView } from "react-native-safe-area-context";
-import { formatMoney, formatTeeTime } from "@nobogey/utils";
+import { describeUserError, formatMoney, formatTeeTime } from "@nobogey/utils";
 import { colors, radius, spacing, typography } from "@nobogey/ui";
 import { EmptyState } from "../../ui/EmptyState";
 import { backToPreviousPage } from "../../ui/navigation";
@@ -91,7 +91,7 @@ export function BookingDetailsScreen() {
           </View>
 
           <RoundConfirmationActions booking={booking} role="golfer" />
-          {booking.status === "requested" || booking.status === "confirmed" ? <Button onPress={() => void cancelBooking(booking.id).then(refresh).catch((error) => setActionError(error instanceof Error ? error.message : "Unable to cancel booking."))} variant="secondary">Cancel booking</Button> : null}
+          {booking.status === "requested" || booking.status === "confirmed" ? <Button onPress={() => void cancelBooking(booking.id).then(refresh).catch((error) => setActionError(describeUserError(error, "Your booking could not be canceled. Please try again.")))} variant="secondary">Cancel booking</Button> : null}
           {actionError ? <Text accessibilityLiveRegion="polite" style={styles.detailError}>{actionError}</Text> : null}
           <CaddieContactCard isAccepted={assignmentAccepted} />
         </ResponsiveContent>
@@ -106,7 +106,7 @@ export function RateCaddieScreen() {
   const booking = bookings.find((item) => item.id === bookingId);
   const [score, setScore] = useState(5); const [comment, setComment] = useState(""); const [message, setMessage] = useState(""); const [saving, setSaving] = useState(false);
   if (!booking) return <UnavailableBooking title="Caddie rating unavailable" />;
-  const submit = async () => { setSaving(true); setMessage(""); try { const { data: auth } = await getSupabaseClient().auth.getUser(); if (!auth.user) throw new Error("Sign in to submit a rating."); const { error } = await getSupabaseClient().from("ratings").insert({ booking_id: booking.id, rater_id: auth.user.id, ratee_id: booking.caddieId, score, comment: comment.trim() || null }); if (error) throw error; setMessage("Thank you. Your rating was saved."); } catch (error) { setMessage(error instanceof Error ? error.message : "Unable to save rating."); } finally { setSaving(false); } };
+  const submit = async () => { setSaving(true); setMessage(""); try { const { data: auth } = await getSupabaseClient().auth.getUser(); if (!auth.user) throw new Error("AUTH_REQUIRED"); const { error } = await getSupabaseClient().from("ratings").insert({ booking_id: booking.id, rater_id: auth.user.id, ratee_id: booking.caddieId, score, comment: comment.trim() || null }); if (error) throw error; setMessage("Thank you. Your rating was saved."); } catch (error) { setMessage(describeUserError(error, "Your rating was not submitted. Please try again.")); } finally { setSaving(false); } };
   return <SafeAreaView edges={["bottom"]} style={styles.safeArea}><ScrollView contentContainerStyle={styles.page}><Text accessibilityRole="header" style={styles.title}>Rate your caddie</Text><View style={styles.ratingRow}>{[1,2,3,4,5].map((value) => <Pressable accessibilityLabel={`${value} stars`} accessibilityRole="button" key={value} onPress={() => setScore(value)}><Text style={styles.ratingStar}>{value <= score ? "★" : "☆"}</Text></Pressable>)}</View><TextInput accessibilityLabel="Rating comments" multiline onChangeText={setComment} placeholder="Share feedback about your round" style={styles.ratingInput} value={comment} />{message ? <Text style={styles.subtitle}>{message}</Text> : null}<Button disabled={saving} onPress={() => void submit()}>{saving ? "Saving…" : "Submit rating"}</Button></ScrollView></SafeAreaView>;
 }
 
