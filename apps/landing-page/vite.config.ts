@@ -11,6 +11,7 @@ export default defineConfig({
       input: {
         main: resolve(process.cwd(), "index.html"),
         contact: resolve(process.cwd(), "contact/index.html"),
+        deleteAccount: resolve(process.cwd(), "delete-account/index.html"),
         getStarted: resolve(process.cwd(), "get-started/index.html"),
         privacy: resolve(process.cwd(), "privacy/index.html"),
         terms: resolve(process.cwd(), "terms/index.html")

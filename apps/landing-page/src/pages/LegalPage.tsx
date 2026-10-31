@@ -48,7 +48,7 @@ export function LegalPage({ effectiveDate, intro, sections, title, version }: Le
       <footer className="border-t border-line bg-warm-white py-8">
         <div className="page-container flex flex-col gap-3 text-sm text-muted sm:flex-row sm:items-center sm:justify-between">
           <p>© NoBogey. All rights reserved.</p>
-          <div className="flex gap-5"><a className="hover:text-forest" href="/terms/">Terms &amp; Conditions</a><a className="hover:text-forest" href="/privacy/">Privacy Policy</a></div>
+          <div className="flex flex-wrap gap-5"><a className="hover:text-forest" href="/terms/">Terms &amp; Conditions</a><a className="hover:text-forest" href="/privacy/">Privacy Policy</a><a className="hover:text-forest" href="/delete-account/">Delete Account</a></div>
         </div>
       </footer>
     </div>
